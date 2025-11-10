@@ -1,0 +1,484 @@
+from typing import Any, Optional
+import datetime
+
+from sqlalchemy import BINARY, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, String, text
+from sqlalchemy.dialects.mysql import TINYINT, YEAR
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+class Base(DeclarativeBase):
+    pass
+
+
+class Countries(Base):
+    __tablename__ = 'countries'
+    __table_args__ = (
+        Index('country_uuid', 'country_uuid', unique=True),
+    )
+
+    country_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    country_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    country_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    calling_code: Mapped[Optional[str]] = mapped_column(String(5))
+    is_active: Mapped[Optional[int]] = mapped_column(TINYINT(1), server_default=text("'1'"))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    contacts: Mapped[list['Contacts']] = relationship('Contacts', back_populates='countries')
+    country_education_document_mapping: Mapped[list['CountryEducationDocumentMapping']] = relationship('CountryEducationDocumentMapping', back_populates='countries')
+    country_identity_mapping: Mapped[list['CountryIdentityMapping']] = relationship('CountryIdentityMapping', back_populates='countries')
+    current_addresses: Mapped[list['CurrentAddresses']] = relationship('CurrentAddresses', back_populates='countries')
+    permanent_addresses: Mapped[list['PermanentAddresses']] = relationship('PermanentAddresses', back_populates='countries')
+    personal_details: Mapped[list['PersonalDetails']] = relationship('PersonalDetails', foreign_keys='[PersonalDetails.nationality_country_uuid]', back_populates='countries')
+    personal_details_: Mapped[list['PersonalDetails']] = relationship('PersonalDetails', foreign_keys='[PersonalDetails.residence_country_uuid]', back_populates='countries_')
+
+
+class DeliverableItems(Base):
+    __tablename__ = 'deliverable_items'
+    __table_args__ = (
+        Index('deliverable_uuid', 'deliverable_uuid', unique=True),
+    )
+
+    deliverable_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    deliverable_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    item_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String(255))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+
+    employee_deliverables: Mapped[list['EmployeeDeliverables']] = relationship('EmployeeDeliverables', back_populates='deliverable_items')
+
+
+class EducationDocumentType(Base):
+    __tablename__ = 'education_document_type'
+    __table_args__ = (
+        Index('education_document_uuid', 'education_document_uuid', unique=True),
+    )
+
+    education_document_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    education_document_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    document_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String(200))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+
+    country_education_document_mapping: Mapped[list['CountryEducationDocumentMapping']] = relationship('CountryEducationDocumentMapping', back_populates='education_document_type')
+
+
+class EducationLevel(Base):
+    __tablename__ = 'education_level'
+    __table_args__ = (
+        Index('education_uuid', 'education_uuid', unique=True),
+    )
+
+    education_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    education_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    education_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String(200))
+    is_active: Mapped[Optional[int]] = mapped_column(TINYINT(1), server_default=text("'1'"))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    country_education_document_mapping: Mapped[list['CountryEducationDocumentMapping']] = relationship('CountryEducationDocumentMapping', back_populates='education_level')
+
+
+class IdentityType(Base):
+    __tablename__ = 'identity_type'
+    __table_args__ = (
+        Index('identity_type_uuid', 'identity_type_uuid', unique=True),
+    )
+
+    identity_type_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    identity_type_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    identity_type_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String(255))
+    is_active: Mapped[Optional[int]] = mapped_column(TINYINT(1), server_default=text("'1'"))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    country_identity_mapping: Mapped[list['CountryIdentityMapping']] = relationship('CountryIdentityMapping', back_populates='identity_type')
+
+
+class OfferLetterDetails(Base):
+    __tablename__ = 'offer_letter_details'
+    __table_args__ = (
+        Index('mail', 'mail', unique=True),
+        Index('user_uuid', 'user_uuid', unique=True)
+    )
+
+    user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    first_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    mail: Mapped[str] = mapped_column(String(100), nullable=False)
+    country_code: Mapped[str] = mapped_column(String(5), nullable=False)
+    contact_number: Mapped[str] = mapped_column(String(15), nullable=False)
+    designation: Mapped[str] = mapped_column(String(50), nullable=False)
+    package: Mapped[str] = mapped_column(String(20), nullable=False)
+    status: Mapped[Optional[str]] = mapped_column(Enum('Offered', 'Accepted', 'Rejected'), server_default=text("'Offered'"))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    contacts: Mapped[list['Contacts']] = relationship('Contacts', back_populates='offer_letter_details')
+    current_addresses: Mapped[list['CurrentAddresses']] = relationship('CurrentAddresses', back_populates='offer_letter_details')
+    employee_deliverables: Mapped[list['EmployeeDeliverables']] = relationship('EmployeeDeliverables', back_populates='offer_letter_details')
+    employee_experience: Mapped[list['EmployeeExperience']] = relationship('EmployeeExperience', back_populates='offer_letter_details')
+    employee_receivables: Mapped[list['EmployeeReceivables']] = relationship('EmployeeReceivables', back_populates='offer_letter_details')
+    permanent_addresses: Mapped[list['PermanentAddresses']] = relationship('PermanentAddresses', back_populates='offer_letter_details')
+    personal_details: Mapped[list['PersonalDetails']] = relationship('PersonalDetails', back_populates='offer_letter_details')
+    employee_education_document: Mapped[list['EmployeeEducationDocument']] = relationship('EmployeeEducationDocument', back_populates='offer_letter_details')
+    employee_identity_document: Mapped[list['EmployeeIdentityDocument']] = relationship('EmployeeIdentityDocument', back_populates='offer_letter_details')
+    employee_pay_slips: Mapped[list['EmployeePaySlips']] = relationship('EmployeePaySlips', back_populates='offer_letter_details')
+    employee_relieving_letter: Mapped[list['EmployeeRelievingLetter']] = relationship('EmployeeRelievingLetter', back_populates='offer_letter_details')
+
+
+class ReceivableItems(Base):
+    __tablename__ = 'receivable_items'
+    __table_args__ = (
+        Index('receivable_uuid', 'receivable_uuid', unique=True),
+    )
+
+    receivable_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    receivable_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    item_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String(255))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+
+    employee_receivables: Mapped[list['EmployeeReceivables']] = relationship('EmployeeReceivables', back_populates='receivable_items')
+
+
+class Contacts(Base):
+    __tablename__ = 'contacts'
+    __table_args__ = (
+        ForeignKeyConstraint(['country_uuid'], ['countries.country_uuid'], name='contacts_ibfk_2'),
+        ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='contacts_ibfk_1'),
+        Index('contact_uuid', 'contact_uuid', unique=True),
+        Index('country_uuid', 'country_uuid'),
+        Index('user_uuid', 'user_uuid')
+    )
+
+    contact_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    contact_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    user_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    country_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    contact_number: Mapped[str] = mapped_column(String(15), nullable=False)
+    emergency_contact: Mapped[str] = mapped_column(String(15), nullable=False)
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    countries: Mapped['Countries'] = relationship('Countries', back_populates='contacts')
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='contacts')
+
+
+class CountryEducationDocumentMapping(Base):
+    __tablename__ = 'country_education_document_mapping'
+    __table_args__ = (
+        ForeignKeyConstraint(['country_uuid'], ['countries.country_uuid'], name='country_education_document_mapping_ibfk_1'),
+        ForeignKeyConstraint(['education_document_uuid'], ['education_document_type.education_document_uuid'], name='country_education_document_mapping_ibfk_3'),
+        ForeignKeyConstraint(['education_uuid'], ['education_level.education_uuid'], name='country_education_document_mapping_ibfk_2'),
+        Index('country_uuid', 'country_uuid'),
+        Index('education_document_uuid', 'education_document_uuid'),
+        Index('education_uuid', 'education_uuid'),
+        Index('mapping_uuid', 'mapping_uuid', unique=True)
+    )
+
+    mapping_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mapping_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    country_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    education_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    education_document_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    is_mandatory: Mapped[Optional[int]] = mapped_column(TINYINT(1), server_default=text("'1'"))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    countries: Mapped['Countries'] = relationship('Countries', back_populates='country_education_document_mapping')
+    education_document_type: Mapped['EducationDocumentType'] = relationship('EducationDocumentType', back_populates='country_education_document_mapping')
+    education_level: Mapped['EducationLevel'] = relationship('EducationLevel', back_populates='country_education_document_mapping')
+    employee_education_document: Mapped[list['EmployeeEducationDocument']] = relationship('EmployeeEducationDocument', back_populates='country_education_document_mapping')
+
+
+class CountryIdentityMapping(Base):
+    __tablename__ = 'country_identity_mapping'
+    __table_args__ = (
+        ForeignKeyConstraint(['country_uuid'], ['countries.country_uuid'], name='country_identity_mapping_ibfk_1'),
+        ForeignKeyConstraint(['identity_type_uuid'], ['identity_type.identity_type_uuid'], name='country_identity_mapping_ibfk_2'),
+        Index('country_uuid', 'country_uuid'),
+        Index('identity_type_uuid', 'identity_type_uuid'),
+        Index('mapping_uuid', 'mapping_uuid', unique=True)
+    )
+
+    mapping_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mapping_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    country_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    identity_type_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    is_mandatory: Mapped[Optional[int]] = mapped_column(TINYINT(1), server_default=text("'1'"))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    countries: Mapped['Countries'] = relationship('Countries', back_populates='country_identity_mapping')
+    identity_type: Mapped['IdentityType'] = relationship('IdentityType', back_populates='country_identity_mapping')
+    employee_identity_document: Mapped[list['EmployeeIdentityDocument']] = relationship('EmployeeIdentityDocument', back_populates='country_identity_mapping')
+
+
+class CurrentAddresses(Base):
+    __tablename__ = 'current_addresses'
+    __table_args__ = (
+        ForeignKeyConstraint(['country_uuid'], ['countries.country_uuid'], name='current_addresses_ibfk_2'),
+        ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='current_addresses_ibfk_1'),
+        Index('address_uuid', 'address_uuid', unique=True),
+        Index('country_uuid', 'country_uuid'),
+        Index('user_uuid', 'user_uuid')
+    )
+
+    address_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    address_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    user_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    address_line1: Mapped[Optional[str]] = mapped_column(String(255))
+    address_line2: Mapped[Optional[str]] = mapped_column(String(255))
+    city: Mapped[Optional[str]] = mapped_column(String(100))
+    state: Mapped[Optional[str]] = mapped_column(String(100))
+    country_uuid: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    postal_code: Mapped[Optional[str]] = mapped_column(String(20))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    countries: Mapped[Optional['Countries']] = relationship('Countries', back_populates='current_addresses')
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='current_addresses')
+
+
+class EmployeeDeliverables(Base):
+    __tablename__ = 'employee_deliverables'
+    __table_args__ = (
+        ForeignKeyConstraint(['deliverable_uuid'], ['deliverable_items.deliverable_uuid'], name='employee_deliverables_ibfk_2'),
+        ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='employee_deliverables_ibfk_1'),
+        Index('deliverable_uuid', 'deliverable_uuid'),
+        Index('employee_deliverable_uuid', 'employee_deliverable_uuid', unique=True),
+        Index('user_uuid', 'user_uuid')
+    )
+
+    employee_deliverable_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    employee_deliverable_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    user_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    deliverable_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    status: Mapped[Optional[str]] = mapped_column(Enum('Pending', 'Delivered', 'Returned'), server_default=text("'Pending'"))
+    issued_by: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    issued_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
+    returned_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
+    remarks: Mapped[Optional[str]] = mapped_column(String(255))
+
+    deliverable_items: Mapped['DeliverableItems'] = relationship('DeliverableItems', back_populates='employee_deliverables')
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_deliverables')
+
+
+class EmployeeExperience(Base):
+    __tablename__ = 'employee_experience'
+    __table_args__ = (
+        ForeignKeyConstraint(['employee_uuid'], ['offer_letter_details.user_uuid'], name='employee_experience_ibfk_1'),
+        Index('employee_uuid', 'employee_uuid'),
+        Index('experience_uuid', 'experience_uuid', unique=True)
+    )
+
+    experience_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    experience_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    employee_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    company_name: Mapped[str] = mapped_column(String(150), nullable=False)
+    start_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
+    role_title: Mapped[Optional[str]] = mapped_column(String(100))
+    employment_type: Mapped[Optional[str]] = mapped_column(Enum('Full-Time', 'Part-Time', 'Intern', 'Contract', 'Freelance'))
+    end_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
+    is_current: Mapped[Optional[int]] = mapped_column(TINYINT(1), server_default=text("'0'"))
+    exp_certificate_path: Mapped[Optional[str]] = mapped_column(String(255))
+    certificate_status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'pending', 'verified', 'rejected'), server_default=text("'pending'"))
+    uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    verified_by: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    verified_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
+    remarks: Mapped[Optional[str]] = mapped_column(String(255))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_experience')
+    employee_pay_slips: Mapped[list['EmployeePaySlips']] = relationship('EmployeePaySlips', back_populates='employee_experience')
+    employee_relieving_letter: Mapped[list['EmployeeRelievingLetter']] = relationship('EmployeeRelievingLetter', back_populates='employee_experience')
+
+
+class EmployeeReceivables(Base):
+    __tablename__ = 'employee_receivables'
+    __table_args__ = (
+        ForeignKeyConstraint(['receivable_uuid'], ['receivable_items.receivable_uuid'], name='employee_receivables_ibfk_2'),
+        ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='employee_receivables_ibfk_1'),
+        Index('employee_receivable_uuid', 'employee_receivable_uuid', unique=True),
+        Index('receivable_uuid', 'receivable_uuid'),
+        Index('user_uuid', 'user_uuid')
+    )
+
+    employee_receivable_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    employee_receivable_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    user_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    receivable_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    status: Mapped[Optional[str]] = mapped_column(Enum('Pending', 'Received', 'Not Received'), server_default=text("'Pending'"))
+    collected_by: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    collected_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
+    remarks: Mapped[Optional[str]] = mapped_column(String(255))
+
+    receivable_items: Mapped['ReceivableItems'] = relationship('ReceivableItems', back_populates='employee_receivables')
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_receivables')
+
+
+class PermanentAddresses(Base):
+    __tablename__ = 'permanent_addresses'
+    __table_args__ = (
+        ForeignKeyConstraint(['country_uuid'], ['countries.country_uuid'], name='permanent_addresses_ibfk_2'),
+        ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='permanent_addresses_ibfk_1'),
+        Index('address_uuid', 'address_uuid', unique=True),
+        Index('country_uuid', 'country_uuid'),
+        Index('user_uuid', 'user_uuid')
+    )
+
+    address_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    address_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    user_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    address_line1: Mapped[Optional[str]] = mapped_column(String(255))
+    address_line2: Mapped[Optional[str]] = mapped_column(String(255))
+    city: Mapped[Optional[str]] = mapped_column(String(100))
+    state: Mapped[Optional[str]] = mapped_column(String(100))
+    country_uuid: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    postal_code: Mapped[Optional[str]] = mapped_column(String(20))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    countries: Mapped[Optional['Countries']] = relationship('Countries', back_populates='permanent_addresses')
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='permanent_addresses')
+
+
+class PersonalDetails(Base):
+    __tablename__ = 'personal_details'
+    __table_args__ = (
+        ForeignKeyConstraint(['nationality_country_uuid'], ['countries.country_uuid'], name='personal_details_ibfk_2'),
+        ForeignKeyConstraint(['residence_country_uuid'], ['countries.country_uuid'], name='personal_details_ibfk_3'),
+        ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='personal_details_ibfk_1'),
+        Index('nationality_country_uuid', 'nationality_country_uuid'),
+        Index('personal_uuid', 'personal_uuid', unique=True),
+        Index('residence_country_uuid', 'residence_country_uuid'),
+        Index('user_uuid', 'user_uuid')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    personal_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    user_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    date_of_birth: Mapped[Optional[datetime.date]] = mapped_column(Date)
+    gender: Mapped[Optional[str]] = mapped_column(Enum('Male', 'Female', 'Other'))
+    marital_status: Mapped[Optional[str]] = mapped_column(Enum('Single', 'Married', 'Divorced', 'Widowed'))
+    blood_group: Mapped[Optional[str]] = mapped_column(String(5))
+    nationality_country_uuid: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    residence_country_uuid: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    countries: Mapped[Optional['Countries']] = relationship('Countries', foreign_keys=[nationality_country_uuid], back_populates='personal_details')
+    countries_: Mapped[Optional['Countries']] = relationship('Countries', foreign_keys=[residence_country_uuid], back_populates='personal_details_')
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='personal_details')
+
+
+class EmployeeEducationDocument(Base):
+    __tablename__ = 'employee_education_document'
+    __table_args__ = (
+        ForeignKeyConstraint(['mapping_uuid'], ['country_education_document_mapping.mapping_uuid'], name='employee_education_document_ibfk_1'),
+        ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='employee_education_document_ibfk_2'),
+        Index('document_uuid', 'document_uuid', unique=True),
+        Index('mapping_uuid', 'mapping_uuid'),
+        Index('user_uuid', 'user_uuid')
+    )
+
+    employee_education_document_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    document_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    mapping_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    user_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    institution_name: Mapped[Optional[str]] = mapped_column(String(150))
+    specialization: Mapped[Optional[str]] = mapped_column(String(150))
+    year_of_passing: Mapped[Optional[Any]] = mapped_column(YEAR)
+    file_path: Mapped[Optional[str]] = mapped_column(String(255))
+    status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'pending', 'verified', 'rejected'), server_default=text("'pending'"))
+    uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    verified_by: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    verified_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
+    remarks: Mapped[Optional[str]] = mapped_column(String(255))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    country_education_document_mapping: Mapped['CountryEducationDocumentMapping'] = relationship('CountryEducationDocumentMapping', back_populates='employee_education_document')
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_education_document')
+
+
+class EmployeeIdentityDocument(Base):
+    __tablename__ = 'employee_identity_document'
+    __table_args__ = (
+        ForeignKeyConstraint(['mapping_uuid'], ['country_identity_mapping.mapping_uuid'], name='employee_identity_document_ibfk_1'),
+        ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='employee_identity_document_ibfk_2'),
+        Index('document_uuid', 'document_uuid', unique=True),
+        Index('mapping_uuid', 'mapping_uuid'),
+        Index('user_uuid', 'user_uuid')
+    )
+
+    employee_identity_document_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    document_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    mapping_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    user_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    file_path: Mapped[Optional[str]] = mapped_column(String(255))
+    expiry_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
+    status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'pending', 'verified', 'rejected'), server_default=text("'pending'"))
+    uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    verified_by: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    verified_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
+    remarks: Mapped[Optional[str]] = mapped_column(String(255))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    country_identity_mapping: Mapped['CountryIdentityMapping'] = relationship('CountryIdentityMapping', back_populates='employee_identity_document')
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_identity_document')
+
+
+class EmployeePaySlips(Base):
+    __tablename__ = 'employee_pay_slips'
+    __table_args__ = (
+        ForeignKeyConstraint(['employee_uuid'], ['offer_letter_details.user_uuid'], name='employee_pay_slips_ibfk_1'),
+        ForeignKeyConstraint(['experience_uuid'], ['employee_experience.experience_uuid'], name='employee_pay_slips_ibfk_2'),
+        Index('employee_uuid', 'employee_uuid'),
+        Index('experience_uuid', 'experience_uuid'),
+        Index('pay_slip_uuid', 'pay_slip_uuid', unique=True)
+    )
+
+    pay_slip_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    pay_slip_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    employee_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    experience_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    file_path: Mapped[str] = mapped_column(String(255), nullable=False)
+    status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'pending', 'verified', 'rejected'), server_default=text("'pending'"))
+    uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    verified_by: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    verified_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
+    remarks: Mapped[Optional[str]] = mapped_column(String(255))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_pay_slips')
+    employee_experience: Mapped['EmployeeExperience'] = relationship('EmployeeExperience', back_populates='employee_pay_slips')
+
+
+class EmployeeRelievingLetter(Base):
+    __tablename__ = 'employee_relieving_letter'
+    __table_args__ = (
+        ForeignKeyConstraint(['employee_uuid'], ['offer_letter_details.user_uuid'], name='employee_relieving_letter_ibfk_1'),
+        ForeignKeyConstraint(['experience_uuid'], ['employee_experience.experience_uuid'], name='employee_relieving_letter_ibfk_2'),
+        Index('employee_uuid', 'employee_uuid'),
+        Index('experience_uuid', 'experience_uuid'),
+        Index('relieving_uuid', 'relieving_uuid', unique=True)
+    )
+
+    relieving_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    relieving_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    employee_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    experience_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    file_path: Mapped[Optional[str]] = mapped_column(String(255))
+    status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'pending', 'verified', 'rejected'), server_default=text("'pending'"))
+    uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    verified_by: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    verified_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
+    remarks: Mapped[Optional[str]] = mapped_column(String(255))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_relieving_letter')
+    employee_experience: Mapped['EmployeeExperience'] = relationship('EmployeeExperience', back_populates='employee_relieving_letter')
