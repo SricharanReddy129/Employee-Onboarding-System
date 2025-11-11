@@ -12,6 +12,7 @@ CREATE TABLE offer_letter_details (
     designation VARCHAR(50) NOT NULL,
     package VARCHAR(20) NOT NULL,
     status ENUM('Offered', 'Accepted', 'Rejected') DEFAULT 'Offered',
+    created_by INT NOT NULL, --Refers to ums user table user id
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

@@ -112,6 +112,7 @@ class OfferLetterDetails(Base):
     contact_number: Mapped[str] = mapped_column(String(15), nullable=False)
     designation: Mapped[str] = mapped_column(String(50), nullable=False)
     package: Mapped[str] = mapped_column(String(20), nullable=False)
+    created_by: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[Optional[str]] = mapped_column(Enum('Offered', 'Accepted', 'Rejected'), server_default=text("'Offered'"))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
