@@ -1,3 +1,16 @@
-sqlacodegen
-pymysql
+# Core framework
+fastapi
+uvicorn
+
+# Database
 SQLAlchemy
+pymysql
+
+# For generating models from DB (optional dev tool)
+sqlacodegen
+
+# Environment variables
+python-dotenv
+
+# For data validation and schema management
+pydantic
