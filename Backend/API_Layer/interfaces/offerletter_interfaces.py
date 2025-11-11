@@ -10,6 +10,7 @@ class OfferCreateRequest(BaseModel):
     contact_number: str
     designation: str
     package: str
+    currency : str
 
 class OfferCreateResponse(BaseModel):
     message: str

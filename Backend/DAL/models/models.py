@@ -1,12 +1,12 @@
-# Backend/DAL/models/models.py
-# Auto-generated SQLAlchemy models for Employee Onboarding System
 from typing import Any, Optional
 import datetime
 
-from sqlalchemy import BINARY, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, String, text
+from sqlalchemy import CHAR, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, String, text
 from sqlalchemy.dialects.mysql import TINYINT, YEAR
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from ..utils.database import Base
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+class Base(DeclarativeBase):
+    pass
 
 
 class Countries(Base):
@@ -16,7 +16,7 @@ class Countries(Base):
     )
 
     country_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    country_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    country_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     country_name: Mapped[str] = mapped_column(String(100), nullable=False)
     calling_code: Mapped[Optional[str]] = mapped_column(String(5))
     is_active: Mapped[Optional[int]] = mapped_column(TINYINT(1), server_default=text("'1'"))
@@ -39,7 +39,7 @@ class DeliverableItems(Base):
     )
 
     deliverable_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    deliverable_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    deliverable_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     item_name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String(255))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
@@ -54,7 +54,7 @@ class EducationDocumentType(Base):
     )
 
     education_document_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    education_document_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    education_document_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     document_name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String(200))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
@@ -69,7 +69,7 @@ class EducationLevel(Base):
     )
 
     education_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    education_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    education_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     education_name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String(200))
     is_active: Mapped[Optional[int]] = mapped_column(TINYINT(1), server_default=text("'1'"))
@@ -86,7 +86,7 @@ class IdentityType(Base):
     )
 
     identity_type_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    identity_type_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    identity_type_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     identity_type_name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String(255))
     is_active: Mapped[Optional[int]] = mapped_column(TINYINT(1), server_default=text("'1'"))
@@ -104,7 +104,7 @@ class OfferLetterDetails(Base):
     )
 
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    user_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     first_name: Mapped[str] = mapped_column(String(50), nullable=False)
     last_name: Mapped[str] = mapped_column(String(50), nullable=False)
     mail: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -112,8 +112,9 @@ class OfferLetterDetails(Base):
     contact_number: Mapped[str] = mapped_column(String(15), nullable=False)
     designation: Mapped[str] = mapped_column(String(50), nullable=False)
     package: Mapped[str] = mapped_column(String(20), nullable=False)
+    currency: Mapped[str] = mapped_column(String(10), nullable=False)
     created_by: Mapped[int] = mapped_column(Integer, nullable=False)
-    status: Mapped[Optional[str]] = mapped_column(Enum('Offered', 'Accepted', 'Rejected'), server_default=text("'Offered'"))
+    status: Mapped[Optional[str]] = mapped_column(Enum('Created', 'Offered', 'Accepted', 'Rejected'), server_default=text("'Created'"))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
@@ -137,7 +138,7 @@ class ReceivableItems(Base):
     )
 
     receivable_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    receivable_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    receivable_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     item_name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String(255))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
@@ -156,9 +157,9 @@ class Contacts(Base):
     )
 
     contact_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    contact_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    user_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    country_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    contact_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    country_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     contact_number: Mapped[str] = mapped_column(String(15), nullable=False)
     emergency_contact: Mapped[str] = mapped_column(String(15), nullable=False)
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
@@ -181,10 +182,10 @@ class CountryEducationDocumentMapping(Base):
     )
 
     mapping_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    mapping_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    country_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    education_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    education_document_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    mapping_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    country_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    education_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    education_document_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     is_mandatory: Mapped[Optional[int]] = mapped_column(TINYINT(1), server_default=text("'1'"))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
@@ -206,9 +207,9 @@ class CountryIdentityMapping(Base):
     )
 
     mapping_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    mapping_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    country_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    identity_type_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    mapping_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    country_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    identity_type_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     is_mandatory: Mapped[Optional[int]] = mapped_column(TINYINT(1), server_default=text("'1'"))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
@@ -229,13 +230,13 @@ class CurrentAddresses(Base):
     )
 
     address_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    address_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    user_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    address_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     address_line1: Mapped[Optional[str]] = mapped_column(String(255))
     address_line2: Mapped[Optional[str]] = mapped_column(String(255))
     city: Mapped[Optional[str]] = mapped_column(String(100))
     state: Mapped[Optional[str]] = mapped_column(String(100))
-    country_uuid: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    country_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
     postal_code: Mapped[Optional[str]] = mapped_column(String(20))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
@@ -255,11 +256,11 @@ class EmployeeDeliverables(Base):
     )
 
     employee_deliverable_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    employee_deliverable_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    user_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    deliverable_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    employee_deliverable_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    deliverable_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     status: Mapped[Optional[str]] = mapped_column(Enum('Pending', 'Delivered', 'Returned'), server_default=text("'Pending'"))
-    issued_by: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    issued_by: Mapped[Optional[str]] = mapped_column(CHAR(36))
     issued_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
     returned_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
     remarks: Mapped[Optional[str]] = mapped_column(String(255))
@@ -277,8 +278,8 @@ class EmployeeExperience(Base):
     )
 
     experience_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    experience_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    employee_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    experience_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    employee_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     company_name: Mapped[str] = mapped_column(String(150), nullable=False)
     start_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
     role_title: Mapped[Optional[str]] = mapped_column(String(100))
@@ -288,7 +289,7 @@ class EmployeeExperience(Base):
     exp_certificate_path: Mapped[Optional[str]] = mapped_column(String(255))
     certificate_status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'pending', 'verified', 'rejected'), server_default=text("'pending'"))
     uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
-    verified_by: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    verified_by: Mapped[Optional[str]] = mapped_column(CHAR(36))
     verified_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
     remarks: Mapped[Optional[str]] = mapped_column(String(255))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
@@ -310,11 +311,11 @@ class EmployeeReceivables(Base):
     )
 
     employee_receivable_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    employee_receivable_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    user_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    receivable_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    employee_receivable_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    receivable_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     status: Mapped[Optional[str]] = mapped_column(Enum('Pending', 'Received', 'Not Received'), server_default=text("'Pending'"))
-    collected_by: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    collected_by: Mapped[Optional[str]] = mapped_column(CHAR(36))
     collected_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
     remarks: Mapped[Optional[str]] = mapped_column(String(255))
 
@@ -333,13 +334,13 @@ class PermanentAddresses(Base):
     )
 
     address_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    address_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    user_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    address_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     address_line1: Mapped[Optional[str]] = mapped_column(String(255))
     address_line2: Mapped[Optional[str]] = mapped_column(String(255))
     city: Mapped[Optional[str]] = mapped_column(String(100))
     state: Mapped[Optional[str]] = mapped_column(String(100))
-    country_uuid: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    country_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
     postal_code: Mapped[Optional[str]] = mapped_column(String(20))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
@@ -361,14 +362,14 @@ class PersonalDetails(Base):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    personal_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    user_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    personal_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     date_of_birth: Mapped[Optional[datetime.date]] = mapped_column(Date)
     gender: Mapped[Optional[str]] = mapped_column(Enum('Male', 'Female', 'Other'))
     marital_status: Mapped[Optional[str]] = mapped_column(Enum('Single', 'Married', 'Divorced', 'Widowed'))
     blood_group: Mapped[Optional[str]] = mapped_column(String(5))
-    nationality_country_uuid: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
-    residence_country_uuid: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    nationality_country_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
+    residence_country_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
@@ -388,16 +389,16 @@ class EmployeeEducationDocument(Base):
     )
 
     employee_education_document_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    document_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    mapping_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    user_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    document_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    mapping_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     institution_name: Mapped[Optional[str]] = mapped_column(String(150))
     specialization: Mapped[Optional[str]] = mapped_column(String(150))
     year_of_passing: Mapped[Optional[Any]] = mapped_column(YEAR)
     file_path: Mapped[Optional[str]] = mapped_column(String(255))
     status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'pending', 'verified', 'rejected'), server_default=text("'pending'"))
     uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
-    verified_by: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    verified_by: Mapped[Optional[str]] = mapped_column(CHAR(36))
     verified_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
     remarks: Mapped[Optional[str]] = mapped_column(String(255))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
@@ -417,14 +418,14 @@ class EmployeeIdentityDocument(Base):
     )
 
     employee_identity_document_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    document_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    mapping_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    user_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    document_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    mapping_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     file_path: Mapped[Optional[str]] = mapped_column(String(255))
     expiry_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
     status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'pending', 'verified', 'rejected'), server_default=text("'pending'"))
     uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
-    verified_by: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    verified_by: Mapped[Optional[str]] = mapped_column(CHAR(36))
     verified_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
     remarks: Mapped[Optional[str]] = mapped_column(String(255))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
@@ -444,13 +445,13 @@ class EmployeePaySlips(Base):
     )
 
     pay_slip_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    pay_slip_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    employee_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    experience_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    pay_slip_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    employee_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    experience_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     file_path: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'pending', 'verified', 'rejected'), server_default=text("'pending'"))
     uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
-    verified_by: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    verified_by: Mapped[Optional[str]] = mapped_column(CHAR(36))
     verified_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
     remarks: Mapped[Optional[str]] = mapped_column(String(255))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
@@ -470,13 +471,13 @@ class EmployeeRelievingLetter(Base):
     )
 
     relieving_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    relieving_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    employee_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
-    experience_uuid: Mapped[bytes] = mapped_column(BINARY(16), nullable=False)
+    relieving_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    employee_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    experience_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     file_path: Mapped[Optional[str]] = mapped_column(String(255))
     status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'pending', 'verified', 'rejected'), server_default=text("'pending'"))
     uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
-    verified_by: Mapped[Optional[bytes]] = mapped_column(BINARY(16))
+    verified_by: Mapped[Optional[str]] = mapped_column(CHAR(36))
     verified_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
     remarks: Mapped[Optional[str]] = mapped_column(String(255))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
