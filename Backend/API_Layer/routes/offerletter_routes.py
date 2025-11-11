@@ -2,16 +2,16 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from API_Layer.interfaces.offerletter_interfaces import OfferCreateRequest, OfferCreateResponse
-from Business_Layer.services.offerletter_services import OfferService
-from DAL.utils.database import get_db
+from ...API_Layer.interfaces.offerletter_interfaces import OfferCreateRequest, OfferCreateResponse
+from ...Business_Layer.services.offerletter_services import OfferService
+
 
 router = APIRouter()
 
 @router.post("/create", response_model=OfferCreateResponse)
-def create_offer_letter(request: OfferCreateRequest, db: Session = Depends(get_db)):
+def create_offer_letter(request: OfferCreateRequest):
     try:
-        offer_id = OfferService.create_offer(request, db)
+        offer_id = OfferService.create_offer(request)
         return OfferCreateResponse(
             message="Offer letter created successfully",
             offer_id=offer_id

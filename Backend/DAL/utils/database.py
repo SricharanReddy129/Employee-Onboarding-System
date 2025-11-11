@@ -6,7 +6,16 @@ from contextvars import ContextVar
 from urllib.parse import quote_plus
 
 # Database URL construction
-DB_URL = get_env_var("DB_URL")
+# Your existing values
+DB_USER = get_env_var("DB_USER")
+DB_PASSWORD = get_env_var("DB_PASSWORD")
+DB_HOST = get_env_var("DB_HOST")
+DB_PORT = get_env_var("DB_PORT")
+DB_NAME = get_env_var("DB_NAME")
+DB_DRIVER = get_env_var("DB_DRIVER")
+encoded_password = quote_plus(DB_PASSWORD)
+
+DB_URL = f"{DB_DRIVER}://{DB_USER}:{encoded_password}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 engine = create_engine(
     DB_URL,

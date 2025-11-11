@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from .API_Layer.middleware.db_session_middleware import DBSessionMiddleware
 from .DAL.utils.database import engine
-from .API_Layer.routes import offer_routes
+from .API_Layer.routes import master_routes, offerletter_routes
 from .DAL.models import models
 
 models.Base.metadata.create_all(bind=engine)
@@ -25,4 +25,5 @@ def custom_openapi():
     return app.openapi_schema
 app.openapi = custom_openapi
 
-app.include_router(master_routes.router, prefix="/offers", tags=["Offers"])
+# app.include_router(master_routes.router, prefix="/offers", tags=["Offers"])
+app.include_router(offerletter_routes.router, prefix="/offerletters", tags=["Offer Letters"])
