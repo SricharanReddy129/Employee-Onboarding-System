@@ -1,12 +1,12 @@
+# Backend/DAL/models/models.py
+# Auto-generated SQLAlchemy models for Employee Onboarding System
 from typing import Any, Optional
 import datetime
 
 from sqlalchemy import BINARY, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, String, text
 from sqlalchemy.dialects.mysql import TINYINT, YEAR
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-
-class Base(DeclarativeBase):
-    pass
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from ..utils.database import Base
 
 
 class Countries(Base):
