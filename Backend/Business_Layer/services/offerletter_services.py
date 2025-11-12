@@ -28,3 +28,9 @@ class OfferService:
         uuid = generate_uuid7()
         new_offer = self.dao.create_offer(uuid, request)
         return new_offer.user_id
+    def get_all_offers(self):
+        """
+        Business logic for retrieving all offer letters.
+        """
+        offers = self.dao.get_all_offers()
+        return offers

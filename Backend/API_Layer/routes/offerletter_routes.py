@@ -24,3 +24,19 @@ def create_offer_letter(request: OfferCreateRequest):
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/", response_model=list[OfferCreateRequest])
+
+def get_all_offers():
+    try:
+        db = get_db_session()               # ✅ fetch DB session from context
+        offer_service = OfferService(db)    # ✅ pass session into service
+
+        offers = offer_service.get_all_offers()
+
+        return offers
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

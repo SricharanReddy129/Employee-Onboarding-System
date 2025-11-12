@@ -1,8 +1,22 @@
+# Python cache
+__pycache__/
 *.pyc
+*.pyo
+*.pyd
+# Ignore Python bytecode and cache
 __pycache__/
 *.py[cod]
-*.pyo   
-*__pycache__/
-*.pyd
-*.env
-*.zip
+*.pyo
+
+# Virtual environments
+venv/
+*.env 
+.env/
+
+# IDE configs
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

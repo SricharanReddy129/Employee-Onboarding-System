@@ -19,7 +19,8 @@ class OfferDAO:
             created_by = 1,
             contact_number=request.contact_number,
             designation=request.designation,
-            package=request.package
+            package=request.package,
+            currency=request.currency
         )
         print("Creating new offer in DAO:", new_offer)
         self.db.add(new_offer)
@@ -29,3 +30,6 @@ class OfferDAO:
 
     def get_offer_by_email(self, mail: str):
         return self.db.query(OfferLetterDetails).filter(OfferLetterDetails.mail == mail).first()
+    def get_all_offers(self):
+        offers = self.db.query(OfferLetterDetails).all()
+        return offers
