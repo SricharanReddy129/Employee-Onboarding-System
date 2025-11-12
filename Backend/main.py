@@ -1,12 +1,11 @@
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
-from .API_Layer.middleware.db_session_middleware import DBSessionMiddleware
 from .DAL.utils.database import engine
 from .API_Layer.routes import master_routes, offerletter_routes
 from .DAL.models import models
 from .API_Layer.middleware.jwt_middleware import JWTMiddleware
 
-models.Base.metadata.create_all(bind=engine)
+# models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Employee Onboarding System API")
 
@@ -14,7 +13,7 @@ app = FastAPI(title="Employee Onboarding System API")
 app.add_middleware(JWTMiddleware)
 
 # Add DB session middleware
-app.add_middleware(DBSessionMiddleware)
+# app.add_middleware(DBSessionMiddleware)
 
 def custom_openapi():
     if app.openapi_schema:

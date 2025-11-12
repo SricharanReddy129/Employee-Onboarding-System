@@ -4,7 +4,7 @@ uvicorn
 
 # Database
 SQLAlchemy
-pymysql
+asyncmy
 
 # For generating models from DB (optional dev tool)
 sqlacodegen
@@ -14,3 +14,4 @@ python-dotenv
 
 # For data validation and schema management
 pydantic
+
