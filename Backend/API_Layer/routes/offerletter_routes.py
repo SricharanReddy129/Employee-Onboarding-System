@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from ...API_Layer.interfaces.offerletter_interfaces import OfferCreateRequest, OfferCreateResponse
 from ...Business_Layer.services.offerletter_services import OfferService
 from ...DAL.utils.database import get_db_session   # ✅ Use ContextVar getter
+import pandas as pd
 
 router = APIRouter()
 
@@ -24,7 +25,30 @@ def create_offer_letter(request: OfferCreateRequest):
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
+# route to create bulk offer letters
+@router.post("/bulk_create", response_model=list[OfferCreateResponse])
+def create_bulk_offer_letters(file: UploadFile = File(...)):
+    try:
+        print("In create_bulk_offer_letters route")
+
+        db = get_db_session()               # ✅ fetch DB session from context
+        offer_service = OfferService(db)    # ✅ pass session into service
+
+        content = file.read()
+        df = pd.read_excel(content)
+
+        required_columns = {'first_name', 'last_name', 'mail', 'country_code', 'contact_number', 'designation', 'package', 'currency'}
+        if not required_columns.issubset(df.columns):
+            missing = required_columns - set(df.columns)
+            raise HTTPException(status_code=400, detail=f"Missing columns in Excel file: {', '.join(missing)}")
+        return offer_service.create_bulk_offers(df)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
 @router.get("/", response_model=list[OfferCreateRequest])
 
 def get_all_offers():
