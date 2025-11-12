@@ -1,1 +1,8 @@
+*.pyc
+__pycache__/
+*.py[cod]
+*.pyo   
+*__pycache__/
+*.pyd
 *.env
+*.zip
