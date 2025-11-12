@@ -88,7 +88,7 @@ def validate_jwt(token: str):
             options={"verify_exp": True, "verify_aud": True, "verify_iss": True}
         )
 
-        print(f"[JWTValidator] ✅ JWT validation successful. Subject: {decoded.get('sub')}")
+        print(f"[JWTValidator] ✅ JWT validation successful.")
         return decoded
 
     except jwt.ExpiredSignatureError:

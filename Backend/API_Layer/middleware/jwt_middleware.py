@@ -38,14 +38,14 @@ class JWTMiddleware(BaseHTTPMiddleware):
             print("[JWTMiddleware] 🧠 Validating token...")
             # Call the validation function
             payload = validate_jwt(token)
-            print(f"[JWTMiddleware] ✅ Token validated successfully. Payload: {payload}")
+            print(f"[JWTMiddleware] ✅ Token validated successfully. Payload")
 
             # Optionally attach decoded payload to request.state for downstream use
             request.state.user = payload
 
             print("[JWTMiddleware] ↩️ Passing control to the next middleware/endpoint")
             response = await call_next(request)
-            print(f"[JWTMiddleware] 🏁 Response status: {response.status_code}")
+            print(f"[JWTMiddleware] 🏁 Response status: token data")
             return response
 
         except HTTPException as e:
