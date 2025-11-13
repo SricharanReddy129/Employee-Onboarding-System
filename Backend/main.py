@@ -1,8 +1,6 @@
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
-from .DAL.utils.database import engine
 from .API_Layer.routes import master_routes, offerletter_routes
-from .DAL.models import models
 from .API_Layer.middleware.jwt_middleware import JWTMiddleware
 
 # models.Base.metadata.create_all(bind=engine)
