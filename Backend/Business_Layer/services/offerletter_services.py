@@ -13,15 +13,13 @@ from ..utils.validation_utils import (
     validate_package,
     validate_currency
 )
-
-
+ 
 class OfferLetterService:
-
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
         self.dao = OfferDAO(self.db)
-    
-    def create_offer(self, request_data: OfferCreateRequest, current_user_id: int):
+ 
+    async def create_offer(self, request_data: OfferCreateRequest, current_user_id: int):
         """
         Business logic for creating a new offer letter.
         Includes validation of all user input fields.
@@ -39,15 +37,16 @@ class OfferLetterService:
 
             # --- DUPLICATE CHECK ---
             print("Checking for existing offer with email:", mail)
-            existing_offer = self.dao.get_offer_by_email(mail)
+            existing_offer = await self.dao.get_offer_by_email(mail)
+            print("Existing offer found:", existing_offer)
             if existing_offer:
                 raise HTTPException(status_code=400, detail="Offer already exists for this email")
 
             # --- CREATE OFFER ---
             print("No existing offer found, creating new offer.")
             uuid = generate_uuid7()
-            new_offer = self.dao.create_offer(uuid, request_data, current_user_id)
-            return new_offer.user_id
+            new_offer = await self.dao.create_offer(uuid, request_data, current_user_id)
+            return new_offer.user_uuid
 
         except ValueError as ve:
             # catches validation-specific errors
@@ -56,10 +55,7 @@ class OfferLetterService:
             raise he
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-    
-    def get_all_offers(self):
-        """
-        Business logic for retrieving all offer letters.
-        """
-        offers = self.dao.get_all_offers()
-        return offers
+ 
+    async def get_all_offers(self):
+        return await self.dao.get_all_offers()
+ 

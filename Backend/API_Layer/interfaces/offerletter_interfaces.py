@@ -14,7 +14,7 @@ class OfferCreateRequest(BaseModel):
 
 class OfferCreateResponse(BaseModel):
     message: str
-    offer_id: int
+    offer_id: str
 
 class OfferLetterDetails(BaseModel):
     first_name: str

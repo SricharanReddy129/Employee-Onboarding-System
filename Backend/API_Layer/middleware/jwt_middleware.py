@@ -21,7 +21,7 @@ class JWTMiddleware(BaseHTTPMiddleware):
 
         # Extract Authorization header
         auth_header = request.headers.get("Authorization")
-        print(f"[JWTMiddleware] 🔍 Authorization header: {auth_header}")
+        print(f"[JWTMiddleware] 🔍 Authorization header: auth_header")
 
         # Check if token is present
         if not auth_header or not auth_header.startswith("Bearer "):
