@@ -1,6 +1,6 @@
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, Request, File
 from ...API_Layer.interfaces.offerletter_interfaces import OfferCreateRequest, OfferCreateResponse
-from ...Business_Layer.services.offerletter_services import OfferService
+from ...Business_Layer.services.offerletter_services import OfferLetterService
 from ...DAL.utils.database import get_db_session   # ✅ Use ContextVar getter
 import pandas as pd
 
@@ -35,7 +35,7 @@ def create_bulk_offer_letters(file: UploadFile = File(...)):
         print("In create_bulk_offer_letters route")
 
         db = get_db_session()               # ✅ fetch DB session from context
-        offer_service = OfferService(db)    # ✅ pass session into service
+        offer_service = OfferLetterService(db)    # ✅ pass session into service
 
         content = file.read()
         df = pd.read_excel(content)
