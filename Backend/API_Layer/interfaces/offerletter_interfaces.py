@@ -16,7 +16,17 @@ class OfferCreateResponse(BaseModel):
     message: str
     offer_id: str
 
-class OfferLetterDetails(BaseModel):
+class BulkOfferCreateResponse(BaseModel):
+    total_rows: int
+    processed_rows: int
+    successful_count: int
+    failed_count: int
+    successful_offers: list[dict]
+    failed_offers: list[dict]
+    skipped_rows: int
+
+
+class OfferLetterDetailsResponse(BaseModel):
     first_name: str
     last_name: str
     mail: EmailStr
@@ -25,5 +35,8 @@ class OfferLetterDetails(BaseModel):
     designation: str
     package: str
     currency : str
-    created_by: str
+    created_by: int
     status : str
+
+    class Config:
+        orm_mode = True

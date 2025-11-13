@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...API_Layer.interfaces.offerletter_interfaces import OfferCreateRequest, OfferCreateResponse
+from ...API_Layer.interfaces.offerletter_interfaces import OfferCreateRequest, OfferCreateResponse, BulkOfferCreateResponse, OfferLetterDetailsResponse
 from ...Business_Layer.services.offerletter_services import OfferLetterService
 from ...DAL.utils.dependencies import get_db
 import pandas as pd
@@ -39,43 +39,65 @@ async def create_offer_letter(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-# ✅ Create bulk offer letters from Excel file
-@router.post("/bulk_create", response_model=list[OfferCreateResponse])
+# ✅ Bulk create offer letters
+@router.post("/bulk_create", response_model=BulkOfferCreateResponse)
 async def create_bulk_offer_letters(
+    request: Request,
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db)
 ):
     """
     Creates multiple offer letters from an uploaded Excel file.
+    Handles transaction commit/rollback at route level.
     """
+    current_user_id = None
     try:
-        print("In create_bulk_offer_letters route")
-
-        offer_service = OfferLetterService(db)
-
-        # Read Excel content into pandas DataFrame
-        content = await file.read()
-        df = pd.read_excel(BytesIO(content))
-
-        required_columns = {
-            'first_name', 'last_name', 'mail', 'country_code',
-            'contact_number', 'designation', 'package', 'currency'
-        }
-
-        if not required_columns.issubset(df.columns):
-            missing = required_columns - set(df.columns)
+        # Validate file first
+        if not file.filename:
+            raise HTTPException(status_code=400, detail="No file provided")
+        
+        if not file.filename.lower().endswith(('.xlsx', '.xls', '.csv')):
             raise HTTPException(
-                status_code=400,
-                detail=f"Missing columns in Excel file: {', '.join(missing)}"
+                status_code=400, 
+                detail="Invalid file format. Only .xlsx, .xls, .csv are allowed"
             )
 
-        return await offer_service.create_bulk_offers(df)
+        current_user_id = int(request.state.user.get("user_id"))
+        
+        # Read file into DataFrame
+        content = await file.read()
+        
+        try:
+            df = pd.read_excel(BytesIO(content))
+        except Exception as e:
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Failed to read Excel file: {str(e)}"
+            )
+
+        # Service handles validation and data preparation
+        offer_service = OfferLetterService(db)
+        result = await offer_service.create_bulk_offers(df, current_user_id)
+        
+        # Route handles transaction commit
+        await db.commit()
+        
+        return result
 
     except HTTPException:
+        # HTTPException is already formatted properly
+        if current_user_id:  # Only rollback if we had a valid session
+            await db.rollback()
         raise
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        # Catch any unexpected errors
+        if current_user_id:
+            await db.rollback()
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Unexpected error: {str(e)}"
+        )
 
 
 # ✅ Get all offers
@@ -90,6 +112,27 @@ async def get_all_offers(
         offer_service = OfferLetterService(db)
         offers = await offer_service.get_all_offers()
         return offers
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# get offer by offer uuid
+@router.get("/{offer_uuid}", response_model=OfferLetterDetailsResponse)
+async def get_offer_by_uuid(
+    offer_uuid: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Retrieves an offer letter by its UUID.
+    """
+    try:
+        offer_service = OfferLetterService(db)
+        offer = await offer_service.get_offer_by_uuid(offer_uuid)
+        if not offer:
+            raise HTTPException(status_code=404, detail="Offer letter not found")
+        return offer
 
     except HTTPException:
         raise
