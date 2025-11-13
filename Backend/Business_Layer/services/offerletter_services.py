@@ -1,7 +1,6 @@
-# Backend/business/services/offerletter_service.py
-
+# Backend/Business_Layer/services/offerletter_service.py
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from ...API_Layer.interfaces.offerletter_interfaces import OfferCreateRequest
 from ...DAL.dao.offerletter_dao import OfferDAO
 from ..utils.uuid_generator import generate_uuid7
