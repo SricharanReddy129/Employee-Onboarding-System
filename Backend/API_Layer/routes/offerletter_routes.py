@@ -8,6 +8,8 @@ from ...DAL.utils.dependencies import get_db
 import pandas as pd
 from io import BytesIO
 from ...config import env_loader
+import requests
+
 
 router = APIRouter()
 
@@ -143,14 +145,14 @@ async def get_offer_by_uuid(
 # ✅ Test Pandadoc API connection
 PANDADOC_API_KEY = env_loader.get_env_var("PANDADOC_API_KEY")
 
-@router.get("/test-pandadoc")
+@router.get("/pandadoc/test")
 def test_pandadoc_connection():
     pandadoc_url = env_loader.get_env_var("PANDADOC_API_URL")
     headers = {
         "Authorization": f"API-Key {PANDADOC_API_KEY}",
     }
 
-    response = Request.get(pandadoc_url, headers=headers)
+    response = requests.get(pandadoc_url, headers=headers)
 
     return {
         "status_code": response.status_code,
