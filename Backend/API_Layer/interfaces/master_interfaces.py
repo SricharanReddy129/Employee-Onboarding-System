@@ -1,11 +1,13 @@
 from pydantic import BaseModel
 
-class CreateCountryRequest(BaseModel):
-    country_name: str
-    calling_code: str
-    
-    class Config:
-        orm_mode = True
+
 class CreateCountryResponse(BaseModel):
     message: str
     country_uuid: str
+class CountryDetails(BaseModel):
+    country_code: str
+    country_name: str
+    is_active: bool
+
+    class Config:
+        orm_mode = True

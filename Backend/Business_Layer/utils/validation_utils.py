@@ -1,5 +1,7 @@
 import re
 from fastapi import HTTPException, status
+import pycountry
+import phonenumbers
 
 def validate_non_empty(value: str, field_name: str = "Field") -> str:
     """
@@ -212,3 +214,28 @@ def validate_currency(currency: str) -> str:
         raise ValueError("Currency must be a valid 3-letter uppercase code (e.g., USD, INR, EUR)")
 
     return cleaned
+
+
+
+def validate_country(calling_code: str):
+    try:
+        code = int(calling_code)
+    except ValueError:
+        raise ValueError("Calling code must be a number")
+
+    # Validate calling code → get region (ISO country code, e.g. IN)
+    region = phonenumbers.region_code_for_country_code(code)
+
+    if not region:
+        raise ValueError("Invalid calling code")
+
+    # Convert region (ISO alpha-2) to country name
+    country = pycountry.countries.get(alpha_2=region)
+
+    if not country:
+        raise ValueError("Country not found in pycountry")
+
+    return country.name
+
+
+
