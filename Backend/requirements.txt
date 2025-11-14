@@ -17,3 +17,7 @@ python-multipart
 # For data validation and schema management
 pydantic
 
+# for phone number validation
+pycountry
+phonenumbers
+
