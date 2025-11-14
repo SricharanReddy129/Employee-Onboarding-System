@@ -40,3 +40,4 @@ app.openapi = custom_openapi
 
 # app.include_router(master_routes.router, prefix="/offers", tags=["Offers"])
 app.include_router(offerletter_routes.router, prefix="/offerletters", tags=["Offer Letters"])
+app.include_router(master_routes.router, prefix="/masters", tags=["Master (Countries)"])
