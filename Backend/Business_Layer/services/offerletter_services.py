@@ -197,5 +197,37 @@ class OfferLetterService:
         return await self.dao.get_all_offers()
     
     async def get_offer_by_uuid(self, offer_uuid: str):
-        print("offer uuid", offer_uuid, "type", type(offer_uuid))
         return await self.dao.get_offer_by_uuid(offer_uuid)
+    
+    async def update_offer_by_uuid(self, offer_uuid: str, request_data: OfferCreateRequest, current_user_id: int):
+        try:
+            offer = await self.dao.get_offer_by_uuid(offer_uuid)
+            if not offer:
+                raise HTTPException(status_code=404, detail="Offer not found")
+
+            # validations...
+            first_name = validate_name(request_data.first_name)
+            last_name = validate_name(request_data.last_name)
+            mail = validate_email(request_data.mail)
+            country_code = validate_country_code(request_data.country_code)
+            contact_number = validate_phone_number(request_data.contact_number)
+            designation = validate_designation(request_data.designation)
+            package = validate_package(request_data.package)
+            currency = validate_currency(request_data.currency)
+
+            # Email uniqueness
+            if mail != offer.mail:
+                existing = await self.dao.get_offer_by_email(mail)
+                if existing:
+                    raise HTTPException(status_code=409, detail="Email already exists")
+
+            updated_offer = await self.dao.update_offer_by_uuid(offer_uuid, request_data, current_user_id)
+
+            return updated_offer
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+

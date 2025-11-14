@@ -16,6 +16,10 @@ class OfferCreateResponse(BaseModel):
     message: str
     offer_id: str
 
+class OfferUpdateResponse(BaseModel):
+    message: str
+    offer_id: str
+
 class BulkOfferCreateResponse(BaseModel):
     total_rows: int
     processed_rows: int

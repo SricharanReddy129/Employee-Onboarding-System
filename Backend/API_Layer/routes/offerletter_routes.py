@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...API_Layer.interfaces.offerletter_interfaces import OfferCreateRequest, OfferCreateResponse, BulkOfferCreateResponse, OfferLetterDetailsResponse
+from ...API_Layer.interfaces.offerletter_interfaces import OfferCreateRequest, OfferCreateResponse, BulkOfferCreateResponse, OfferLetterDetailsResponse, OfferUpdateResponse
 from ...Business_Layer.services.offerletter_services import OfferLetterService
 from ...DAL.utils.dependencies import get_db
 import pandas as pd
@@ -134,6 +134,27 @@ async def get_offer_by_uuid(
             raise HTTPException(status_code=404, detail="Offer letter not found")
         return offer
 
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+# update offer details by offer uuid
+@router.put("/{offer_uuid}", response_model=OfferUpdateResponse)
+async def update_offer_by_uuid(
+    offer_uuid: str,
+    request_data: OfferCreateRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        offer_service = OfferLetterService(db)
+        current_user_id = int(request.state.user.get("user_id"))
+        offer = await offer_service.update_offer_by_uuid(offer_uuid, request_data, current_user_id)
+        return OfferUpdateResponse(
+            message="Offer Details Updated Successfully",
+            offer_id=offer_uuid
+        )
     except HTTPException:
         raise
     except Exception as e:
