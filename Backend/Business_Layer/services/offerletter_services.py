@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from ...API_Layer.interfaces.offerletter_interfaces import OfferCreateRequest
-from ...DAL.dao.offerletter_dao import OfferDAO
+from ...DAL.dao.offerletter_dao import OfferLetterDAO
 from ..utils.uuid_generator import generate_uuid7
 from ..utils.validation_utils import (
     validate_name,
@@ -18,7 +18,7 @@ from ..utils.validation_utils import (
 class OfferLetterService:
     def __init__(self, db: AsyncSession):
         self.db = db
-        self.dao = OfferDAO(self.db)
+        self.dao = OfferLetterDAO(self.db)
  
     async def create_offer(self, request_data: OfferCreateRequest, current_user_id: int):
         """
@@ -231,3 +231,15 @@ class OfferLetterService:
             raise HTTPException(status_code=500, detail=str(e))
 
 
+    async def get_pending_offerletters(self, current_user_id: int):
+        """
+        Fetch all offer letters where:
+        - status = 'created'
+        - created_by = current_user_id
+        """
+        print("Fetching pending offer letters for user:", current_user_id)
+        dao = OfferLetterDAO(self.db)
+
+        records = await dao.fetch_pending_offerletters(current_user_id)
+
+        return {"candidates": records}

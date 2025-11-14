@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.models.models import OfferLetterDetails
 from ...API_Layer.interfaces.offerletter_interfaces import OfferCreateRequest
 
-class OfferDAO:
+class OfferLetterDAO:
     def __init__(self, db: AsyncSession):
         self.db = db  # Store the session for transaction management
 
@@ -116,4 +116,22 @@ class OfferDAO:
         await self.db.refresh(offer)
 
         return offer
+    
+    async def fetch_pending_offerletters(self, created_by: int):
+        """
+        Returns all offer letters:
+        - status = 'created'
+        - created_by = <current user>
+        """
+
+        query = (
+            select(OfferLetterDetails)
+            .where(
+                OfferLetterDetails.status == "Created",
+                OfferLetterDetails.created_by == created_by
+            )
+        )
+
+        result = await self.db.execute(query)
+        return result.scalars().all()
 

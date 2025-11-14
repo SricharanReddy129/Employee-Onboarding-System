@@ -1,6 +1,7 @@
 # Backend/api/interfaces/offerletter_interfaces.py
 
 from pydantic import BaseModel, EmailStr
+from typing import List
 
 class OfferCreateRequest(BaseModel):
     first_name: str
@@ -29,7 +30,6 @@ class BulkOfferCreateResponse(BaseModel):
     failed_offers: list[dict]
     skipped_rows: int
 
-
 class OfferLetterDetailsResponse(BaseModel):
     first_name: str
     last_name: str
@@ -44,3 +44,20 @@ class OfferLetterDetailsResponse(BaseModel):
 
     class Config:
         orm_mode = True
+
+class OfferPendingCandidate(BaseModel):
+    offer_uuid: str
+    first_name: str
+    last_name: str
+    mail: str
+    designation: str
+    package: str
+    currency: str
+    status: str
+    created_by: int
+
+    class Config:
+        orm_mode = True
+
+class OfferPendingListResponse(BaseModel):
+    candidates: list[OfferLetterDetailsResponse]

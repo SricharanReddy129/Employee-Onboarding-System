@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...API_Layer.interfaces.offerletter_interfaces import OfferCreateRequest, OfferCreateResponse, BulkOfferCreateResponse, OfferLetterDetailsResponse, OfferUpdateResponse
+from ...API_Layer.interfaces.offerletter_interfaces import OfferCreateRequest, OfferCreateResponse, BulkOfferCreateResponse, OfferLetterDetailsResponse, OfferUpdateResponse, OfferPendingListResponse
 from ...Business_Layer.services.offerletter_services import OfferLetterService
 from ...DAL.utils.dependencies import get_db
 import pandas as pd
@@ -18,7 +18,7 @@ router = APIRouter()
 async def create_offer_letter(
     request_data: OfferCreateRequest,
     request: Request,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db)#
 ):
     """
     Creates a single offer letter.
@@ -122,7 +122,7 @@ async def get_all_offers(
         raise HTTPException(status_code=500, detail=str(e))
 
 # get offer by offer uuid
-@router.get("/{offer_uuid}", response_model=OfferLetterDetailsResponse)
+@router.get("/offer/{offer_uuid}", response_model=OfferLetterDetailsResponse)
 async def get_offer_by_uuid(
     offer_uuid: str,
     db: AsyncSession = Depends(get_db)
@@ -182,3 +182,16 @@ async def update_offer_by_uuid(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/pending", response_model=OfferPendingListResponse)
+async def get_pending_offerletters(
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    # Extract user_id from JWT middleware
+    print("Fetching pending offer letters endpoint called")
+    current_user_id = request.state.user.get("user_id")
+
+    offer_service = OfferLetterService(db)
+    return await offer_service.get_pending_offerletters(current_user_id)
