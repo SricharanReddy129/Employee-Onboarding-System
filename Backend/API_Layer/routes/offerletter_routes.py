@@ -7,6 +7,7 @@ from ...Business_Layer.services.offerletter_services import OfferLetterService
 from ...DAL.utils.dependencies import get_db
 import pandas as pd
 from io import BytesIO
+from ...config import env_loader
 
 router = APIRouter()
 
@@ -95,3 +96,21 @@ async def get_all_offers(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
+# ✅ Test Pandadoc API connection
+PANDADOC_API_KEY = env_loader.get_env_var("PANDADOC_API_KEY")
+
+@router.get("/test-pandadoc")
+def test_pandadoc_connection():
+    pandadoc_url = env_loader.get_env_var("PANDADOC_API_URL")
+    headers = {
+        "Authorization": f"API-Key {PANDADOC_API_KEY}",
+    }
+
+    response = Request.get(pandadoc_url, headers=headers)
+
+    return {
+        "status_code": response.status_code,
+        "response": response.json() if response.content else None
+    }
