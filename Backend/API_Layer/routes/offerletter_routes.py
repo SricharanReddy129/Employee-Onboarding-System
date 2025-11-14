@@ -7,6 +7,9 @@ from ...Business_Layer.services.offerletter_services import OfferLetterService
 from ...DAL.utils.dependencies import get_db
 import pandas as pd
 from io import BytesIO
+from ...config import env_loader
+import requests
+
 
 router = APIRouter()
 
@@ -139,7 +142,22 @@ async def get_offer_by_uuid(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-# update offer details by offer uuid
+# ✅ Test Pandadoc API connection
+PANDADOC_API_KEY = env_loader.get_env_var("PANDADOC_API_KEY")
+
+@router.get("/pandadoc/test")
+def test_pandadoc_connection():
+    pandadoc_url = env_loader.get_env_var("PANDADOC_API_URL")
+    headers = {
+        "Authorization": f"API-Key {PANDADOC_API_KEY}",
+    }
+
+    response = requests.get(pandadoc_url, headers=headers)
+
+    return {
+        "status_code": response.status_code,
+        "response": response.json() if response.content else None
+    }
 @router.put("/{offer_uuid}", response_model=OfferUpdateResponse)
 async def update_offer_by_uuid(
     offer_uuid: str,
@@ -150,11 +168,16 @@ async def update_offer_by_uuid(
     try:
         offer_service = OfferLetterService(db)
         current_user_id = int(request.state.user.get("user_id"))
-        offer = await offer_service.update_offer_by_uuid(offer_uuid, request_data, current_user_id)
+
+        offer = await offer_service.update_offer_by_uuid(
+            offer_uuid, request_data, current_user_id
+        )
+
         return OfferUpdateResponse(
             message="Offer Details Updated Successfully",
             offer_id=offer_uuid
         )
+
     except HTTPException:
         raise
     except Exception as e:
