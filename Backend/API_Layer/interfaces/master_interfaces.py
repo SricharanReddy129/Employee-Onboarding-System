@@ -11,3 +11,11 @@ class CountryDetails(BaseModel):
 
     class Config:
         orm_mode = True
+
+## EDUCATION LEVEL ##
+class CreateEducLevelResponse(BaseModel):
+    education_uuid: str
+    message: str
+class CreateEducLevelRequest(BaseModel):
+    education_name: str
+    description: str

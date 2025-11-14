@@ -1,11 +1,11 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from ..interfaces.master_interfaces import CreateCountryResponse, CountryDetails
-from ...Business_Layer.services.master_services import CountryService
+from ..interfaces.master_interfaces import CreateCountryResponse, CountryDetails, CreateEducLevelResponse, CreateEducLevelRequest
+from ...Business_Layer.services.master_services import CountryService, EducationService
 from ...DAL.utils.dependencies import get_db
 
 router = APIRouter()
-
+## COUNTRY ROUTES START ##
 @router.post("/country", response_model= CreateCountryResponse)
 async def create_country(
     calling_code: str,
@@ -60,3 +60,25 @@ async def get_country_uuid(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+## COUNTRY ROUTES END ##
+
+## EDUCATION LEVEL ROUTES ##
+
+@router.post("/education-level/", response_model= CreateEducLevelResponse)
+async def create_education_level(
+    request_data: CreateEducLevelRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+    
+        education_service = EducationService(db)
+        result = await education_service.create_education_level(request_data)
+        return CreateEducLevelResponse(
+            education_uuid= result.education_uuid,
+            message = "Education Level Created Successfully"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
