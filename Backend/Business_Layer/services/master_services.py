@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from ...DAL.dao.master_dao import  MasterDAO, EducationDAO
 from ..utils.validation_utils import validate_country_code, validate_alphabets_only, validate_country
 from ..utils.uuid_generator import generate_uuid7
-from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest
+from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest, EducLevelDetails
 
 
 class CountryService:
@@ -61,6 +61,14 @@ class CountryService:
             raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+    async def get_all_countries(self):
+        try:
+            result = await self.dao.get_all_countries()
+            return result
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
 class EducationService:
     def __init__(self, db: AsyncSession):
@@ -80,6 +88,50 @@ class EducationService:
             raise he
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+    
+    async def get_all_education_levels(self):
+        try:
+            result = await self.dao.get_all_education_levels()
+            return result
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
+    async def get_education_level_by_uuid(self, uuid: str):
+        try:
+            result = await self.dao.get_education_level_by_uuid(uuid)
+            return result
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
+    async def update_education_level(self, request_data: EducLevelDetails, uuid: str):
+        try:
+            education_name = validate_alphabets_only(request_data.education_name)
+            education_name = await self.dao.get_education_level_by_eduname_and_uuid(education_name, uuid)
+            if education_name:
+                raise HTTPException(status_code=404, detail = "Education Level Already Exist")
+            return await self.dao.update_education_level(request_data, uuid)
+        except ValueError as ve:
+            raise HTTPException(status_code=422, detail=str(ve))
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
+    async def delete_education_level(self, uuid: str):
+        try:
+            result = await self.dao.get_education_level_by_uuid(uuid)
+            if not result:
+                raise HTTPException(status_code=404, detail = "Education Level Not Found")
+            return await self.dao.delete_education_level(uuid)
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
 
     
 

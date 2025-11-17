@@ -8,9 +8,13 @@ class CountryDetails(BaseModel):
     country_code: str
     country_name: str
     is_active: bool
+class CountryAllDetails(BaseModel):
+    country_uuid:str
+    calling_code: str
+    country_name: str
+    is_active: bool
 
-    class Config:
-        orm_mode = True
+
 
 ## EDUCATION LEVEL ##
 class CreateEducLevelResponse(BaseModel):
@@ -19,3 +23,13 @@ class CreateEducLevelResponse(BaseModel):
 class CreateEducLevelRequest(BaseModel):
     education_name: str
     description: str
+
+class EducLevelDetails(BaseModel):
+    education_name: str
+    description: str
+    is_active: bool
+class AllEducLevelDetails(BaseModel):
+    education_uuid: str
+    education_name: str
+    description: str
+    is_active: bool

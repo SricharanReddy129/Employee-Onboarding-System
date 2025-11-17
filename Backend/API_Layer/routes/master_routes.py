@@ -1,6 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from ..interfaces.master_interfaces import CreateCountryResponse, CountryDetails, CreateEducLevelResponse, CreateEducLevelRequest
+from ..interfaces.master_interfaces import (CreateCountryResponse, CountryDetails, CountryAllDetails,
+                                            CreateEducLevelResponse, CreateEducLevelRequest, EducLevelDetails, AllEducLevelDetails
+                                            )
 from ...Business_Layer.services.master_services import CountryService, EducationService
 from ...DAL.utils.dependencies import get_db
 
@@ -60,6 +62,19 @@ async def get_country_uuid(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/country", response_model=list[CountryAllDetails])
+async def get_all_countries(
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        country_service = CountryService(db)
+        result = await country_service.get_all_countries()
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 ## COUNTRY ROUTES END ##
 
 ## EDUCATION LEVEL ROUTES ##
@@ -76,6 +91,74 @@ async def create_education_level(
         return CreateEducLevelResponse(
             education_uuid= result.education_uuid,
             message = "Education Level Created Successfully"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+# get all education levels
+@router.get("/education-level", response_model=list[AllEducLevelDetails])
+
+async def get_all_education_levels(
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        education_service = EducationService(db)
+        result = await education_service.get_all_education_levels()
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+# get education details with uuid
+@router.get("/education-level/{education_uuid}", response_model=EducLevelDetails)
+async def get_education_level_by_uuid(
+    education_uuid: str,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        education_service = EducationService(db)
+        result = await education_service.get_education_level_by_uuid(education_uuid)
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+# edit education details with uuid
+@router.put("/education-level/{education_uuid}", response_model=CreateEducLevelResponse)
+async def update_education_level(
+    request_data: EducLevelDetails,
+    education_uuid: str,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        education_service = EducationService(db)
+        result = await education_service.update_education_level(request_data, education_uuid)
+        return CreateEducLevelResponse(
+            education_uuid = result.education_uuid,
+            message = "Education Level Updated Successfully"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+# delete education with uuid
+@router.delete("/education-level/{education_uuid}", response_model= CreateCountryResponse)
+async def delete_education_level(
+    education_uuid: str,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        education_service = EducationService(db)
+        result = await education_service.delete_education_level(education_uuid)
+
+        return CreateCountryResponse(
+            country_uuid = education_uuid,
+            message = "Education Level Deleted Successfully"
         )
     except HTTPException:
         raise

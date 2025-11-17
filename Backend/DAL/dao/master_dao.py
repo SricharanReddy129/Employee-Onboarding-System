@@ -2,7 +2,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.models.models import Countries, EducationLevel
-from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest
+from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest, EducLevelDetails
 
 
 class MasterDAO:
@@ -46,6 +46,9 @@ class MasterDAO:
         await self.db.refresh(country)
 
         return country
+    async def get_all_countries(self):
+        result = await self.db.execute(select(Countries))
+        return result.scalars().all()
 
 class EducationDAO:
     def __init__(self, db: AsyncSession):
@@ -67,5 +70,43 @@ class EducationDAO:
         await self.db.refresh(new_edu_level)
         return new_edu_level
 
+    async def get_all_education_levels(self):
+        result = await self.db.execute(select(EducationLevel))
+        return result.scalars().all()
+    
+    async def get_education_level_by_uuid(self, uuid: str):
+        result = await self.db.execute(select(EducationLevel).where(EducationLevel.education_uuid == uuid))
+        return result.scalar_one_or_none()
+    
+    async def get_education_level_by_eduname_and_uuid(self, education_name: str, education_uuid: str):
+        result = await self.db.execute(select(EducationLevel).where(EducationLevel.education_name == education_name).where(EducationLevel.education_uuid != education_uuid))
+        
+        return result.scalar_one_or_none()
 
+    async def update_education_level(self, request_data: EducLevelDetails, uuid: str):
+        result = await self.db.execute(
+            select(EducationLevel).where(EducationLevel.education_uuid == uuid)
+        )
+        
+        edu_level = result.scalar_one_or_none()
+        if edu_level is None:
+            return None
+        
+        edu_level.education_name = request_data.education_name
+        edu_level.description = request_data.description
+        edu_level.is_active = request_data.is_active
+
+        await self.db.commit()
+        await self.db.refresh(edu_level)
+
+        return edu_level
+    
+    async def delete_education_level(self, uuid: str):
+        result = await self.db.execute(select(EducationLevel).where(EducationLevel.education_uuid == uuid))
+        edu_level = result.scalar_one_or_none()
+        if edu_level is None:
+            return None
+        await self.db.delete(edu_level)
+        await self.db.commit()
+        return edu_level
    
