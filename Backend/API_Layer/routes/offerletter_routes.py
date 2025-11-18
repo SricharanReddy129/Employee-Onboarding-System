@@ -2,7 +2,16 @@
 
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...API_Layer.interfaces.offerletter_interfaces import OfferCreateRequest, OfferCreateResponse, BulkOfferCreateResponse, OfferLetterDetailsResponse, OfferUpdateResponse, OfferPendingListResponse
+from ...API_Layer.interfaces.offerletter_interfaces import(
+    OfferCreateRequest, 
+    OfferCreateResponse, 
+    BulkOfferCreateResponse,
+    OfferLetterDetailsResponse, 
+    OfferUpdateResponse,
+    BulkSendOfferLettersResponse, 
+    BulkSendOfferLettersRequest,
+    BulkSendOfferLettersResult,
+)
 from ...Business_Layer.services.offerletter_services import OfferLetterService
 from ...DAL.utils.dependencies import get_db
 import pandas as pd
@@ -18,7 +27,7 @@ router = APIRouter()
 async def create_offer_letter(
     request_data: OfferCreateRequest,
     request: Request,
-    db: AsyncSession = Depends(get_db)#
+    db: AsyncSession = Depends(get_db)
 ):
     """
     Creates a single offer letter.
@@ -158,6 +167,7 @@ def test_pandadoc_connection():
         "status_code": response.status_code,
         "response": response.json() if response.content else None
     }
+
 @router.put("/{offer_uuid}", response_model=OfferUpdateResponse)
 async def update_offer_by_uuid(
     offer_uuid: str,
@@ -184,14 +194,30 @@ async def update_offer_by_uuid(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/pending", response_model=OfferPendingListResponse)
+@router.get("/pending", response_model=list[OfferLetterDetailsResponse])
 async def get_pending_offerletters(
     request: Request,
     db: AsyncSession = Depends(get_db)
 ):
-    # Extract user_id from JWT middleware
     print("Fetching pending offer letters endpoint called")
+
+    # Extract user_id from JWT middleware
     current_user_id = request.state.user.get("user_id")
 
     offer_service = OfferLetterService(db)
-    return await offer_service.get_pending_offerletters(current_user_id)
+    result =  await offer_service.get_pending_offerletters(current_user_id)
+    for i in result:
+        print("uuid", i.user_uuid)
+    return result
+
+
+@router.post("/bulk-send", response_model=BulkSendOfferLettersResponse)
+async def bulk_send_offer_letters(
+    request_data: BulkSendOfferLettersRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    print("Bulk send offer letters endpoint called")
+    offer_service = OfferLetterService(db)
+    print('offer_service created in route')
+    return await offer_service.send_bulk_offerletters(request_data, int(request.state.user.get("user_id")))

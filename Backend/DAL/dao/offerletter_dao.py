@@ -89,6 +89,7 @@ class OfferLetterDAO:
             select(OfferLetterDetails).where(OfferLetterDetails.user_uuid == offer_uuid)
         )
         return result.scalars().first()
+    
     async def update_offer_by_uuid(self, offer_uuid: str, request_data: OfferCreateRequest, current_user_id: int):
 
         # 1. Fetch record
@@ -135,3 +136,26 @@ class OfferLetterDAO:
         result = await self.db.execute(query)
         return result.scalars().all()
 
+    async def update_offerletter_status(self, offer_uuid: str, new_status: str, current_user_id: int):
+        """
+        Update only the status of an offer letter by UUID.
+        """
+
+        # 1. Fetch record
+        result = await self.db.execute(
+            select(OfferLetterDetails).where(OfferLetterDetails.user_uuid == offer_uuid)
+        )
+        offer = result.scalar_one_or_none()
+
+        if not offer:
+            return None
+
+        # 2. Update fields
+        offer.status = new_status
+        offer.created_by = current_user_id
+
+        # 3. Commit
+        await self.db.commit()
+        await self.db.refresh(offer)
+
+        return offer
