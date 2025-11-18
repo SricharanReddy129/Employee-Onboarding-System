@@ -1,4 +1,5 @@
 # Backend/Business_Layer/services/offerletter_service.py
+import asyncio
 import uuid
 from fastapi import HTTPException
 from httpx import AsyncClient
@@ -254,27 +255,30 @@ class OfferLetterService:
         return records
     
 
-    async def send_offer_letter_with_pandadoc(self, payload: dict):
+    async def create_offerletter_draft_with_pandadoc(self, payload: dict, user_uuid: str):
         """
-        Create & send an offer letter using PandaDoc template.
+        Create a PandaDoc draft, extract its ID, store it in DB.
         """
-        print("send_offer_letter_with_pandadoc service started")
+        print("create_offerletter_draft_with_pandadoc service started")
         
+        # -------------------- Load ENV Variables --------------------
         try:
             api_key = get_env_var("PANDADOC_API_KEY")
-            print("api_key loaded:", api_key)
-
             template_id = get_env_var("PANDADOC_TEMPLATE_ID")
-            print("template_id loaded:", template_id)
+            api_url = get_env_var("PANDADOC_DRAFT_API_URL")
 
-            api_url = get_env_var("PANDADOC_API_URL")
-            print("api_url loaded:", api_url)
+            print("API key loaded:", api_key)
+            print("Template ID loaded:", template_id)
+            print("API URL loaded:", api_url)
 
         except Exception as e:
             print("Error loading env variables:", e)
-        
+            raise
+
+
+        # -------------------- Prepare PandaDoc Body --------------------
         print("Preparing PandaDoc document body")
-    
+
         doc_body = {
             "name": f"Offer Letter {payload['offer_uuid']}",
             "template_uuid": template_id,
@@ -283,7 +287,7 @@ class OfferLetterService:
                     "email": payload["email"],
                     "first_name": payload["first_name"],
                     "last_name": payload["last_name"],
-                    "designation": payload["designation"]
+                    "role": "Candidate"
                 }
             ],
             "tokens": [
@@ -295,18 +299,18 @@ class OfferLetterService:
                 {"name": "offer_uuid", "value": payload["offer_uuid"]},
                 {"name": "company_name", "value": payload["company_name"]}
             ],
-            "send_document": True
+            "send_document": False
         }
-
-        print("Preparing PandaDoc request payload")
-
+        
+        # -------------------- Prepare Headers --------------------
         headers = {
             "Authorization": f"API-Key {api_key}",
             "Content-Type": "application/json"
         }
 
-        print('headers prepared, sending request to PandaDoc')
+        print("Headers prepared, sending request to PandaDoc")
 
+        # -------------------- API Call --------------------
         try:
             async with httpx.AsyncClient(timeout=30) as client:
                 response = await client.post(api_url, json=doc_body, headers=headers)
@@ -314,21 +318,145 @@ class OfferLetterService:
             if response.status_code not in (200, 201):
                 raise Exception(f"PandaDoc Error: {response.status_code} - {response.text}")
 
-            print("PandaDoc request successful, response:", response.text)
-            return response.json()
+            print("PandaDoc request successful:", response.text)
+            response_json = response.json()
 
-        except httpx.RequestError as req_err:
-            print("HTTP RequestError occurred:", str(req_err))
-            raise Exception(f"PandaDoc HTTP RequestError: {str(req_err)}") from req_err
+            # -------------------- Extract Draft ID --------------------
+            draft_id = response_json.get("id")
+            print("PandaDoc Draft ID extracted:", draft_id)
 
-        except httpx.HTTPStatusError as status_err:
-            print("HTTP StatusError occurred:", str(status_err))
-            raise Exception(f"PandaDoc HTTP StatusError: {str(status_err)}") from status_err
+            if not draft_id:
+                raise Exception("PandaDoc did not return a valid document id")
+
+            # -------------------- Save Draft ID in DB --------------------
+            print("Updating PandaDoc draft ID in database...")
+            await self.dao.update_pandadoc_draft_id(
+                user_uuid=user_uuid,
+                draft_id=draft_id
+            )
+            print("Draft ID stored in DB successfully")
+
+            return response_json
 
         except Exception as e:
             print("Unexpected error during PandaDoc request:", str(e))
             raise
+
     
+    async def poll_pandadoc_draft_status(self, offer_uuid: str) -> dict:
+        """
+        Poll PandaDoc until document status becomes `document.draft`.
+        Steps:
+        1) Get draft ID from DB using DAO
+        2) Poll PandaDoc every 2s
+        3) Stop when status = document.draft
+        """
+        # 1️⃣ Fetch draft_id from DB
+        offer = await self.dao.get_offer_by_uuid(offer_uuid)
+        if not offer or not offer.pandadoc_draft_id:
+            raise HTTPException(status_code=400, detail="Draft ID not found for this offer letter")
+        
+        draft_id = offer.pandadoc_draft_id
+        print(f"[PandaDoc Poll] Starting poll for draft_id: {draft_id}")
+
+        # 2️⃣ PandaDoc Poll URL
+        poll_url = get_env_var("PANDADOC_POLL_API_URL").format(draft_id=draft_id)
+        api_key = get_env_var("PANDADOC_API_KEY")
+
+        headers = {
+            "Authorization": f"API-Key {api_key}",  # your PandaDoc key
+            "Content-Type": "application/json"
+        }
+
+        max_attempts = 25    # total ~50 seconds (25 × 2s)
+        attempt = 0
+
+        async with httpx.AsyncClient() as client:
+            while attempt < max_attempts:
+                attempt += 1
+                print(f"[PandaDoc Poll] Attempt {attempt}/{max_attempts}")
+
+                try:
+                    response = await client.get(poll_url, headers=headers)
+                    response.raise_for_status()
+                    data = response.json()
+
+                    status = data.get("status")
+                    print(f"[PandaDoc Poll] Current status = {status}")
+
+                    # 3️⃣ If draft is ready → return success
+                    if status == "document.draft":
+                        print(f"[PandaDoc Poll] Draft ready for {draft_id}")
+                        return data
+
+                except Exception as e:
+                    print(f"[PandaDoc Poll] Error polling: {str(e)}")
+
+                # Wait before next poll
+                await asyncio.sleep(2)
+
+        # 4️⃣ Fail after timeout
+        raise HTTPException(
+            status_code=504,
+            detail=f"PandaDoc draft not ready after polling for {draft_id}"
+        )
+    
+
+    async def send_pandadoc_offerletter(self, offer_uuid: str) -> dict:
+        """
+        Sends the PandaDoc document (email to candidate) after draft status is 'document.draft'.
+        - Fetch draft_id from DB
+        - Call PandaDoc document send endpoint
+        """
+
+        # 1️⃣ Fetch draft_id from DB
+        offer = await self.dao.get_offer_by_uuid(offer_uuid)
+
+        if not offer or not offer.pandadoc_draft_id:
+            raise HTTPException(status_code=400, detail="Draft ID not found for this offer letter")
+
+        draft_id = offer.pandadoc_draft_id
+        print(f"[PandaDoc Send] Sending document for draft_id: {draft_id}")
+
+        # 2️⃣ PandaDoc Send URL
+        send_url = get_env_var('PANDADOC_SEND_API_URL').format(draft_id=draft_id)
+
+        # 3️⃣ Build request
+        payload = {
+            "silent": False,   # Candidate receives email
+            "subject": "Your Offer Letter",
+            "message": "Please review and sign your offer letter.",
+        }
+
+        api_key = get_env_var("PANDADOC_API_KEY")
+        headers = {
+            "Authorization": f"API-Key {api_key}",
+            "Content-Type": "application/json"
+        }
+
+        # 4️⃣ Make API call
+        try:
+            async with httpx.AsyncClient(timeout=30) as client:
+                response = await client.post(send_url, json=payload, headers=headers)
+
+            if response.status_code not in (200, 202):
+                print("PandaDoc send error response:", response.text)
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"PandaDoc send error: {response.text}"
+                )
+
+            print(f"[PandaDoc Send] Document sent for draft {draft_id}")
+            return response.json()
+
+        except httpx.RequestError as req_err:
+            print("[PandaDoc Send] RequestError:", str(req_err))
+            raise HTTPException(status_code=500, detail=f"HTTP RequestError: {str(req_err)}")
+
+        except Exception as e:
+            print("[PandaDoc Send] Unexpected error:", str(e))
+            raise HTTPException(status_code=500, detail=f"Unexpected Error: {str(e)}")
+        
 
     async def send_bulk_offerletters(self, request_data: BulkSendOfferLettersRequest, current_user_id: int):
         """
@@ -379,40 +507,69 @@ class OfferLetterService:
 
                 # --- 3️⃣ Call PandaDoc ---
                 print('Sending offer letter via PandaDoc for uuid', offer_uuid)
+                # create draft endpoint calling 
                 try:
-                    print('About to call send_offer_letter_with_pandadoc for uuid', offer_uuid)
-                    await self.send_offer_letter_with_pandadoc(payload)
-                    print('PandaDoc call completed successfully for uuid', offer_uuid)
+                    print('About to call create_offerletter_draft_with_pandadoc for uuid', offer_uuid)
+                    await self.create_offerletter_draft_with_pandadoc(payload, offer_uuid)
+                    print('PandaDoc draft call completed successfully')
 
-                    # --- 4️⃣ Update Offer Letter Status ---
-                    print('About to update offer letter status in DB for uuid', offer_uuid)
+                    # poll draft status endpoint calling
                     try:
-                        await self.dao.update_offerletter_status(
-                            offer_uuid = offer_uuid,
-                            new_status = "Offered",
-                            current_user_id = current_user_id
-                        )
-                        print('Offer letter status updated successfully for uuid', offer_uuid)
-                    except Exception as dao_e:
-                        print('Error updating offer letter status for uuid', offer_uuid, '-', str(dao_e))
+                        print('About to call poll_pandadoc_draft_status for uuid', offer_uuid)
+                        await self.poll_pandadoc_draft_status(offer_uuid)
+                        print('PandaDoc poll call completed successfully')
+
+                        # send document endpoint calling
+                        try:
+                            print('About to call send_pandadoc_offerletter for uuid', offer_uuid)
+                            await self.send_pandadoc_offerletter(offer_uuid)
+                            print('PandaDoc send call completed successfully')
+
+                            # --- 4️⃣ Update Offer Letter Status ---
+                            print('About to update offer letter status in DB for uuid', offer_uuid)
+                            try:
+                                await self.dao.update_offerletter_status(
+                                    offer_uuid = offer_uuid,
+                                    new_status = "Offered",
+                                    current_user_id = current_user_id
+                                )
+                                print('Offer letter status updated successfully for uuid', offer_uuid)
+
+                                # --- 5️⃣ Append to successful ---
+                                successful.append({
+                                    "offerletter_uuid": offer_uuid,
+                                    "email": record.mail,
+                                    "status": "success",
+                                    "message": "Offer letter sent successfully"
+                                })
+                                print('Offer letter sent and recorded as successful for uuid', offer_uuid)
+
+                            except Exception as dao_e:
+                                print('Error updating offer letter status for uuid', offer_uuid, '-', str(dao_e))
+                                failed.append({
+                                    "offerletter_uuid": offer_uuid,
+                                    "email": record.mail,
+                                    "error": f"DB update error: {dao_e}"
+                                })
+                                continue  # skip adding to successful if update failed
+                        except Exception as e:
+                            print('Error sending offer letter for uuid', offer_uuid, '-', str(e))
+                            failed.append({
+                                "offerletter_uuid": offer_uuid,
+                                "email": record.mail,
+                                "error": str(e)
+                            })
+
+                    except Exception as e:
+                        print('Error polling offer letter for uuid', offer_uuid, '-', str(e))
                         failed.append({
                             "offerletter_uuid": offer_uuid,
                             "email": record.mail,
-                            "error": f"DB update error: {dao_e}"
+                            "error": str(e)
                         })
-                        continue  # skip adding to successful if update failed
-
-                    # --- 5️⃣ Append to successful ---
-                    successful.append({
-                        "offerletter_uuid": offer_uuid,
-                        "email": record.mail,
-                        "status": "success",
-                        "message": "Offer letter sent successfully"
-                    })
-                    print('Offer letter sent and recorded as successful for uuid', offer_uuid)
 
                 except Exception as e:
-                    print('Error sending offer letter for uuid', offer_uuid, '-', str(e))
+                    print('Error drafting offer letter for uuid', offer_uuid, '-', str(e))
                     failed.append({
                         "offerletter_uuid": offer_uuid,
                         "email": record.mail,
