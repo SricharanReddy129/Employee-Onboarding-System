@@ -117,6 +117,8 @@ class OfferLetterDetails(Base):
     status: Mapped[Optional[str]] = mapped_column(Enum('Created', 'Offered', 'Accepted', 'Rejected'), server_default=text("'Created'"))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+    file_path: Mapped[Optional[str]] = mapped_column(String(255))
+    pandadoc_draft_id: Mapped[Optional[str]] = mapped_column(String(255))
 
     contacts: Mapped[list['Contacts']] = relationship('Contacts', back_populates='offer_letter_details', lazy="selectin")
     current_addresses: Mapped[list['CurrentAddresses']] = relationship('CurrentAddresses', back_populates='offer_letter_details', lazy="selectin")

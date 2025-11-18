@@ -43,9 +43,6 @@ class OfferLetterDetailsResponse(BaseModel):
     created_by: int
     status : str
 
-    class Config:
-        orm_mode = True
-
 class OfferPendingCandidate(BaseModel):
     offer_uuid: str
     first_name: str
@@ -56,9 +53,6 @@ class OfferPendingCandidate(BaseModel):
     currency: str
     status: str
     created_by: int
-
-    class Config:
-        orm_mode = True
 
 class BulkSendOfferLettersRequest(BaseModel):
     user_uuid_list: List[str]

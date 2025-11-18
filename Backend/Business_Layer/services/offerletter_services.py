@@ -283,7 +283,7 @@ class OfferLetterService:
                     "email": payload["email"],
                     "first_name": payload["first_name"],
                     "last_name": payload["last_name"],
-                    "designation": "Employee"
+                    "designation": payload["designation"]
                 }
             ],
             "tokens": [
@@ -293,6 +293,7 @@ class OfferLetterService:
                 {"name": "package", "value": payload["package"]},
                 {"name": "currency", "value": payload["currency"]},
                 {"name": "offer_uuid", "value": payload["offer_uuid"]},
+                {"name": "company_name", "value": payload["company_name"]}
             ],
             "send_document": True
         }
@@ -371,7 +372,8 @@ class OfferLetterService:
                     "designation": record.designation,
                     "package": record.package,
                     "currency": record.currency,
-                    "offer_uuid": offer_uuid
+                    "offer_uuid": offer_uuid,
+                    "company_name" : "Paves Global Infotech"
                 }
                 print('payload for uuid', offer_uuid, ':', payload)
 

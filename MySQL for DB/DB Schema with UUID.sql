@@ -15,7 +15,9 @@ CREATE TABLE offer_letter_details (
     status ENUM('Created', 'Offered', 'Accepted', 'Rejected') DEFAULT 'Created',
     created_by INT NOT NULL, -- Refers to ums user table user id
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    file_path VARCHAR(255),
+    pandadoc_draft_id VARCHAR(255)
 );
 
 -- =========================================================
