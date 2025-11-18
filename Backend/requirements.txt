@@ -21,3 +21,6 @@ pydantic
 pycountry
 phonenumbers
 
+# for file upload blob aws
+aioboto3
+
