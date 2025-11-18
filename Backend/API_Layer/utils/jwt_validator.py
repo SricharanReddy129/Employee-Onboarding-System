@@ -12,7 +12,7 @@ def get_oidc_metadata():
     """Fetch OIDC metadata from the well-known configuration endpoint."""
     print(f"[JWTValidator] 🚀 Fetching OIDC metadata from: {OIDC_CONFIG_URL}")
     try:
-        resp = requests.get(OIDC_CONFIG_URL, timeout=15)
+        resp = requests.get(OIDC_CONFIG_URL, timeout=30)
         resp.raise_for_status()
         print("[JWTValidator] ✅ Successfully fetched OIDC metadata")
         return resp.json()
@@ -28,7 +28,7 @@ def get_public_key_from_jwks(jwks_uri: str, kid: str):
     """Fetch public key from JWKS URI using key ID (kid)."""
     print(f"[JWTValidator] 🔑 Fetching JWKS from: {jwks_uri}")
     try:
-        resp = requests.get(jwks_uri, timeout=15)
+        resp = requests.get(jwks_uri, timeout=30)
         resp.raise_for_status()
         jwks = resp.json()
         print(f"[JWTValidator] ✅ Successfully fetched JWKS (keys count: {len(jwks.get('keys', []))})")

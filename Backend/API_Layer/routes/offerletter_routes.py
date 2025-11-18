@@ -151,23 +151,6 @@ async def get_offer_by_uuid(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-# ✅ Test Pandadoc API connection
-PANDADOC_API_KEY = env_loader.get_env_var("PANDADOC_API_KEY")
-
-@router.get("/pandadoc/test")
-def test_pandadoc_connection():
-    pandadoc_url = env_loader.get_env_var("PANDADOC_API_URL")
-    headers = {
-        "Authorization": f"API-Key {PANDADOC_API_KEY}",
-    }
-
-    response = requests.get(pandadoc_url, headers=headers)
-
-    return {
-        "status_code": response.status_code,
-        "response": response.json() if response.content else None
-    }
-
 @router.put("/{offer_uuid}", response_model=OfferUpdateResponse)
 async def update_offer_by_uuid(
     offer_uuid: str,

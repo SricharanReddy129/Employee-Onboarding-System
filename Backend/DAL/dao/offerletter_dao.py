@@ -159,3 +159,26 @@ class OfferLetterDAO:
         await self.db.refresh(offer)
 
         return offer
+    
+    async def update_pandadoc_draft_id(self, user_uuid: str, draft_id: str):
+        """
+        Update the PandaDoc draft ID for an offer letter by user UUID.
+        """
+
+        # 1. Fetch record
+        result = await self.db.execute(
+            select(OfferLetterDetails).where(OfferLetterDetails.user_uuid == user_uuid)
+        )
+        offer = result.scalar_one_or_none()
+
+        if not offer:
+            return None
+
+        # 2. Update fields
+        offer.pandadoc_draft_id = draft_id
+
+        # 3. Commit
+        await self.db.commit()
+        await self.db.refresh(offer)
+
+        return offer
