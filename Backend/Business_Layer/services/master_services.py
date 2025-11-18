@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from ...DAL.dao.master_dao import  MasterDAO, EducationDAO
+from ...DAL.dao.education_dao import EducationDocDAO
 from ..utils.validation_utils import validate_country_code, validate_alphabets_only, validate_country
 from ..utils.uuid_generator import generate_uuid7
 from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest, EducLevelDetails
@@ -74,6 +75,8 @@ class EducationService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.dao = EducationDAO(self.db)
+        self.educationdao = EducationDocDAO(self.db)
+        self.countrydao = MasterDAO(self.db)
     async def create_education_level(self, request_data: CreateEducLevelRequest):
         try:
             education_name = validate_alphabets_only(request_data.education_name)
@@ -127,6 +130,28 @@ class EducationService:
             if not result:
                 raise HTTPException(status_code=404, detail = "Education Level Not Found")
             return await self.dao.delete_education_level(uuid)
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
+    async def create_education_country_mapping(self, educ_level_uuid, educ_doc_uuid, country_uuid):
+        try:
+            existing = await self.dao.get_education_level_by_uuid(educ_level_uuid)
+            if not existing:
+                raise HTTPException(status_code=404, detail="Education Level Not Found")
+            existing = await self.educationdao.get_education_document_by_uuid(educ_doc_uuid)
+            if not existing:
+                raise HTTPException(status_code=404, detail="Education Document Not Found")
+            existing = await self.countrydao.get_country_by_uuid(country_uuid)
+            if not existing:
+                raise HTTPException(status_code=404, detail="Country Not Found")
+            existing = await self.dao.check_education_country_mapping(educ_level_uuid, educ_doc_uuid, country_uuid)
+            if existing:
+                raise HTTPException(status_code=404, detail="Mapping Already Exists")
+            uuid = generate_uuid7()
+            result = await self.dao.create_education_country_mapping(educ_level_uuid, educ_doc_uuid, country_uuid, uuid)
+            return result
         except HTTPException as he:
             raise he
         except Exception as e:
