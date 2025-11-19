@@ -182,3 +182,18 @@ class OfferLetterDAO:
         await self.db.refresh(offer)
 
         return offer
+
+    async def get_pandadoc_draft_id(self, offer_uuid: str):
+        """
+        Fetch only the PandaDoc draft ID for an offer letter by user UUID.
+        """
+
+        # 1. Fetch only the draft_id column
+        result = await self.db.execute(
+            select(OfferLetterDetails.pandadoc_draft_id)
+            .where(OfferLetterDetails.user_uuid == offer_uuid)
+        )
+        draft_id = result.scalar_one_or_none()
+
+        # 2. Return the value
+        return draft_id

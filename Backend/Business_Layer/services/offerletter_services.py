@@ -301,7 +301,7 @@ class OfferLetterService:
             ],
             "send_document": False
         }
-        
+
         # -------------------- Prepare Headers --------------------
         headers = {
             "Authorization": f"API-Key {api_key}",
@@ -352,11 +352,11 @@ class OfferLetterService:
         3) Stop when status = document.draft
         """
         # 1️⃣ Fetch draft_id from DB
-        offer = await self.dao.get_offer_by_uuid(offer_uuid)
-        if not offer or not offer.pandadoc_draft_id:
+        draft_id = await self.dao.get_pandadoc_draft_id(offer_uuid)
+
+        if not draft_id:
             raise HTTPException(status_code=400, detail="Draft ID not found for this offer letter")
-        
-        draft_id = offer.pandadoc_draft_id
+
         print(f"[PandaDoc Poll] Starting poll for draft_id: {draft_id}")
 
         # 2️⃣ PandaDoc Poll URL
@@ -410,12 +410,11 @@ class OfferLetterService:
         """
 
         # 1️⃣ Fetch draft_id from DB
-        offer = await self.dao.get_offer_by_uuid(offer_uuid)
+        draft_id = await self.dao.get_pandadoc_draft_id(offer_uuid)
 
-        if not offer or not offer.pandadoc_draft_id:
+        if not draft_id:
             raise HTTPException(status_code=400, detail="Draft ID not found for this offer letter")
 
-        draft_id = offer.pandadoc_draft_id
         print(f"[PandaDoc Send] Sending document for draft_id: {draft_id}")
 
         # 2️⃣ PandaDoc Send URL
