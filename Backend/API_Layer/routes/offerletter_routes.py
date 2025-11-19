@@ -19,7 +19,6 @@ from io import BytesIO
 from ...config import env_loader
 import requests
 
-
 router = APIRouter()
 
 # ✅ Create single offer letter

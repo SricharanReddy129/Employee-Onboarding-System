@@ -8,7 +8,7 @@ from .API_Layer.middleware.jwt_middleware import JWTMiddleware
 app = FastAPI(title="Employee Onboarding System API")
 
 # Add JWT middleware globally
-# app.add_middleware(JWTMiddleware)
+app.add_middleware(JWTMiddleware)
 
 # Add DB session middleware
 # app.add_middleware(DBSessionMiddleware)
