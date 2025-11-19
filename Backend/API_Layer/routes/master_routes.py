@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..interfaces.master_interfaces import (CreateCountryResponse, CountryDetails, CountryAllDetails,
-                                            CreateEducLevelResponse, CreateEducLevelRequest, EducLevelDetails, AllEducLevelDetails
-                                            )
+                                            CreateEducLevelResponse, CreateEducLevelRequest, EducLevelDetails, AllEducLevelDetails,
+                                            CountryEductionMapping)
 from ...Business_Layer.services.master_services import CountryService, EducationService
 from ...DAL.utils.dependencies import get_db
 
@@ -159,6 +159,26 @@ async def delete_education_level(
         return CreateCountryResponse(
             country_uuid = education_uuid,
             message = "Education Level Deleted Successfully"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+# Education Country Mapping
+@router.post("/{educ-level-uuid}/{educ-doc-uuid}/{country-uuid}", response_model=CountryEductionMapping)
+async def create_education_country_mapping(
+    educ_level_uuid: str,
+    educ_doc_uuid: str,
+    country_uuid: str,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        education_service = EducationService(db)
+        result = await education_service.create_education_country_mapping(educ_level_uuid, educ_doc_uuid, country_uuid)
+        return CountryEductionMapping(
+            mapping_uuid = result.mapping_uuid,
+            message= "Education Country Mapping Created Successfully"
         )
     except HTTPException:
         raise

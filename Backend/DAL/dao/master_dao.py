@@ -1,7 +1,7 @@
 # Backend/DAL/dao/master_dao.py
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...DAL.models.models import Countries, EducationLevel
+from ...DAL.models.models import Countries, EducationLevel, CountryEducationDocumentMapping
 from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest, EducLevelDetails
 
 
@@ -109,4 +109,23 @@ class EducationDAO:
         await self.db.delete(edu_level)
         await self.db.commit()
         return edu_level
+    async def create_education_country_mapping(self, educ_level_uuid, educ_doc_uuid, country_uuid, uuid):
+        new_edu_country_mapping = CountryEducationDocumentMapping(
+            mapping_uuid = uuid,
+            education_uuid = educ_level_uuid,
+            education_document_uuid = educ_doc_uuid,
+            country_uuid = country_uuid
+        )
+        self.db.add(new_edu_country_mapping)
+        await self.db.commit()
+        await self.db.refresh(new_edu_country_mapping)
+        return new_edu_country_mapping
+    
+    async def check_education_country_mapping(self, educ_level_uuid, educ_doc_uuid, country_uuid):
+        result = await self.db.execute(select(CountryEducationDocumentMapping).where(
+            CountryEducationDocumentMapping.education_document_uuid == educ_doc_uuid).where(
+            CountryEducationDocumentMapping.country_uuid == country_uuid).where(
+                CountryEducationDocumentMapping.education_uuid == educ_level_uuid))
+        
+        return result.scalar_one_or_none()
    

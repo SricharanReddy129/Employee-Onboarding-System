@@ -33,3 +33,6 @@ class AllEducLevelDetails(BaseModel):
     education_name: str
     description: str
     is_active: bool
+class CountryEductionMapping(BaseModel):
+    mapping_uuid: str
+    message: str
