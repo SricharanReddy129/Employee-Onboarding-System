@@ -36,3 +36,9 @@ class AllEducLevelDetails(BaseModel):
 class CountryEductionMapping(BaseModel):
     mapping_uuid: str
     message: str
+class CountryEducationMappingDetails(BaseModel):
+    mapping_uuid: str
+    country_uuid: str
+    education_uuid: str
+    education_document_uuid: str
+    is_mandatory: bool

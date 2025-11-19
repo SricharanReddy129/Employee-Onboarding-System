@@ -156,7 +156,25 @@ class EducationService:
             raise he
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+    async def delete_education_country_mapping(self, mapping_uuid):
+        try:
+            result = await self.dao.get_education_country_mapping_by_uuid(mapping_uuid)
+            if not result:
+                raise HTTPException(status_code=404, detail="Mapping Not Found")
+            return await self.dao.delete_education_country_mapping(mapping_uuid)
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
         
+    async def get_all_education_country_mapping(self):
+        try:
+            result = await self.dao.get_all_education_country_mapping()
+            return result
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
     
 

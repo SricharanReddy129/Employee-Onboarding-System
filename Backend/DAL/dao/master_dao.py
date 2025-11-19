@@ -128,4 +128,18 @@ class EducationDAO:
                 CountryEducationDocumentMapping.education_uuid == educ_level_uuid))
         
         return result.scalar_one_or_none()
-   
+    
+    async def get_education_country_mapping_by_uuid(self, mappng_uuid):
+        result = await self.db.execute(select(CountryEducationDocumentMapping).where(CountryEducationDocumentMapping.mapping_uuid == mappng_uuid))
+        return result.scalar_one_or_none()
+    async def delete_education_country_mapping(self, mappng_uuid):
+        result = await self.db.execute(select(CountryEducationDocumentMapping).where(CountryEducationDocumentMapping.mapping_uuid == mappng_uuid))
+        edu_country_mapping = result.scalar_one_or_none()
+        if edu_country_mapping is None:
+            return None
+        await self.db.delete(edu_country_mapping)
+        await self.db.commit()
+        return edu_country_mapping
+    async def get_all_education_country_mapping(self):
+        result = await self.db.execute(select(CountryEducationDocumentMapping))
+        return result.scalars().all()

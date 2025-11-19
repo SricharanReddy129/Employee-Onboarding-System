@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..interfaces.master_interfaces import (CreateCountryResponse, CountryDetails, CountryAllDetails,
                                             CreateEducLevelResponse, CreateEducLevelRequest, EducLevelDetails, AllEducLevelDetails,
-                                            CountryEductionMapping)
+                                            CountryEductionMapping, CountryEducationMappingDetails)
 from ...Business_Layer.services.master_services import CountryService, EducationService
 from ...DAL.utils.dependencies import get_db
 
@@ -180,6 +180,36 @@ async def create_education_country_mapping(
             mapping_uuid = result.mapping_uuid,
             message= "Education Country Mapping Created Successfully"
         )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.delete("/mapping/{mapping_uuid}", response_model=CountryEductionMapping)
+async def delete_education_country_mapping(
+    mapping_uuid: str,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        education_service = EducationService(db)
+        result = await education_service.delete_education_country_mapping(mapping_uuid)
+        return CountryEductionMapping(
+            mapping_uuid = result.mapping_uuid,
+            message = "Education Country Mapping Deleted Successfully"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/all-mapping", response_model=list[CountryEducationMappingDetails])
+async def get_all_education_country_mapping(
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        education_service = EducationService(db)
+        result = await education_service.get_all_education_country_mapping()
+        return result
     except HTTPException:
         raise
     except Exception as e:
