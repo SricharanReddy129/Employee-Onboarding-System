@@ -208,7 +208,7 @@ CREATE TABLE employee_education_document (
     specialization VARCHAR(150),
     year_of_passing YEAR,
     file_path VARCHAR(255),
-    status ENUM('uploaded', 'pending', 'verified', 'rejected') DEFAULT 'pending',
+    status ENUM('uploaded', 'verified', 'rejected') DEFAULT 'uploaded',
     uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     verified_by CHAR(36) NULL,
     verified_at DATETIME NULL,
