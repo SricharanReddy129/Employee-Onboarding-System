@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
-from .API_Layer.routes import master_routes, offerletter_routes, education_routes
+from .API_Layer.routes import master_routes, offerletter_routes, education_routes, offerresponse_routes
 from .API_Layer.middleware.jwt_middleware import JWTMiddleware
 
 # models.Base.metadata.create_all(bind=engine)
@@ -41,3 +41,4 @@ app.openapi = custom_openapi
 app.include_router(offerletter_routes.router, prefix="/offerletters", tags=["Offer Letters"])
 app.include_router(master_routes.router, prefix="/masters", tags=["Master (Countries)"])
 app.include_router(education_routes.router, prefix="/education", tags=["Education Documents"])
+app.include_router(offerresponse_routes.router, prefix="/offerresponse", tags=["Offer Response"])
