@@ -7,7 +7,7 @@ from ...Business_Layer.services.offerresponse_service import OfferResponseServic
 
 router = APIRouter()
 
-@router.post("/auth/offerletter-accepted", response_model=PandaDocWebhookResponse)
+@router.post("/offerletter-accepted", response_model=PandaDocWebhookResponse)
 async def offerletter_accepted_webhook(request: Request):
     """
     Receives PandaDoc webhook when candidate signs the offer letter.
