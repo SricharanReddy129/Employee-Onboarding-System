@@ -11,7 +11,7 @@ class EducationDocService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.dao = EducationDocDAO(self.db)
-        self.masterdao = EducationDAO(self.db)
+        self.countrydao = EducationDAO(self.db)
         self.offerdao = OfferLetterDAO(self.db)
     async def create_education_document(self, request_data):
         try:
@@ -72,7 +72,7 @@ class EducationDocService:
     async def create_employee_education_document(self, request_data, file):
         try:
             # checking mapping exists or not
-            existing = await self.masterdao.get_education_country_mapping_by_uuid(request_data.mapping_uuid)
+            existing = await self.countrydao.get_education_country_mapping_by_uuid(request_data.mapping_uuid)
             if not existing:
                 raise HTTPException(status_code=404, detail="Mapping Not Found")
             

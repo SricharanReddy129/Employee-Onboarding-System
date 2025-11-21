@@ -42,3 +42,21 @@ class CountryEducationMappingDetails(BaseModel):
     education_uuid: str
     education_document_uuid: str
     is_mandatory: bool
+
+# Contacts ##
+class CreateContactResponse(BaseModel):
+    contact_uuid: str
+    message: str
+
+class CreateContactRequest(BaseModel):
+    user_uuid: str
+    country_uuid: str
+    contact_number: str
+    emergency_contact: str
+
+class ContactDetails(BaseModel):
+    contact_uuid: str
+    user_uuid: str
+    country_uuid: str
+    contact_number: str
+    emergency_contact: str

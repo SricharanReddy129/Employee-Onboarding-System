@@ -102,48 +102,6 @@ def validate_email(email: str) -> str:
     return email
 
 
-def validate_country_code(country_code: str) -> str:
-    """
-    Validates a country calling code.
-    - Only digits allowed (no '+', spaces, or symbols)
-    - Length must be between 1 and 4 digits
-    - Removes any leading/trailing spaces before validation
-    """
-    code = country_code.strip()
-
-    if not code:
-        raise ValueError("Country code cannot be empty.")
-
-    if not re.fullmatch(r"\d{1,4}", code):
-        raise ValueError("Invalid country code format. It should contain only 1–4 digits without '+' or spaces.")
-
-    return code
-
-
-def validate_phone_number(phone_number: str) -> str:
-    """
-    Validates and normalizes a phone number for database storage.
-    - Removes spaces, dashes, brackets, and dots.
-    - Ensures only digits remain.
-    - Checks length (7–15 digits as per E.164 standard).
-    - Returns normalized version (digits only).
-    """
-    if not phone_number or not isinstance(phone_number, str):
-        raise ValueError("Phone number cannot be empty or null")
-
-    # Remove common formatting characters
-    cleaned = re.sub(r"[()\s\-\.]", "", phone_number)
-
-    # Ensure only digits remain
-    if not cleaned.isdigit():
-        raise ValueError("Phone number must contain only digits")
-
-    # Validate length (E.164 standard: 7–15 digits)
-    if not 7 <= len(cleaned) <= 15:
-        raise ValueError("Phone number length must be between 7 and 15 digits")
-
-    return cleaned
-
 
 def validate_designation(designation: str) -> str:
     """
@@ -236,6 +194,41 @@ def validate_country(calling_code: str):
         raise ValueError("Country not found in pycountry")
 
     return country.name
+
+def validate_phone_number(calling_code: str, phone_number: str, type: str) -> bool:
+    # 1. Validate calling code
+    try:
+        code = int(calling_code)
+    except ValueError:
+        raise ValueError("Calling code must be a numeric value")
+
+    region = phonenumbers.region_code_for_country_code(code)
+    if not region:
+        raise ValueError("Invalid calling code")
+
+    # 2. Build full number with +code
+    full_number = f"+{code}{phone_number}"
+
+    try:
+        parsed = phonenumbers.parse(full_number, None)
+    except phonenumbers.NumberParseException:
+        raise ValueError(f"{type} is Invalid phone number format")
+
+    # 3. Validate number structure
+    if not phonenumbers.is_possible_number(parsed):
+        raise ValueError(f"{type}  is not possible for this region")
+
+    # 4. Validate if number is actually valid
+    if not phonenumbers.is_valid_number(parsed):
+        raise ValueError(f"{type} is not valid")
+
+    # 5. Extra check: ensure region matches calling code
+    detected_region = phonenumbers.region_code_for_number(parsed)
+    if detected_region != region:
+        raise ValueError(f"{type} does not match the calling code")
+
+    return True
+
 
 
 
