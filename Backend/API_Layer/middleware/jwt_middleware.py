@@ -8,7 +8,7 @@ class JWTMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
         # Add paths you want to skip
-        self.open_endpoints = ["/docs", "/openapi.json", "/redoc"]
+        self.open_endpoints = ["/docs", "/openapi.json", "/redoc", "/offerresponse/offerletter-accepted"]
 
     async def dispatch(self, request: Request, call_next):
         path = request.url.path
