@@ -37,7 +37,7 @@ class OfferResponseService:
         # ----------------------------
         # 3️⃣ Extract & convert timestamp
         # ----------------------------
-        signing_timestamp_raw = payload.date
+        signing_timestamp_raw = payload.data.action_date
         signing_timestamp = None
 
         if signing_timestamp_raw:

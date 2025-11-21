@@ -17,8 +17,8 @@ class PandaDocData(BaseModel):
     status: Optional[str] = None        # e.g., "document.completed"
     recipients: Optional[List[PandaDocRecipient]] = None
     version: Optional[int] = None
-
-
+    action_date: Optional[str] = None   # ISO timestamp when action occurred
+    
 class PandaDocWebhookRequest(BaseModel):
     event: str                  # document.completed
     id: Optional[str] = None    # Webhook event ID
