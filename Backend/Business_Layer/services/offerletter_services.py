@@ -18,7 +18,7 @@ from ...config.env_loader import get_env_var
 from ..utils.validation_utils import (
     validate_name,
     validate_email,
-    validate_country_code,
+    validate_country,
     validate_phone_number,
     validate_designation,
     validate_package,
@@ -41,8 +41,8 @@ class OfferLetterService:
             first_name = validate_name(request_data.first_name)
             last_name = validate_name(request_data.last_name)
             mail = validate_email(request_data.mail)
-            country_code = validate_country_code(request_data.country_code)
-            contact_number = validate_phone_number(request_data.contact_number)
+            country_code = validate_country(request_data.country_code)
+            contact_number = validate_phone_number(country_code,request_data.contact_number)
             designation = validate_designation(request_data.designation)
             package = validate_package(request_data.package)
             currency = validate_currency(request_data.currency)
@@ -102,8 +102,8 @@ class OfferLetterService:
                 first_name = validate_name(str(row['first_name']).strip())
                 last_name = validate_name(str(row['last_name']).strip())
                 mail = validate_email(str(row['mail']).strip())
-                country_code = validate_country_code(str(row['country_code']).strip())
-                contact_number = validate_phone_number(str(row['contact_number']).strip())
+                country_code = validate_country(str(row['country_code']).strip())
+                contact_number = validate_phone_number(country_code, str(row['contact_number']).strip())
                 designation = validate_designation(str(row['designation']).strip())
                 package = validate_package(str(row['package']).strip())
                 currency = validate_currency(str(row['currency']).strip())
@@ -220,8 +220,8 @@ class OfferLetterService:
             first_name = validate_name(request_data.first_name)
             last_name = validate_name(request_data.last_name)
             mail = validate_email(request_data.mail)
-            country_code = validate_country_code(request_data.country_code)
-            contact_number = validate_phone_number(request_data.contact_number)
+            country_code = validate_country(request_data.country_code)
+            contact_number = validate_phone_number(country_code, request_data.contact_number)
             designation = validate_designation(request_data.designation)
             package = validate_package(request_data.package)
             currency = validate_currency(request_data.currency)

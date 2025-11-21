@@ -112,7 +112,7 @@ async def create_bulk_offer_letters(
 
 
 # ✅ Get all offers
-@router.get("/", response_model=list[OfferCreateRequest])
+@router.get("/", response_model=list[OfferLetterDetailsResponse])
 async def get_all_offers(
     db: AsyncSession = Depends(get_db)
 ):

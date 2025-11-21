@@ -1,11 +1,11 @@
 # Backend/DAL/dao/master_dao.py
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...DAL.models.models import Countries, EducationLevel, CountryEducationDocumentMapping
+from ...DAL.models.models import Countries, EducationLevel, CountryEducationDocumentMapping, Contacts
 from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest, EducLevelDetails
 
 
-class MasterDAO:
+class CountryDAO:
     def __init__(self, db: AsyncSession):
         self.db = db  # Store the session for transaction management
     
@@ -143,3 +143,30 @@ class EducationDAO:
     async def get_all_education_country_mapping(self):
         result = await self.db.execute(select(CountryEducationDocumentMapping))
         return result.scalars().all()
+
+class ContactDAO:
+    def __init__(self, db: AsyncSession):
+        self.db = db  # Store the session for transaction management
+
+    async def create_contact(self, request_data, uuid):
+        new_contact = Contacts(
+            contact_uuid = uuid,
+            user_uuid = request_data.user_uuid,
+            country_uuid = request_data.country_uuid,
+            contact_number = request_data.contact_number,
+            emergency_contact = request_data.emergency_contact
+        )
+        self.db.add(new_contact)
+        await self.db.commit()
+        await self.db.refresh(new_contact)
+        return new_contact
+    async def get_contact_by_user_uuid_and_country_uuid(self, user_uuid, country_uuid):
+        result = await self.db.execute(select(Contacts).where(Contacts.user_uuid == user_uuid).where(Contacts.country_uuid == country_uuid))
+        return result.scalar_one_or_none()
+    async def get_all_contacts(self):
+        result = await self.db.execute(select(Contacts))
+        return result.scalars().all()
+    async def get_contact_by_uuid(self, uuid):
+        result = await self.db.execute(select(Contacts).where(Contacts.contact_uuid == uuid))
+        return result.scalar_one_or_none()
+        

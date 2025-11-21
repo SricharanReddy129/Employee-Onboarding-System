@@ -8,7 +8,7 @@ from .API_Layer.middleware.jwt_middleware import JWTMiddleware
 app = FastAPI(title="Employee Onboarding System API")
 
 # Add JWT middleware globally
-app.add_middleware(JWTMiddleware)
+# app.add_middleware(JWTMiddleware)
 
 # Add DB session middleware
 # app.add_middleware(DBSessionMiddleware)
@@ -39,6 +39,6 @@ def custom_openapi():
 app.openapi = custom_openapi
 
 app.include_router(offerletter_routes.router, prefix="/offerletters", tags=["Offer Letters"])
-app.include_router(master_routes.router, prefix="/masters", tags=["Master (Countries)"])
+app.include_router(master_routes.router, prefix="/masters", tags=["Master (Countries, Education Levels, Contacts)"])
 app.include_router(education_routes.router, prefix="/education", tags=["Education Documents"])
 app.include_router(offerresponse_routes.router, prefix="/offerresponse", tags=["Offer Response"])

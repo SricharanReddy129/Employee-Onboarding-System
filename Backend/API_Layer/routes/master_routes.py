@@ -2,8 +2,9 @@ from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..interfaces.master_interfaces import (CreateCountryResponse, CountryDetails, CountryAllDetails,
                                             CreateEducLevelResponse, CreateEducLevelRequest, EducLevelDetails, AllEducLevelDetails,
-                                            CountryEductionMapping, CountryEducationMappingDetails)
-from ...Business_Layer.services.master_services import CountryService, EducationService
+                                            CountryEductionMapping, CountryEducationMappingDetails,
+                                            CreateContactResponse, CreateContactRequest, ContactDetails)
+from ...Business_Layer.services.master_services import CountryService, EducationService, ContactService
 from ...DAL.utils.dependencies import get_db
 
 router = APIRouter()
@@ -209,6 +210,48 @@ async def get_all_education_country_mapping(
     try:
         education_service = EducationService(db)
         result = await education_service.get_all_education_country_mapping()
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+## EDUCATION LEVEL AND MAPPING ROUTES ENDS ##
+
+## CONTACTS ROUTES BEGINS ##
+# Create contect details
+@router.post("/contacts", response_model= CreateContactResponse)
+async def create_contact(request_data: CreateContactRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        contact_service = ContactService(db)
+        result = await contact_service.create_contact(request_data)
+        return CreateContactResponse(
+            contact_uuid = result.contact_uuid,
+            message = "Contact Created Successfully"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+# get all contacts details
+@router.get("/contacts", response_model= list[ContactDetails])
+async def get_all_contacts(db: AsyncSession = Depends(get_db)):
+    try:
+        contact_service = ContactService(db)
+        result = await contact_service.get_all_contacts()
+        return result
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+# get contact details by uuid
+@router.get("/contacts/{contact_uuid}", response_model=ContactDetails)
+async def get_contact_by_uuid(contact_uuid: str, db: AsyncSession = Depends(get_db)):
+    try:
+        contact_service = ContactService(db)
+        result = await contact_service.get_contact_by_uuid(contact_uuid)
         return result
     except HTTPException:
         raise
