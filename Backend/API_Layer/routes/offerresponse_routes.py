@@ -16,20 +16,29 @@ async def offerletter_accepted_webhook(request: Request):
     print("📬 API Layer: Received PandaDoc webhook for offer letter acceptance")
 
     try:
-        # 1. Parse incoming webhook JSON
         payload_json = await request.json()
         print("📩 Incoming PandaDoc Webhook Payload:", payload_json)
 
-        # 2. Validate using Interface Layer (Pydantic)
-        payload = PandaDocWebhookRequest(**payload_json)
+        # If PandaDoc sends a list → iterate through them
+        if isinstance(payload_json, list):
+            payloads = payload_json
+        else:
+            payloads = [payload_json]
 
-        # 3. Call Business Layer to process the webhook
-        await OfferResponseService.process_pandadoc_webhook(payload)
+        responses = []
+        for p in payloads:
+            try:
+                payload = PandaDocWebhookRequest(**p)
+                response = await OfferResponseService.process_pandadoc_webhook(payload)
+                responses.append(response)
+            except Exception as e:
+                print("❌ Error processing single webhook entry:", e)
 
-        # 4. Return required success response to PandaDoc
+        # Always return OK
         return PandaDocWebhookResponse(status="ok")
+
 
     except Exception as e:
         print("❌ Error processing webhook:", str(e))
         # Still return 200 OK so PandaDoc doesn't retry
-        return PandaDocWebhookResponse(status="ok")
+        return PandaDocWebhookResponse(status="error")
