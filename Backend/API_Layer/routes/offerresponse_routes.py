@@ -13,6 +13,8 @@ async def offerletter_accepted_webhook(request: Request):
     Receives PandaDoc webhook when candidate signs the offer letter.
     """
 
+    print("📬 API Layer: Received PandaDoc webhook for offer letter acceptance")
+
     try:
         # 1. Parse incoming webhook JSON
         payload_json = await request.json()
