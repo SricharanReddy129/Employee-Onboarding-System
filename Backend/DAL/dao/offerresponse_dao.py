@@ -1,8 +1,11 @@
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.models.models import OfferLetterDetails
 
 
 class OfferResponseDAO:
+    def __init__(self, db: AsyncSession):
+        self.db = db  # Store the session for transaction management
 
     async def update_offer_from_webhook(self, update_data: dict):
         """
@@ -22,6 +25,7 @@ class OfferResponseDAO:
         offer = result.scalar_one_or_none()
 
         if not offer:
+            print(f"❌ DAO: No offer found for PandaDoc doc_id: {doc_id}")
             return None
 
         # 2. Update fields
@@ -31,5 +35,7 @@ class OfferResponseDAO:
         # 3. Commit + refresh
         await self.db.commit()
         await self.db.refresh(offer)
+
+        print(f"✅ DAO: Updated offer {offer.user_uuid} successfully.")
 
         return offer

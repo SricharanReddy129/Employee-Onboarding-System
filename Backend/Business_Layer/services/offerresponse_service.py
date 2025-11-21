@@ -1,11 +1,15 @@
 from datetime import datetime
 from ...API_Layer.interfaces.offerresponse_interface import PandaDocWebhookRequest, PandaDocWebhookResponse
 from ...DAL.dao.offerresponse_dao import OfferResponseDAO
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class OfferResponseService:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+        self.dao = OfferResponseDAO(self.db)
 
-    async def process_pandadoc_webhook(payload: PandaDocWebhookRequest):
+    async def process_pandadoc_webhook(self, payload: PandaDocWebhookRequest):
         """
         Business logic:
         - Validate event
@@ -20,8 +24,6 @@ class OfferResponseService:
         # ----------------------------
         # 1️⃣ Validate document completion
         # ----------------------------
-        # Example received event = "recipient_completed"
-        # But actual status is inside payload.data.status
         if payload.data.status != "document.completed":
             print(f"⚠ Ignoring webhook: status={payload.data.status}")
             return PandaDocWebhookResponse(status="ignored")
@@ -29,8 +31,7 @@ class OfferResponseService:
         # ----------------------------
         # 2️⃣ Extract PandaDoc document ID
         # ----------------------------
-        doc_id = payload.data.id   # This is ALWAYS present
-
+        doc_id = payload.data.id
         print(f"➡ Document ID (doc_id): {doc_id}")
 
         # ----------------------------
@@ -61,11 +62,9 @@ class OfferResponseService:
         print("📦 Prepared update data:", update_data)
 
         # ----------------------------
-        # 5️⃣ DAO call
+        # 5️⃣ Call DAO using constructor-injected DB
         # ----------------------------
-        dao = OfferResponseDAO()        # follow same style as your other DAOs
-        dao.db = payload.db if hasattr(payload, "db") else dao.db  # allow passing db via DI
-        await dao.update_offer_from_webhook(update_data)
+        await self.dao.update_offer_from_webhook(update_data)
 
         print("✅ Business Layer: Update request sent to DAO")
 
