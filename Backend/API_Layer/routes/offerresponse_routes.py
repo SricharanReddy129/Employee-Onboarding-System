@@ -42,3 +42,4 @@ async def offerletter_accepted_webhook(request: Request):
         print("❌ Error processing webhook:", str(e))
         # Still return 200 OK so PandaDoc doesn't retry
         return PandaDocWebhookResponse(status="error")
+    

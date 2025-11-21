@@ -5,42 +5,40 @@ from ...DAL.dao.offerresponse_dao import OfferResponseDAO
 
 class OfferResponseService:
 
-    @staticmethod
     async def process_pandadoc_webhook(payload: PandaDocWebhookRequest):
         """
-        Business logic only:
-        - Extract data from webhook
+        Business logic:
         - Validate event
-        - Prepare update fields
-        - Call DAO layer for DB operations
+        - Extract PandaDoc document ID
+        - Convert timestamps
+        - Prepare update payload
+        - Send to DAO layer
         """
 
         print("📌 Business Layer: Processing webhook")
 
         # ----------------------------
-        # 1️⃣ Validate event
+        # 1️⃣ Validate document completion
         # ----------------------------
-        if payload.event != "document.completed":
-            print("⚠ Ignoring webhook: Not a completed event.")
-            return
+        # Example received event = "recipient_completed"
+        # But actual status is inside payload.data.status
+        if payload.data.status != "document.completed":
+            print(f"⚠ Ignoring webhook: status={payload.data.status}")
+            return PandaDocWebhookResponse(status="ignored")
 
         # ----------------------------
-        # 2️⃣ Extract required fields
+        # 2️⃣ Extract PandaDoc document ID
         # ----------------------------
-        draft_id = payload.data.uuid                   # (pandadoc_draft_id stored in DB)
-        pandadoc_signed_doc_id = payload.data.id       # (internal PandaDoc docId)
-        signing_timestamp_raw = payload.date           # (ISO timestamp)
-        document_status = payload.data.status          # should be "completed"
+        doc_id = payload.data.id   # This is ALWAYS present
 
-        print(f"➡ Draft UUID: {draft_id}")
-        print(f"➡ Signed Doc ID: {pandadoc_signed_doc_id}")
-        print(f"➡ Document Status: {document_status}")
-        print(f"➡ Timestamp Raw: {signing_timestamp_raw}")
+        print(f"➡ Document ID (doc_id): {doc_id}")
 
         # ----------------------------
-        # 3️⃣ Convert timestamp
+        # 3️⃣ Extract & convert timestamp
         # ----------------------------
+        signing_timestamp_raw = payload.date
         signing_timestamp = None
+
         if signing_timestamp_raw:
             try:
                 signing_timestamp = datetime.fromisoformat(
@@ -49,26 +47,29 @@ class OfferResponseService:
             except:
                 signing_timestamp = datetime.utcnow()
 
+        print(f"➡ Signing Timestamp: {signing_timestamp}")
+
         # ----------------------------
-        # 4️⃣ Prepare values to update
+        # 4️⃣ Prepare update data for DAO
         # ----------------------------
         update_data = {
-            "draft_id": draft_id,
+            "doc_id": doc_id,
             "new_status": "Accepted",
-            "signed_at": signing_timestamp,
-            "signed_doc_id": pandadoc_signed_doc_id
+            "offer_signed_at": signing_timestamp,
         }
 
         print("📦 Prepared update data:", update_data)
 
         # ----------------------------
-        # 5️⃣ Call DAO (No DB ops here)
+        # 5️⃣ DAO call
         # ----------------------------
-        await OfferResponseDAO.update_offer_from_webhook(update_data)
+        dao = OfferResponseDAO()        # follow same style as your other DAOs
+        dao.db = payload.db if hasattr(payload, "db") else dao.db  # allow passing db via DI
+        await dao.update_offer_from_webhook(update_data)
 
-        print("✅ Passed update request to DAO layer")
+        print("✅ Business Layer: Update request sent to DAO")
 
         # ----------------------------
-        # 6️⃣ Return webhook response
+        # 6️⃣ Return response to PandaDoc
         # ----------------------------
         return PandaDocWebhookResponse(status="ok")
