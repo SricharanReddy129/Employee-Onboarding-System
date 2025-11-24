@@ -56,7 +56,7 @@ class OfferResponseService:
         update_data = {
             "doc_id": doc_id,
             "new_status": "Accepted",
-            "offer_signed_at": signing_timestamp,
+            "offer_response_at": signing_timestamp,
         }
 
         print("📦 Prepared update data:", update_data)

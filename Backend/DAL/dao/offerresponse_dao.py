@@ -14,7 +14,7 @@ class OfferResponseDAO:
 
         doc_id = update_data["doc_id"]
         new_status = update_data["new_status"]
-        signed_at = update_data["offer_signed_at"]
+        signed_at = update_data["offer_response_at"]
 
         # 1. Fetch record by doc_id (stored in pandadoc_draft_id)
         result = await self.db.execute(
@@ -30,7 +30,7 @@ class OfferResponseDAO:
 
         # 2. Update fields
         offer.status = new_status            # "Accepted"
-        offer.offer_signed_at = signed_at    # datetime from webhook
+        offer.offer_response_at = signed_at    # datetime from webhook
 
         # 3. Commit + refresh
         await self.db.commit()
