@@ -169,4 +169,12 @@ class ContactDAO:
     async def get_contact_by_uuid(self, uuid):
         result = await self.db.execute(select(Contacts).where(Contacts.contact_uuid == uuid))
         return result.scalar_one_or_none()
+    async def delete_contact(self, uuid):
+        result = await self.db.execute(select(Contacts).where(Contacts.contact_uuid == uuid))
+        contact = result.scalar_one_or_none()
+        if contact is None:
+            return None
+        await self.db.delete(contact)
+        await self.db.commit()
+        return contact
         

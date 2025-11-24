@@ -231,5 +231,15 @@ class ContactService:
             raise he
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+    async def delete_contact(self, uuid):
+        try:
+            result = await self.dao.get_contact_by_uuid(uuid)
+            if not result:
+                raise ValueError("Contact Not Found")
+            return await self.dao.delete_contact(uuid)
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
             

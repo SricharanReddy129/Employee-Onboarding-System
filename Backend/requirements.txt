@@ -24,3 +24,4 @@ phonenumbers
 # for file upload blob aws
 aioboto3
 
+httpx
