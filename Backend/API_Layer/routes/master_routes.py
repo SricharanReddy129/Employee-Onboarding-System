@@ -258,3 +258,17 @@ async def get_contact_by_uuid(contact_uuid: str, db: AsyncSession = Depends(get_
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
+# delete contact details by uuid
+@router.delete("/contacts/{contact_uuid}", response_model= CreateContactResponse)
+async def delete_contact(contact_uuid: str, db: AsyncSession = Depends(get_db)):
+    try:
+        contact_service = ContactService(db)
+        result = await contact_service.delete_contact(contact_uuid)
+        return CreateContactResponse(
+            contact_uuid = result.contact_uuid,
+            message = "Contact Deleted Successfully"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
