@@ -12,14 +12,13 @@ class PandaDocRecipient(BaseModel):
 
 
 class PandaDocData(BaseModel):
-    id: str                     # PandaDoc document ID
-    uuid: str                   # Same UUID you stored in DB
-    name: Optional[str] = None
-    status: str                 # completed / sent / viewed
+    id: str                             # PandaDoc document internal ID (ALWAYS present)
+    name: Optional[str] = None          # Document name (may contain UUID, but we IGNORE)
+    status: Optional[str] = None        # e.g., "document.completed"
     recipients: Optional[List[PandaDocRecipient]] = None
     version: Optional[int] = None
-
-
+    action_date: Optional[str] = None   # ISO timestamp when action occurred
+    
 class PandaDocWebhookRequest(BaseModel):
     event: str                  # document.completed
     id: Optional[str] = None    # Webhook event ID
