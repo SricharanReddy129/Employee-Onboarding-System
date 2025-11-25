@@ -334,3 +334,18 @@ CREATE TABLE employee_receivables (
     FOREIGN KEY (user_uuid) REFERENCES offer_letter_details(user_uuid),
     FOREIGN KEY (receivable_uuid) REFERENCES receivable_items(receivable_uuid)
 );
+
+-- 21 Audit Logs Table 
+CREATE TABLE audit_trail (
+    audit_id INT AUTO_INCREMENT PRIMARY KEY,
+    audit_uuid CHAR(36) NOT NULL,
+    entity_name VARCHAR(100) NOT NULL,         -- table name
+    entity_id VARCHAR(100) NOT NULL,           -- row id from that table
+    operation ENUM('CREATE', 'UPDATE', 'DELETE') NOT NULL,
+    user_id VARCHAR(100) DEFAULT NULL,         -- who performed the action
+    old_data JSON DEFAULT NULL,                -- before update
+    new_data JSON DEFAULT NULL,                -- after update
+    ip_address VARCHAR(50) DEFAULT NULL,
+    host VARCHAR(255) DEFAULT NULL,            -- localhost:8000 or EC2 DNS
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

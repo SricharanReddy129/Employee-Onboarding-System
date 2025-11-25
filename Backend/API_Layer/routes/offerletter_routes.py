@@ -130,9 +130,9 @@ async def get_all_offers(
         raise HTTPException(status_code=500, detail=str(e))
 
 # get offer by offer uuid
-@router.get("/offer/{offer_uuid}", response_model=OfferLetterDetailsResponse)
+@router.get("/offer/{user_uuid}", response_model=OfferLetterDetailsResponse)
 async def get_offer_by_uuid(
-    offer_uuid: str,
+    user_uuid: str,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -140,7 +140,7 @@ async def get_offer_by_uuid(
     """
     try:
         offer_service = OfferLetterService(db)
-        offer = await offer_service.get_offer_by_uuid(offer_uuid)
+        offer = await offer_service.get_offer_by_uuid(user_uuid)
         if not offer:
             raise HTTPException(status_code=404, detail="Offer letter not found")
         return offer
@@ -150,9 +150,9 @@ async def get_offer_by_uuid(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.put("/{offer_uuid}", response_model=OfferUpdateResponse)
+@router.put("/{user_uuid}", response_model=OfferUpdateResponse)
 async def update_offer_by_uuid(
-    offer_uuid: str,
+    user_uuid: str,
     request_data: OfferCreateRequest,
     request: Request,
     db: AsyncSession = Depends(get_db)
@@ -162,12 +162,12 @@ async def update_offer_by_uuid(
         current_user_id = int(request.state.user.get("user_id"))
 
         offer = await offer_service.update_offer_by_uuid(
-            offer_uuid, request_data, current_user_id
+            user_uuid, request_data, current_user_id
         )
 
         return OfferUpdateResponse(
             message="Offer Details Updated Successfully",
-            offer_id=offer_uuid
+            offer_id=user_uuid
         )
 
     except HTTPException:

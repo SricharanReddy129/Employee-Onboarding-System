@@ -44,7 +44,7 @@ class OfferLetterDetailsResponse(BaseModel):
     status : str
 
 class OfferPendingCandidate(BaseModel):
-    offer_uuid: str
+    user_uuid: str
     first_name: str
     last_name: str
     mail: str

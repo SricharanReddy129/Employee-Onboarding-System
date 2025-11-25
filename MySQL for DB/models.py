@@ -1,12 +1,28 @@
 from typing import Any, Optional
 import datetime
 
-from sqlalchemy import CHAR, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, String, text
+from sqlalchemy import CHAR, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, text
 from sqlalchemy.dialects.mysql import TINYINT, YEAR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 class Base(DeclarativeBase):
     pass
+
+
+class AuditTrail(Base):
+    __tablename__ = 'audit_trail'
+
+    audit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    audit_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    entity_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    entity_id: Mapped[str] = mapped_column(String(100), nullable=False)
+    operation: Mapped[str] = mapped_column(Enum('CREATE', 'UPDATE', 'DELETE'), nullable=False)
+    user_id: Mapped[Optional[str]] = mapped_column(String(100))
+    old_data: Mapped[Optional[dict]] = mapped_column(JSON)
+    new_data: Mapped[Optional[dict]] = mapped_column(JSON)
+    ip_address: Mapped[Optional[str]] = mapped_column(String(50))
+    host: Mapped[Optional[str]] = mapped_column(String(255))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
 
 
 class Countries(Base):
@@ -399,7 +415,7 @@ class EmployeeEducationDocument(Base):
     specialization: Mapped[Optional[str]] = mapped_column(String(150))
     year_of_passing: Mapped[Optional[Any]] = mapped_column(YEAR)
     file_path: Mapped[Optional[str]] = mapped_column(String(255))
-    status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'pending', 'verified', 'rejected'), server_default=text("'pending'"))
+    status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'verified', 'rejected'), server_default=text("'uploaded'"))
     uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     verified_by: Mapped[Optional[str]] = mapped_column(CHAR(36))
     verified_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
