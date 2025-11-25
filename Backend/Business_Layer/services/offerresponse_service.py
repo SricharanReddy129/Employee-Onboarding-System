@@ -1,5 +1,9 @@
 from datetime import datetime
-from ...API_Layer.interfaces.offerresponse_interface import PandaDocWebhookRequest, PandaDocWebhookResponse
+from ...API_Layer.interfaces.offerresponse_interface import(
+    PandaDocWebhookRequest,
+    PandaDocWebhookResponse,
+    PandaDocExpirationData
+)
 from ...DAL.dao.offerresponse_dao import OfferResponseDAO
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,7 +13,7 @@ class OfferResponseService:
         self.db = db
         self.dao = OfferResponseDAO(self.db)
 
-    async def process_pandadoc_webhook(self, payload: PandaDocWebhookRequest):
+    async def process_offer_acceptance_webhook(self, payload: PandaDocWebhookRequest):
         """
         Business logic:
         - Validate event
@@ -64,9 +68,73 @@ class OfferResponseService:
         # ----------------------------
         # 5️⃣ Call DAO using constructor-injected DB
         # ----------------------------
-        await self.dao.update_offer_from_webhook(update_data)
+        await self.dao.update_offer_acceptance_from_webhook(update_data)
 
         print("✅ Business Layer: Update request sent to DAO")
+
+        # ----------------------------
+        # 6️⃣ Return response to PandaDoc
+        # ----------------------------
+        return PandaDocWebhookResponse(status="ok")
+    
+    async def process_offer_expiration_webhook(self, payload: PandaDocWebhookRequest):
+        """
+        Business logic for offer expiration:
+        - Validate event
+        - Extract PandaDoc document ID
+        - Convert expiration timestamp
+        - Prepare update payload
+        - Send to DAO layer
+        """
+
+        print("📌 Business Layer: Processing EXPIRATION webhook")
+
+        # ----------------------------
+        # 1️⃣ Validate document expiration
+        # ----------------------------
+        if payload.data.status != "document.voided":
+            print(f"⚠ Ignoring webhook (not expiration): status={payload.data.status}")
+            return PandaDocWebhookResponse(status="ignored")
+
+        # ----------------------------
+        # 2️⃣ Extract PandaDoc document ID
+        # ----------------------------
+        doc_id = payload.data.id
+        print(f"➡ Document ID (doc_id): {doc_id}")
+
+        # ----------------------------
+        # 3️⃣ Extract & convert expiration timestamp
+        # ----------------------------
+        expiration_timestamp_raw = payload.data.expiration_date
+        expiration_timestamp = None
+
+        if expiration_timestamp_raw:
+            try:
+                expiration_timestamp = datetime.fromisoformat(
+                    expiration_timestamp_raw.replace("Z", "+00:00")
+                )
+            except:
+                expiration_timestamp = datetime.utcnow()
+
+        print(f"➡ Expiration Timestamp: {expiration_timestamp}")
+
+        # ----------------------------
+        # 4️⃣ Prepare update data for DAO
+        # ----------------------------
+        update_data = {
+            "doc_id": doc_id,
+            "new_status": "Expired",
+            "offer_response_at": expiration_timestamp,
+        }
+
+        print("📦 Prepared expiration update data:", update_data)
+
+        # ----------------------------
+        # 5️⃣ Call DAO using constructor-injected DB
+        # ----------------------------
+        await self.dao.update_offer_expiration_from_webhook(update_data)
+
+        print("🧊 Business Layer: Expiration update sent to DAO")
 
         # ----------------------------
         # 6️⃣ Return response to PandaDoc

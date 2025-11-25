@@ -29,3 +29,12 @@ class PandaDocWebhookRequest(BaseModel):
 
 class PandaDocWebhookResponse(BaseModel):
     status: str = "ok"
+
+class PandaDocExpirationData(BaseModel):
+    id: str                                 # PandaDoc document ID
+    name: Optional[str] = None              # Document name (optional)
+    status: Optional[str] = None            # Expected: "document.voided"
+    expiration_date: Optional[str] = None   # When PandaDoc expired the document (ISO timestamp)
+    version: Optional[int] = None           # Document version (optional)
+    metadata: Optional[dict] = None         # Contains offer_uuid if you added it in template
+
