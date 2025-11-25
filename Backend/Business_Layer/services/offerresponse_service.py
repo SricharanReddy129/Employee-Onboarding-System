@@ -77,7 +77,7 @@ class OfferResponseService:
         # ----------------------------
         return PandaDocWebhookResponse(status="ok")
     
-    async def process_offer_expiration_webhook(self, payload: PandaDocWebhookRequest):
+    async def process_offer_expiration_webhook(self, payload: PandaDocExpirationData):
         """
         Business logic for offer expiration:
         - Validate event
@@ -92,20 +92,20 @@ class OfferResponseService:
         # ----------------------------
         # 1️⃣ Validate document expiration
         # ----------------------------
-        if payload.data.status != "document.voided":
-            print(f"⚠ Ignoring webhook (not expiration): status={payload.data.status}")
+        if payload.status != "document.voided":
+            print(f"⚠ Ignoring webhook (not expiration): status={payload.status}")
             return PandaDocWebhookResponse(status="ignored")
 
         # ----------------------------
         # 2️⃣ Extract PandaDoc document ID
         # ----------------------------
-        doc_id = payload.data.id
+        doc_id = payload.id
         print(f"➡ Document ID (doc_id): {doc_id}")
 
         # ----------------------------
         # 3️⃣ Extract & convert expiration timestamp
         # ----------------------------
-        expiration_timestamp_raw = payload.data.expiration_date
+        expiration_timestamp_raw = payload.expiration_date
         expiration_timestamp = None
 
         if expiration_timestamp_raw:
