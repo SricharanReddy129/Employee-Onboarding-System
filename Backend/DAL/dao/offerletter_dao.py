@@ -81,20 +81,20 @@ class OfferLetterDAO:
         result = await self.db.execute(select(OfferLetterDetails))
         return result.scalars().all()
     
-    async def get_offer_by_uuid(self, offer_uuid: str):
+    async def get_offer_by_uuid(self, user_uuid: str):
         """
         Get a single offer by UUID.
         """
         result = await self.db.execute(
-            select(OfferLetterDetails).where(OfferLetterDetails.user_uuid == offer_uuid)
+            select(OfferLetterDetails).where(OfferLetterDetails.user_uuid == user_uuid)
         )
         return result.scalars().first()
     
-    async def update_offer_by_uuid(self, offer_uuid: str, request_data: OfferCreateRequest, current_user_id: int):
+    async def update_offer_by_uuid(self, user_uuid: str, request_data: OfferCreateRequest, current_user_id: int):
 
         # 1. Fetch record
         result = await self.db.execute(
-            select(OfferLetterDetails).where(OfferLetterDetails.user_uuid == offer_uuid)
+            select(OfferLetterDetails).where(OfferLetterDetails.user_uuid == user_uuid)
         )
         offer = result.scalar_one_or_none()
 
@@ -136,14 +136,14 @@ class OfferLetterDAO:
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def update_offerletter_status(self, offer_uuid: str, new_status: str, current_user_id: int):
+    async def update_offerletter_status(self, user_uuid: str, new_status: str, current_user_id: int):
         """
         Update only the status of an offer letter by UUID.
         """
 
         # 1. Fetch record
         result = await self.db.execute(
-            select(OfferLetterDetails).where(OfferLetterDetails.user_uuid == offer_uuid)
+            select(OfferLetterDetails).where(OfferLetterDetails.user_uuid == user_uuid)
         )
         offer = result.scalar_one_or_none()
 
@@ -183,7 +183,7 @@ class OfferLetterDAO:
 
         return offer
 
-    async def get_pandadoc_draft_id(self, offer_uuid: str):
+    async def get_pandadoc_draft_id(self, user_uuid: str):
         """
         Fetch only the PandaDoc draft ID for an offer letter by user UUID.
         """
@@ -191,7 +191,7 @@ class OfferLetterDAO:
         # 1. Fetch only the draft_id column
         result = await self.db.execute(
             select(OfferLetterDetails.pandadoc_draft_id)
-            .where(OfferLetterDetails.user_uuid == offer_uuid)
+            .where(OfferLetterDetails.user_uuid == user_uuid)
         )
         draft_id = result.scalar_one_or_none()
 

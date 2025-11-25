@@ -2,11 +2,12 @@ from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from .API_Layer.routes import master_routes, offerletter_routes, education_routes, offerresponse_routes
 from .API_Layer.middleware.jwt_middleware import JWTMiddleware
-
+from .API_Layer.middleware.audit_middleware import AuditMiddleware
 # models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Employee Onboarding System API")
-
+# Add Audit Middleware globally
+app.add_middleware(AuditMiddleware)
 # Add JWT middleware globally
 app.add_middleware(JWTMiddleware)
 

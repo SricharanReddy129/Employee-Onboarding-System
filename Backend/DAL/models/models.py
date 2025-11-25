@@ -1,12 +1,29 @@
 from typing import Any, Optional
 import datetime
 
-from sqlalchemy import CHAR, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, String, text
+from sqlalchemy import CHAR, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, text
 from sqlalchemy.dialects.mysql import TINYINT, YEAR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 class Base(DeclarativeBase):
     pass
+
+
+class AuditTrail(Base):
+    __tablename__ = 'audit_trail'
+
+    audit_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    audit_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    entity_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    entity_id: Mapped[str] = mapped_column(String(100), nullable=False)
+    operation: Mapped[str] = mapped_column(Enum('CREATE', 'UPDATE', 'DELETE'), nullable=False)
+    user_id: Mapped[Optional[str]] = mapped_column(String(100))
+    old_data: Mapped[Optional[dict]] = mapped_column(JSON)
+    new_data: Mapped[Optional[dict]] = mapped_column(JSON)
+    ip_address: Mapped[Optional[str]] = mapped_column(String(50))
+    host: Mapped[Optional[str]] = mapped_column(String(255))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    endpoint: Mapped[Optional[str]] = mapped_column(String(100))
 
 
 class Countries(Base):
@@ -117,8 +134,8 @@ class OfferLetterDetails(Base):
     status: Mapped[Optional[str]] = mapped_column(Enum('Created', 'Offered', 'Accepted', 'Rejected'), server_default=text("'Created'"))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
-    pandadoc_draft_id: Mapped[Optional[str]] = mapped_column(String(255))
     file_path: Mapped[Optional[str]] = mapped_column(String(255))
+    pandadoc_draft_id: Mapped[Optional[str]] = mapped_column(String(255))
     offer_signed_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
 
     contacts: Mapped[list['Contacts']] = relationship('Contacts', back_populates='offer_letter_details', lazy="selectin")

@@ -42,7 +42,7 @@ class OfferLetterService:
             last_name = validate_name(request_data.last_name)
             mail = validate_email(request_data.mail)
             country_code = validate_country(request_data.country_code)
-            contact_number = validate_phone_number(country_code,request_data.contact_number)
+            contact_number = validate_phone_number(request_data.country_code, request_data.contact_number, type = 'contact_number')
             designation = validate_designation(request_data.designation)
             package = validate_package(request_data.package)
             currency = validate_currency(request_data.currency)
@@ -103,7 +103,7 @@ class OfferLetterService:
                 last_name = validate_name(str(row['last_name']).strip())
                 mail = validate_email(str(row['mail']).strip())
                 country_code = validate_country(str(row['country_code']).strip())
-                contact_number = validate_phone_number(country_code, str(row['contact_number']).strip())
+                contact_number = validate_phone_number(str(row['country_code']).strip(), str(row['contact_number']).strip(), type = 'contact_number')
                 designation = validate_designation(str(row['designation']).strip())
                 package = validate_package(str(row['package']).strip())
                 currency = validate_currency(str(row['currency']).strip())
@@ -207,12 +207,12 @@ class OfferLetterService:
     async def get_all_offers(self):
         return await self.dao.get_all_offers()
     
-    async def get_offer_by_uuid(self, offer_uuid: str):
-        return await self.dao.get_offer_by_uuid(offer_uuid)
+    async def get_offer_by_uuid(self, user_uuid: str):
+        return await self.dao.get_offer_by_uuid(user_uuid)
     
-    async def update_offer_by_uuid(self, offer_uuid: str, request_data: OfferCreateRequest, current_user_id: int):
+    async def update_offer_by_uuid(self, user_uuid: str, request_data: OfferCreateRequest, current_user_id: int):
         try:
-            offer = await self.dao.get_offer_by_uuid(offer_uuid)
+            offer = await self.dao.get_offer_by_uuid(user_uuid)
             if not offer:
                 raise HTTPException(status_code=404, detail="Offer not found")
 
@@ -221,7 +221,7 @@ class OfferLetterService:
             last_name = validate_name(request_data.last_name)
             mail = validate_email(request_data.mail)
             country_code = validate_country(request_data.country_code)
-            contact_number = validate_phone_number(country_code, request_data.contact_number)
+            contact_number = validate_phone_number(request_data.country_code, request_data.contact_number, type='contact')
             designation = validate_designation(request_data.designation)
             package = validate_package(request_data.package)
             currency = validate_currency(request_data.currency)
@@ -232,7 +232,7 @@ class OfferLetterService:
                 if existing:
                     raise HTTPException(status_code=409, detail="Email already exists")
 
-            updated_offer = await self.dao.update_offer_by_uuid(offer_uuid, request_data, current_user_id)
+            updated_offer = await self.dao.update_offer_by_uuid(user_uuid, request_data, current_user_id)
 
             return updated_offer
 
@@ -280,7 +280,7 @@ class OfferLetterService:
         print("Preparing PandaDoc document body")
 
         doc_body = {
-            "name": f"Offer Letter {payload['offer_uuid']}",
+            "name": f"Offer Letter {payload['user_uuid']}",
             "template_uuid": template_id,
             "recipients": [
                 {
@@ -296,7 +296,7 @@ class OfferLetterService:
                 {"name": "designation", "value": payload["designation"]},
                 {"name": "package", "value": payload["package"]},
                 {"name": "currency", "value": payload["currency"]},
-                {"name": "offer_uuid", "value": payload["offer_uuid"]},
+                {"name": "user_uuid", "value": payload["user_uuid"]},
                 {"name": "company_name", "value": payload["company_name"]}
             ],
             "send_document": False
@@ -343,7 +343,7 @@ class OfferLetterService:
             raise
 
     
-    async def poll_pandadoc_draft_status(self, offer_uuid: str) -> dict:
+    async def poll_pandadoc_draft_status(self, user_uuid: str) -> dict:
         """
         Poll PandaDoc until document status becomes `document.draft`.
         Steps:
@@ -352,7 +352,7 @@ class OfferLetterService:
         3) Stop when status = document.draft
         """
         # 1️⃣ Fetch draft_id from DB
-        draft_id = await self.dao.get_pandadoc_draft_id(offer_uuid)
+        draft_id = await self.dao.get_pandadoc_draft_id(user_uuid)
 
         if not draft_id:
             raise HTTPException(status_code=400, detail="Draft ID not found for this offer letter")
@@ -402,7 +402,7 @@ class OfferLetterService:
         )
     
 
-    async def send_pandadoc_offerletter(self, offer_uuid: str) -> dict:
+    async def send_pandadoc_offerletter(self, user_uuid: str) -> dict:
         """
         Sends the PandaDoc document (email to candidate) after draft status is 'document.draft'.
         - Fetch draft_id from DB
@@ -410,7 +410,7 @@ class OfferLetterService:
         """
 
         # 1️⃣ Fetch draft_id from DB
-        draft_id = await self.dao.get_pandadoc_draft_id(offer_uuid)
+        draft_id = await self.dao.get_pandadoc_draft_id(user_uuid)
 
         if not draft_id:
             raise HTTPException(status_code=400, detail="Draft ID not found for this offer letter")
@@ -479,14 +479,14 @@ class OfferLetterService:
             print('the uuids: ', *uuids)
 
             # --- 2️⃣ Process Each Offer Letter ---
-            for offer_uuid in uuids:
+            for user_uuid in uuids:
 
                 # Fetch DB record using DAO function EXACTLY as written
-                record = await self.dao.get_offer_by_uuid(offer_uuid)
-                print('record fetched for uuid', offer_uuid, ':', record)
+                record = await self.dao.get_offer_by_uuid(user_uuid)
+                print('record fetched for uuid', user_uuid, ':', record)
                 if not record:
                     failed.append({
-                        "offerletter_uuid": offer_uuid,
+                        "offerletter_uuid": user_uuid,
                         "error": "Offer letter not found in database"
                     })
                     continue
@@ -499,78 +499,78 @@ class OfferLetterService:
                     "designation": record.designation,
                     "package": record.package,
                     "currency": record.currency,
-                    "offer_uuid": offer_uuid,
+                    "user_uuid": user_uuid,
                     "company_name" : "Paves Global Infotech"
                 }
-                print('payload for uuid', offer_uuid, ':', payload)
+                print('payload for uuid', user_uuid, ':', payload)
 
                 # --- 3️⃣ Call PandaDoc ---
-                print('Sending offer letter via PandaDoc for uuid', offer_uuid)
+                print('Sending offer letter via PandaDoc for uuid', user_uuid)
                 # create draft endpoint calling 
                 try:
-                    print('About to call create_offerletter_draft_with_pandadoc for uuid', offer_uuid)
-                    await self.create_offerletter_draft_with_pandadoc(payload, offer_uuid)
+                    print('About to call create_offerletter_draft_with_pandadoc for uuid', user_uuid)
+                    await self.create_offerletter_draft_with_pandadoc(payload, user_uuid)
                     print('PandaDoc draft call completed successfully')
 
                     # poll draft status endpoint calling
                     try:
-                        print('About to call poll_pandadoc_draft_status for uuid', offer_uuid)
-                        await self.poll_pandadoc_draft_status(offer_uuid)
+                        print('About to call poll_pandadoc_draft_status for uuid', user_uuid)
+                        await self.poll_pandadoc_draft_status(user_uuid)
                         print('PandaDoc poll call completed successfully')
 
                         # send document endpoint calling
                         try:
-                            print('About to call send_pandadoc_offerletter for uuid', offer_uuid)
-                            await self.send_pandadoc_offerletter(offer_uuid)
+                            print('About to call send_pandadoc_offerletter for uuid', user_uuid)
+                            await self.send_pandadoc_offerletter(user_uuid)
                             print('PandaDoc send call completed successfully')
 
                             # --- 4️⃣ Update Offer Letter Status ---
-                            print('About to update offer letter status in DB for uuid', offer_uuid)
+                            print('About to update offer letter status in DB for uuid', user_uuid)
                             try:
                                 await self.dao.update_offerletter_status(
-                                    offer_uuid = offer_uuid,
+                                    user_uuid = user_uuid,
                                     new_status = "Offered",
                                     current_user_id = current_user_id
                                 )
-                                print('Offer letter status updated successfully for uuid', offer_uuid)
+                                print('Offer letter status updated successfully for uuid', user_uuid)
 
                                 # --- 5️⃣ Append to successful ---
                                 successful.append({
-                                    "offerletter_uuid": offer_uuid,
+                                    "offerletter_uuid": user_uuid,
                                     "email": record.mail,
                                     "status": "success",
                                     "message": "Offer letter sent successfully"
                                 })
-                                print('Offer letter sent and recorded as successful for uuid', offer_uuid)
+                                print('Offer letter sent and recorded as successful for uuid', user_uuid)
 
                             except Exception as dao_e:
-                                print('Error updating offer letter status for uuid', offer_uuid, '-', str(dao_e))
+                                print('Error updating offer letter status for uuid', user_uuid, '-', str(dao_e))
                                 failed.append({
-                                    "offerletter_uuid": offer_uuid,
+                                    "offerletter_uuid": user_uuid,
                                     "email": record.mail,
                                     "error": f"DB update error: {dao_e}"
                                 })
                                 continue  # skip adding to successful if update failed
                         except Exception as e:
-                            print('Error sending offer letter for uuid', offer_uuid, '-', str(e))
+                            print('Error sending offer letter for uuid', user_uuid, '-', str(e))
                             failed.append({
-                                "offerletter_uuid": offer_uuid,
+                                "offerletter_uuid": user_uuid,
                                 "email": record.mail,
                                 "error": str(e)
                             })
 
                     except Exception as e:
-                        print('Error polling offer letter for uuid', offer_uuid, '-', str(e))
+                        print('Error polling offer letter for uuid', user_uuid, '-', str(e))
                         failed.append({
-                            "offerletter_uuid": offer_uuid,
+                            "offerletter_uuid": user_uuid,
                             "email": record.mail,
                             "error": str(e)
                         })
 
                 except Exception as e:
-                    print('Error drafting offer letter for uuid', offer_uuid, '-', str(e))
+                    print('Error drafting offer letter for uuid', user_uuid, '-', str(e))
                     failed.append({
-                        "offerletter_uuid": offer_uuid,
+                        "offerletter_uuid": user_uuid,
                         "email": record.mail,
                         "error": str(e)
                     })

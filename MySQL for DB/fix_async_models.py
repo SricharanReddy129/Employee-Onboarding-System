@@ -26,9 +26,10 @@ def fix_relationships(file_path):
     
     print(f"✅ Fixed relationships in {file_path}")
 
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python fix_async_models.py models.py")
-        sys.exit(1)
-    
-    fix_relationships(sys.argv[1])
+# if __name__ == "__main__":
+#     if len(sys.argv) != 2:
+#         print("Usage: python fix_async_models.py models.py")
+#         print(sys.argv[1])
+#         sys.exit(1)
+file_path = r"C:\Users\Jagadish.Pannala\Employee_Onboarding_Module\Employee-Onboarding-System\MySQL for DB\models.py"
+fix_relationships(file_path)
