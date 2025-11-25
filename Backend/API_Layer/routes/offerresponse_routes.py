@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi import APIRouter, Body, Depends, Request, HTTPException
 from ...API_Layer.interfaces.offerresponse_interface import (
     PandaDocWebhookRequest, 
     PandaDocWebhookResponse,
@@ -54,7 +54,8 @@ async def offerletter_accepted_webhook(
 @router.post("/offerletter-expired", response_model=PandaDocWebhookResponse)
 async def offerletter_expired_webhook(
     request: Request,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    payload: dict = Body(...),           # 👈 THIS LINE is just to test the webhook handling
     ):
     """
     Receives PandaDoc webhook when the offer letter is automatically expired
@@ -85,7 +86,7 @@ async def offerletter_expired_webhook(
                     continue
 
                 response_offer = OfferResponseService(db)
-                response = await response_offer.handle_expiration(expiration_data)
+                response = await response_offer.process_offer_expiration_webhook(expiration_data)
                 responses.append(response)
 
             except Exception as e:
