@@ -138,7 +138,7 @@ class OfferLetterDetails(Base):
     pandadoc_draft_id: Mapped[Optional[str]] = mapped_column(String(255))
     file_path: Mapped[Optional[str]] = mapped_column(String(255))
     offer_response_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
-    offer_signed_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
+    # offer_signed_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
 
     contacts: Mapped[list['Contacts']] = relationship('Contacts', back_populates='offer_letter_details', lazy="selectin")
     current_addresses: Mapped[list['CurrentAddresses']] = relationship('CurrentAddresses', back_populates='offer_letter_details', lazy="selectin")
