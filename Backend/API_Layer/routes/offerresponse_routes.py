@@ -1,11 +1,14 @@
-from fastapi import APIRouter, Depends, Request, HTTPException
+from fastapi import APIRouter, Body, Depends, Request, HTTPException
 from ...API_Layer.interfaces.offerresponse_interface import (
     PandaDocWebhookRequest, 
-    PandaDocWebhookResponse
+    PandaDocWebhookResponse,
+    PandaDocExpirationData
 )
 from ...Business_Layer.services.offerresponse_service import OfferResponseService
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.utils.dependencies import get_db
+from ..utils.webhook_validation import validate_webhook_signature
+from ...config.env_loader import get_env_var
 
 router = APIRouter()
 
@@ -19,6 +22,24 @@ async def offerletter_accepted_webhook(
     """
 
     print("📬 API Layer: Received PandaDoc webhook for offer letter acceptance")
+
+    signature = request.headers.get("X-PandaDoc-Signature")
+    raw_body = await request.body()
+
+    # 🔐 Validate using secret key for this webhook
+    try:
+        PANDADOC_OFFER_ACCEPTED_WEBHOOK_KEY = get_env_var("PANDADOC_OFFER_ACCEPTED_WEBHOOK_KEY")
+    except Exception as e:
+        print("[Offer Signed] ❌ Error loading webhook secret key:", e)
+        raise HTTPException(500, "Server misconfiguration")
+    
+    if not validate_webhook_signature(PANDADOC_OFFER_ACCEPTED_WEBHOOK_KEY, raw_body, signature):
+        print("[Offer Signed] ❌ Validation failed. Rejecting webhook.")
+        raise HTTPException(401, "Invalid webhook signature")
+
+    print("[Offer Signed] ✅ Validation passed")
+
+    # Business layer handles actual functionality
 
     try:
         payload_json = await request.json()
@@ -35,7 +56,7 @@ async def offerletter_accepted_webhook(
             try:
                 payload = PandaDocWebhookRequest(**p)
                 response_offer = OfferResponseService(db)
-                response = await response_offer.process_pandadoc_webhook(payload)
+                response = await response_offer.process_offer_acceptance_webhook(payload)
                 responses.append(response)
             except Exception as e:
                 print("❌ Error processing single webhook entry:", e)
@@ -49,3 +70,70 @@ async def offerletter_accepted_webhook(
         # Still return 200 OK so PandaDoc doesn't retry
         return PandaDocWebhookResponse(status="error")
     
+    
+@router.post("/offerletter-expired", response_model=PandaDocWebhookResponse)
+async def offerletter_expired_webhook(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    payload: dict = Body(...),           # 👈 THIS LINE is just to test the webhook handling
+    ):
+    """
+    Receives PandaDoc webhook when the offer letter is automatically expired
+    (status = document.voided).
+    """
+
+    print("📬 API Layer: Received PandaDoc webhook for offer letter EXPIRATION")
+
+    signature = request.headers.get("X-PandaDoc-Signature")
+    raw_body = await request.body()
+
+    # 🔐 Validate using secret key for this webhook
+    try:
+        PANDADOC_OFFER_EXPIRED_WEBHOOK_KEY = get_env_var("PANDADOC_OFFER_EXPIRED_WEBHOOK_KEY")
+    except Exception as e:
+        print("[Offer Expired] ❌ Error loading webhook secret key:", e)
+        raise HTTPException(500, "Server misconfiguration")
+    
+    if not validate_webhook_signature(PANDADOC_OFFER_EXPIRED_WEBHOOK_KEY, raw_body, signature):
+        print("[Offer Expired] ❌ Validation failed. Rejecting webhook.")
+        raise HTTPException(401, "Invalid webhook signature")
+
+    print("[Offer expired] ✅ Validation passed")
+
+    # Business layer handles actual functionality
+
+    try:
+        payload_json = await request.json()
+        print("📩 Incoming PandaDoc Expiration Webhook Payload:", payload_json)
+
+        # If PandaDoc sends a list → iterate through them
+        if isinstance(payload_json, list):
+            payloads = payload_json
+        else:
+            payloads = [payload_json]
+
+        responses = []
+        for p in payloads:
+            try:
+                # We ONLY extract the "data" block because expiration uses a different interface
+                expiration_data = PandaDocExpirationData(**p.get("data", {}))
+
+                # Ignore any events that are not expiration (voided)
+                if expiration_data.status != "document.voided":
+                    print(f"⚠️ Ignoring non-expiration event: {expiration_data.status}")
+                    continue
+
+                response_offer = OfferResponseService(db)
+                response = await response_offer.process_offer_expiration_webhook(expiration_data)
+                responses.append(response)
+
+            except Exception as e:
+                print("❌ Error processing single expiration webhook entry:", e)
+
+        # Always return OK
+        return PandaDocWebhookResponse(status="ok")
+
+    except Exception as e:
+        print("❌ Error processing EXPIRATION webhook:", str(e))
+        # Still return 200 OK so PandaDoc doesn't retry
+        return PandaDocWebhookResponse(status="error")
