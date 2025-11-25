@@ -7,6 +7,8 @@ from ...API_Layer.interfaces.offerresponse_interface import (
 from ...Business_Layer.services.offerresponse_service import OfferResponseService
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.utils.dependencies import get_db
+from ..utils.webhook_validation import validate_webhook_signature
+from ...config.env_loader import get_env_var
 
 router = APIRouter()
 
@@ -20,6 +22,24 @@ async def offerletter_accepted_webhook(
     """
 
     print("📬 API Layer: Received PandaDoc webhook for offer letter acceptance")
+
+    signature = request.headers.get("X-PandaDoc-Signature")
+    raw_body = await request.body()
+
+    # 🔐 Validate using secret key for this webhook
+    try:
+        PANDADOC_OFFER_ACCEPTED_WEBHOOK_KEY = get_env_var("PANDADOC_OFFER_ACCEPTED_WEBHOOK_KEY")
+    except Exception as e:
+        print("[Offer Signed] ❌ Error loading webhook secret key:", e)
+        raise HTTPException(500, "Server misconfiguration")
+    
+    if not validate_webhook_signature(PANDADOC_OFFER_ACCEPTED_WEBHOOK_KEY, raw_body, signature):
+        print("[Offer Signed] ❌ Validation failed. Rejecting webhook.")
+        raise HTTPException(401, "Invalid webhook signature")
+
+    print("[Offer Signed] ✅ Validation passed")
+
+    # Business layer handles actual functionality
 
     try:
         payload_json = await request.json()
@@ -63,6 +83,24 @@ async def offerletter_expired_webhook(
     """
 
     print("📬 API Layer: Received PandaDoc webhook for offer letter EXPIRATION")
+
+    signature = request.headers.get("X-PandaDoc-Signature")
+    raw_body = await request.body()
+
+    # 🔐 Validate using secret key for this webhook
+    try:
+        PANDADOC_OFFER_EXPIRED_WEBHOOK_KEY = get_env_var("PANDADOC_OFFER_EXPIRED_WEBHOOK_KEY")
+    except Exception as e:
+        print("[Offer Expired] ❌ Error loading webhook secret key:", e)
+        raise HTTPException(500, "Server misconfiguration")
+    
+    if not validate_webhook_signature(PANDADOC_OFFER_EXPIRED_WEBHOOK_KEY, raw_body, signature):
+        print("[Offer Expired] ❌ Validation failed. Rejecting webhook.")
+        raise HTTPException(401, "Invalid webhook signature")
+
+    print("[Offer expired] ✅ Validation passed")
+
+    # Business layer handles actual functionality
 
     try:
         payload_json = await request.json()
