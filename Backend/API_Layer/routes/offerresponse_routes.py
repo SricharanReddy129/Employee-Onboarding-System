@@ -7,7 +7,7 @@ from ...API_Layer.interfaces.offerresponse_interface import (
 from ...Business_Layer.services.offerresponse_service import OfferResponseService
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.utils.dependencies import get_db
-from ..utils.webhook_validation import validate_webhook_signature
+from ..utils.webhook_validation import validate_webhook_origin
 from ...config.env_loader import get_env_var
 
 router = APIRouter()
@@ -23,49 +23,20 @@ async def offerletter_accepted_webhook(
 
     print("📬 API Layer: Received PandaDoc webhook for offer letter acceptance")
 
-    try:
-        received_signature = request.headers.get("X-PandaDoc-Signature")
-    except Exception as e:
-        print("❌ Error extracting webhook signature:", e)
-        raise HTTPException(400, "Bad Request")
+    # 1. Extract client IP
+    client_ip = request.client.host
+    print(f"[Offer Signed] Incoming IP: {client_ip}")
+
+    # 2. Validate IP using utils
+    PANDADOC_ALLOWED_IPS = get_env_var("PANDADOC_ALLOWED_IPS")
     
-    print(f"[Offer Signed] Received signature: {received_signature}")
-    
-    raw_body = await request.body()
+    if not validate_webhook_origin(client_ip, PANDADOC_ALLOWED_IPS):
+        print("[Offer Signed] ❌ Origin validation failed")
+        raise HTTPException(401, "Unauthorized webhook origin")
 
-    raw_body = await request.body()
-
-    print("\n================= Incoming Webhook Request =================")
-    print("Headers:")
-    for k, v in request.headers.items():
-        print(f"  {k}: {v}")
-
-    print("\nRaw Body:")
-    try:
-        print(raw_body.decode("utf-8"))
-    except:
-        print(raw_body)
-
-    print("============================================================\n")
-
-
-    # 🔐 Validate using secret key for this webhook
-    try:
-        print("[Offer Signed] Loading webhook secret key from environment")
-        PANDADOC_OFFER_ACCEPTED_WEBHOOK_KEY = get_env_var("PANDADOC_OFFER_ACCEPTED_WEBHOOK_KEY")
-    except Exception as e:
-        print("[Offer Signed] ❌ Error loading webhook secret key:", e)
-        raise HTTPException(500, "Server misconfiguration")
-    
-    print("[Offer Signed] validate_webhook_signature to be called")
-    if not validate_webhook_signature(PANDADOC_OFFER_ACCEPTED_WEBHOOK_KEY, raw_body, received_signature):
-        print("[Offer Signed] ❌ Validation failed. Rejecting webhook.")
-        raise HTTPException(401, "Invalid webhook signature")
-
-    print("[Offer Signed] ✅ Validation passed")
+    print("[Offer Signed] ✅ Origin validated")
 
     # Business layer handles actual functionality
-
     try:
         payload_json = await request.json()
         print("📩 Incoming PandaDoc Webhook Payload:", payload_json)

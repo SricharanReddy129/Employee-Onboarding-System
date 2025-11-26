@@ -1,35 +1,28 @@
-import hmac
-import hashlib
+def validate_webhook_origin(client_ip: str, allowed_ips: list[str]) -> bool:
+    """
+    Validate that the webhook request came from a trusted PandaDoc IP.
+    Only returns True/False. Calling route handles rejection.
+    """
 
-def validate_webhook_signature(secret: str, raw_body: bytes, received_signature: str) -> bool:
-    print("\n[Webhook Validation] Starting validation...")
+    print("\n[Webhook Origin Validation] Starting IP validation...")
+    print(f"[Webhook Origin Validation] Incoming IP: {client_ip}")
 
-    print(f"[Webhook Validation] Secret content (first 10 chars): {secret[:10]}")
-    print(f"[Webhook Validation] Raw body (first 50 chars): {raw_body[:50]}")
-    print(f"[Webhook Validation] Received signature: {received_signature}")
-
-    if not received_signature:
-        print("[Webhook Validation] ❌ No signature received in header")
+    if not client_ip:
+        print("[Webhook Origin Validation] ❌ Could not determine client IP")
         return False
 
-    if not secret:
-        print("[Webhook Validation] ❌ Secret key missing")
+    if not allowed_ips:
+        print("[Webhook Origin Validation] ❌ No allowed IPs configured!")
         return False
 
-    print(f"[Webhook Validation] Raw body length: {len(raw_body)} bytes")
-    print(f"[Webhook Validation] Received signature: {received_signature}")
+    # Debug print allowed IPs
+    print("[Webhook Origin Validation] Allowed IP Ranges:")
+    for ip in allowed_ips:
+        print(f"   - {ip}")
 
-    computed_signature = hmac.new(
-        secret.encode(),
-        raw_body,
-        hashlib.sha256
-    ).hexdigest()
-
-    print(f"[Webhook Validation] Computed signature: {computed_signature}")
-
-    if hmac.compare_digest(computed_signature, received_signature):
-        print("[Webhook Validation] ✅ Signature matched — valid webhook")
+    if client_ip in allowed_ips:
+        print("[Webhook Origin Validation] ✅ IP matched — valid webhook source")
         return True
 
-    print("[Webhook Validation] ❌ Signature mismatch")
+    print("[Webhook Origin Validation] ❌ IP NOT in allowlist — rejecting webhook")
     return False
