@@ -29,7 +29,7 @@ async def offerletter_accepted_webhook(
 
     # 2. Validate IP using utils
     PANDADOC_ALLOWED_IPS = get_env_var("PANDADOC_ALLOWED_IPS")
-    
+
     if not validate_webhook_origin(client_ip, PANDADOC_ALLOWED_IPS):
         print("[Offer Signed] ❌ Origin validation failed")
         raise HTTPException(401, "Unauthorized webhook origin")
@@ -78,28 +78,20 @@ async def offerletter_expired_webhook(
     (status = document.voided).
     """
 
-    print("📬 API Layer: Received PandaDoc webhook for offer letter EXPIRATION")
+    print("📬 API Layer: Received PandaDoc webhook for offer letter expiration")
 
-    try:
-        received_signature = request.headers.get("X-PandaDoc-Signature")
-    except Exception as e:
-        print("❌ Error extracting webhook signature:", e)
-        raise HTTPException(400, "Bad Request")
+    # 1. Extract client IP
+    client_ip = request.client.host
+    print(f"[Offer Signed] Incoming IP: {client_ip}")
+
+    # 2. Validate IP using utils
+    PANDADOC_ALLOWED_IPS = get_env_var("PANDADOC_ALLOWED_IPS")
     
-    raw_body = await request.body()
+    if not validate_webhook_origin(client_ip, PANDADOC_ALLOWED_IPS):
+        print("[Offer Signed] ❌ Origin validation failed")
+        raise HTTPException(401, "Unauthorized webhook origin")
 
-    # 🔐 Validate using secret key for this webhook
-    try:
-        PANDADOC_OFFER_EXPIRED_WEBHOOK_KEY = get_env_var("PANDADOC_OFFER_EXPIRED_WEBHOOK_KEY")
-    except Exception as e:
-        print("[Offer Expired] ❌ Error loading webhook secret key:", e)
-        raise HTTPException(500, "Server misconfiguration")
-    
-    if not validate_webhook_signature(PANDADOC_OFFER_EXPIRED_WEBHOOK_KEY, raw_body, received_signature):
-        print("[Offer Expired] ❌ Validation failed. Rejecting webhook.")
-        raise HTTPException(401, "Invalid webhook signature")
-
-    print("[Offer expired] ✅ Validation passed")
+    print("[Offer Signed] ✅ Origin validated")
 
     # Business layer handles actual functionality
 
