@@ -16,7 +16,7 @@ class JWTMiddleware(BaseHTTPMiddleware):
 
         # Skip validation for open endpoints
         if any(path.startswith(ep) for ep in self.open_endpoints):
-            #print(f"[JWTMiddleware] 🟢 Skipping JWT validation for open endpoint: {path}")
+            print(f"[JWTMiddleware] 🟢 Skipping JWT validation for open endpoint: {path}")
             return await call_next(request)
 
         # Extract Authorization header

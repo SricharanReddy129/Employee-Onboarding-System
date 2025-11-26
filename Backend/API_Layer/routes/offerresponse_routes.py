@@ -23,7 +23,12 @@ async def offerletter_accepted_webhook(
 
     print("📬 API Layer: Received PandaDoc webhook for offer letter acceptance")
 
-    signature = request.headers.get("X-PandaDoc-Signature")
+    try:
+        received_signature = request.headers.get("X-PandaDoc-Signature")
+    except Exception as e:
+        print("❌ Error extracting webhook signature:", e)
+        raise HTTPException(400, "Bad Request")
+    
     raw_body = await request.body()
 
     # 🔐 Validate using secret key for this webhook
@@ -33,7 +38,7 @@ async def offerletter_accepted_webhook(
         print("[Offer Signed] ❌ Error loading webhook secret key:", e)
         raise HTTPException(500, "Server misconfiguration")
     
-    if not validate_webhook_signature(PANDADOC_OFFER_ACCEPTED_WEBHOOK_KEY, raw_body, signature):
+    if not validate_webhook_signature(PANDADOC_OFFER_ACCEPTED_WEBHOOK_KEY, raw_body, received_signature):
         print("[Offer Signed] ❌ Validation failed. Rejecting webhook.")
         raise HTTPException(401, "Invalid webhook signature")
 
@@ -84,7 +89,12 @@ async def offerletter_expired_webhook(
 
     print("📬 API Layer: Received PandaDoc webhook for offer letter EXPIRATION")
 
-    signature = request.headers.get("X-PandaDoc-Signature")
+    try:
+        received_signature = request.headers.get("X-PandaDoc-Signature")
+    except Exception as e:
+        print("❌ Error extracting webhook signature:", e)
+        raise HTTPException(400, "Bad Request")
+    
     raw_body = await request.body()
 
     # 🔐 Validate using secret key for this webhook
@@ -94,7 +104,7 @@ async def offerletter_expired_webhook(
         print("[Offer Expired] ❌ Error loading webhook secret key:", e)
         raise HTTPException(500, "Server misconfiguration")
     
-    if not validate_webhook_signature(PANDADOC_OFFER_EXPIRED_WEBHOOK_KEY, raw_body, signature):
+    if not validate_webhook_signature(PANDADOC_OFFER_EXPIRED_WEBHOOK_KEY, raw_body, received_signature):
         print("[Offer Expired] ❌ Validation failed. Rejecting webhook.")
         raise HTTPException(401, "Invalid webhook signature")
 
