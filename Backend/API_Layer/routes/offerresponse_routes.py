@@ -35,11 +35,13 @@ async def offerletter_accepted_webhook(
 
     # 🔐 Validate using secret key for this webhook
     try:
+        print("[Offer Signed] Loading webhook secret key from environment")
         PANDADOC_OFFER_ACCEPTED_WEBHOOK_KEY = get_env_var("PANDADOC_OFFER_ACCEPTED_WEBHOOK_KEY")
     except Exception as e:
         print("[Offer Signed] ❌ Error loading webhook secret key:", e)
         raise HTTPException(500, "Server misconfiguration")
     
+    print("[Offer Signed] validate_webhook_signature to be called")
     if not validate_webhook_signature(PANDADOC_OFFER_ACCEPTED_WEBHOOK_KEY, raw_body, received_signature):
         print("[Offer Signed] ❌ Validation failed. Rejecting webhook.")
         raise HTTPException(401, "Invalid webhook signature")
