@@ -33,6 +33,22 @@ async def offerletter_accepted_webhook(
     
     raw_body = await request.body()
 
+    raw_body = await request.body()
+
+    print("\n================= Incoming Webhook Request =================")
+    print("Headers:")
+    for k, v in request.headers.items():
+        print(f"  {k}: {v}")
+
+    print("\nRaw Body:")
+    try:
+        print(raw_body.decode("utf-8"))
+    except:
+        print(raw_body)
+
+    print("============================================================\n")
+
+
     # 🔐 Validate using secret key for this webhook
     try:
         print("[Offer Signed] Loading webhook secret key from environment")
