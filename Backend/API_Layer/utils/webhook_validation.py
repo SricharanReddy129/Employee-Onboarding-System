@@ -4,6 +4,10 @@ import hashlib
 def validate_webhook_signature(secret: str, raw_body: bytes, received_signature: str) -> bool:
     print("\n[Webhook Validation] Starting validation...")
 
+    print(f"[Webhook Validation] Secret content (first 10 chars): {secret[:10]}")
+    print(f"[Webhook Validation] Raw body (first 50 chars): {raw_body[:50]}")
+    print(f"[Webhook Validation] Received signature: {received_signature}")
+
     if not received_signature:
         print("[Webhook Validation] ❌ No signature received in header")
         return False
