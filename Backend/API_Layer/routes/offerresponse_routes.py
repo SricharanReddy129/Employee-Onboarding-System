@@ -29,6 +29,8 @@ async def offerletter_accepted_webhook(
         print("❌ Error extracting webhook signature:", e)
         raise HTTPException(400, "Bad Request")
     
+    print(f"[Offer Signed] Received signature: {received_signature}")
+    
     raw_body = await request.body()
 
     # 🔐 Validate using secret key for this webhook
