@@ -1,5 +1,6 @@
 import re
 from fastapi import HTTPException, status
+from datetime import datetime
 import pycountry
 import phonenumbers
 
@@ -229,6 +230,15 @@ def validate_phone_number(calling_code: str, phone_number: str, type: str) -> bo
 
     return True
 
-
+def validate_date_of_birth(date_of_birth: str):
+    try:
+        datetime.strptime(date_of_birth, "%Y-%m-%d")
+    except ValueError:
+        raise ValueError("Date of birth must be in YYYY-MM_DD format")
+    return date_of_birth
+def validate_blood_group(blood_group: str):
+    if blood_group not in ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"]:
+        raise ValueError("Invalid blood group. It must be one of A+, A-, B+, B-, O+, O-, AB+, AB-")
+    return blood_group
 
 

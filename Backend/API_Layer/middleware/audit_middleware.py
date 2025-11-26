@@ -91,9 +91,10 @@ class AuditMiddleware(BaseHTTPMiddleware):
             # Try to get the new entity ID from response
             new_entity_id = (
                 new_data.get("offer_id") or 
-                new_data.get("id") or 
+                new_data.get("user_uuid") or 
                 new_data.get("uuid") or
-                new_data.get(f"{entity_name}_id")
+                new_data.get(f"{entity_name}_id") or
+                new_data.get("personal_uuid")
             )
             
             if new_entity_id:
@@ -108,8 +109,9 @@ class AuditMiddleware(BaseHTTPMiddleware):
             headers=dict(response.headers),
             media_type=response.media_type
         )
+        table_name = self.entity_mappings[entity_name]["table"]
         # my_dict = {
-        #     "entity_name": entity_name,
+        #     "entity_name": table_name,
         #     "entity_id": entity_id,
         #     "operation": operation,
         #     "user_id": user_id,
@@ -130,8 +132,9 @@ class AuditMiddleware(BaseHTTPMiddleware):
                     # For CREATE operations, use the fetched entity data as new_data
                     final_new_data = new_entity_data if new_entity_data else new_data
                     
+                    
                     await audit.create_audit_log(
-                        entity_name=entity_name,
+                        entity_name=table_name,
                         entity_id=str(entity_id or "N/A"),
                         operation=operation,
                         user_id=str(user_id),

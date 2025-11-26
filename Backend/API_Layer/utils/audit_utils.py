@@ -36,6 +36,10 @@ class AuditUtils:
                 "table": "employee_education_document",
                 "id_field": "document_uuid"
             },
+            "employee-details": {
+                "table": "personal_details",
+                "id_field": "personal_uuid"
+            }
         }
 
 
@@ -72,9 +76,10 @@ class AuditUtils:
             # Fallback to common ID fields
             if not entity_id:
                 entity_id = (
-                    req_body.get("id") or 
+                    req_body.get("user_uuid") or 
                     req_body.get("uuid") or 
                     req_body.get("offer_uuid") or
+                    req_body.get("personal_uuid") or
                     req_body.get(f"{entity_name}_id") or
                     req_body.get(f"{entity_name}_uuid")
                 )
