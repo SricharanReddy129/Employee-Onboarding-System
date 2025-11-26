@@ -6,7 +6,8 @@ def validate_webhook_origin(client_ip: str, allowed_ips: list[str]) -> bool:
 
     print("\n[Webhook Origin Validation] Starting IP validation...")
 
-    print("Whitelist IPs:", *allowed_ips)
+    for ip in allowed_ips:
+        print(f"[Webhook Origin Validation] Allowed IP: {ip}")
 
     # 1. Ensure whitelist exists
     if not allowed_ips:
