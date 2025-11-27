@@ -28,7 +28,7 @@ async def offerletter_accepted_webhook(
     print(f"[Offer Signed] Incoming IP: {client_ip}")
 
     # 2. Validate IP using utils
-    PANDADOC_ALLOWED_IPS = get_env_var("PANDADOC_ALLOWED_IPS")
+    PANDADOC_ALLOWED_IPS = [ip.strip() for ip in get_env_var("PANDADOC_ALLOWED_IPS").split(",")]
 
     if not validate_webhook_origin(client_ip, PANDADOC_ALLOWED_IPS):
         print("[Offer Signed] ❌ Origin validation failed")
@@ -85,7 +85,7 @@ async def offerletter_expired_webhook(
     print(f"[Offer Signed] Incoming IP: {client_ip}")
 
     # 2. Validate IP using utils
-    PANDADOC_ALLOWED_IPS = get_env_var("PANDADOC_ALLOWED_IPS")
+    PANDADOC_ALLOWED_IPS = [ip.strip() for ip in get_env_var("PANDADOC_ALLOWED_IPS").split(",")]
     
     if not validate_webhook_origin(client_ip, PANDADOC_ALLOWED_IPS):
         print("[Offer Signed] ❌ Origin validation failed")
