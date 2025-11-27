@@ -44,52 +44,31 @@ class AuditUtils:
             "employee-details": {
                 "table": "personal_details",
                 "id_field": "personal_uuid"
-            }
+            },
+            "addresses": {
+                "table": "addresses",
+                "id_field": "address_uuid"
+            },
         }
 
 
     def extract_entity_info(self, path: str, req_body: dict, method: str):
         """Extract entity name and ID from request"""
-        path_parts = path.strip("/").split("/")
-        entity_name = path_parts[0] if path_parts else "unknown"
-        
-        # Check if it's a bulk operation
-        is_bulk = any(keyword in path.lower() for keyword in ["bulk", "batch"])
-        
-        # Try to get entity ID from various sources
-        entity_id = None
-        
-        # Skip ID extraction for bulk operations
-        if is_bulk:
-            return entity_name, "BULK_OPERATION"
-        
-        # 1. From path (e.g., /countries/123 or /offerletters/offer/123)
-        if len(path_parts) > 1:
-            # Handle nested paths like /offerletters/offer/{uuid}
-            if len(path_parts) > 2 and path_parts[2]:
-                entity_id = path_parts[2]
-            elif path_parts[1] and path_parts[1] not in ["create", "pending"]:
-                entity_id = path_parts[1]
-        
-        # 2. From request body
-        if not entity_id and req_body:
-            # Check mapped ID field
-            if entity_name in self.entity_mappings:
-                id_field = self.entity_mappings[entity_name]["id_field"]
-                entity_id = req_body.get(id_field)
-            
-            # Fallback to common ID fields
-            if not entity_id:
-                entity_id = (
-                    req_body.get("user_uuid") or 
-                    req_body.get("uuid") or 
-                    req_body.get("offer_uuid") or
-                    req_body.get("personal_uuid") or
-                    req_body.get(f"{entity_name}_id") or
-                    req_body.get(f"{entity_name}_uuid")
-                )
-        
-        return entity_name, entity_id
+        print("path", path, req_body)
+        if path.startswith("/employee-details/address") and method == "POST":
+            entity_name = "addresses"
+            path_parts = path.strip("/").split("/")
+            return entity_name, None
+        elif path.startswith("/employee-details/address") and (method == "PUT" or method =="DELETE"):
+            entity_name = "addresses"
+            path_parts = path.strip("/").split("/")
+            entity_id = path_parts[-1] if path_parts else None
+            return entity_name, entity_id
+        else:
+            path_parts = path.strip("/").split("/")
+            entity_name = path_parts[0] if path_parts else "unknown"
+            entity_id = path_parts[-1] if path_parts else None
+            return entity_name, entity_id
 
     def get_operation_type(self, method: str) -> str:
         """Map HTTP method to operation type"""

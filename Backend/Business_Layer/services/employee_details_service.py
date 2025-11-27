@@ -111,6 +111,59 @@ class AddressService:
             raise he
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-
+    async def get_all_addresses(self):
+        try:
+            result = await self.dao.get_all_addresses()
+            if not result:
+                raise HTTPException(status_code=200, detail="No Addresses Found")
+    
+            return result
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    async def get_address_by_address_uuid(self, uuid):
+        try:
+            result = await self.dao.get_address_by_address_uuid(uuid)
+            if not result:
+                raise HTTPException(status_code=200, detail="No Address Found for this User")
+            return result
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    async def update_address(self, uuid, request_data):
+        try:
+            existing = await self.dao.get_address_by_address_uuid(uuid)
+            if not existing:
+                raise HTTPException(status_code=404, detail="Address Not Found")
+            existing = await self.offerdao.get_offer_by_uuid(request_data.user_uuid)
+            if not existing:
+                raise HTTPException(status_code = 404, detail = "User Not Found")
+            country_existing = await self.countrydao.get_country_by_uuid(request_data.country_uuid)
+            if not country_existing:
+                raise HTTPException(status_code = 404, detail = "Country Not Found")
+            existing = await self.dao.get_address_by_user_uuid_and_address_type(request_data.user_uuid, request_data.address_type)
+            if existing:
+                raise ValueError(f"{request_data.address_type} Address for this user already exists")
+            calling_code = country_existing.calling_code
+            validate_postal_code(calling_code, request_data.postal_code)
+            result = await self.dao.update_address(uuid, request_data)
+            return result
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    async def delete_address(self, uuid):
+        try:
+            existing = await self.dao.get_address_by_address_uuid(uuid)
+            if not existing:
+                raise HTTPException(status_code=404, detail="Address Not Found")
+            result = await self.dao.delete_address(uuid)
+            return result
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
 
             

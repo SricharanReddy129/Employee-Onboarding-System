@@ -51,7 +51,6 @@ class AuditMiddleware(BaseHTTPMiddleware):
         operation = AuditUtils().get_operation_type(method)
 
         ip_address_from_request = AuditUtils()._get_ip_address(request = request)
-
         print("Ip address", ip_address_from_request)
 
         # Get IP address (handle proxies)
@@ -65,11 +64,13 @@ class AuditMiddleware(BaseHTTPMiddleware):
 
         # Fetch old data BEFORE processing request (for UPDATE/DELETE)
         old_data = None
+        print("Old data", entity_id, entity_name)
         if operation in ["UPDATE", "DELETE"] and entity_id:
+            print("hello")
             async for db in get_db():
                 old_data = await AuditUtils().get_data(db, entity_name, entity_id)
                 break
-
+        print("after loop", old_data)
         # Process the request
         response = await call_next(request)
 
@@ -90,19 +91,23 @@ class AuditMiddleware(BaseHTTPMiddleware):
         if new_data:
             # Try to get the new entity ID from response
             new_entity_id = (
-                new_data.get("offer_id") or 
+                new_data.get("offer_uuid") or 
                 new_data.get("user_uuid") or 
                 new_data.get("uuid") or
                 new_data.get(f"{entity_name}_id") or
                 new_data.get("personal_uuid") or
-                new_data.get("pandadoc_draft_id")
+                new_data.get("pandadoc_draft_id") or
+                new_data.get("address_uuid")
             )
-            
+            print("New before loop", new_entity_data)
+            print("New data", new_data)
+            print("entity name", entity_name)
+            print("entity id", entity_id)
             if new_entity_id:
                 async for db in get_db():
                     new_entity_data = await AuditUtils().get_data(db, entity_name, new_entity_id)
                     break
-
+        print("after loop", new_entity_data)
         # Create new response with captured body
         response = Response(
             content=response_body,

@@ -88,3 +88,15 @@ class CreateAddressRequest(BaseModel):
 class CreateAddressResponse(BaseModel):
     address_uuid: str
     message: str
+
+class AddressDetails(BaseModel):
+    address_uuid: str
+    user_uuid: str
+    address_type: str
+    address_line1: str
+    address_line2: Optional[str] = None
+    city: Optional[str] = None
+    district_or_ward: Optional[str] = None
+    state_or_region: Optional[str] = None
+    postal_code: str
+    country_uuid: str

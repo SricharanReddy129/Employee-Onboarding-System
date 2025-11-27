@@ -81,3 +81,26 @@ class AddressDAO:
         await self.db.commit()
         await self.db.refresh(permanent_address)
         return permanent_address
+    async def update_address(self, uuid, request_data):
+        result = await self.db.execute(select(Addresses).where(Addresses.address_uuid == uuid))
+        permanent_address = result.scalar_one_or_none()
+        if not permanent_address:
+            return None
+        permanent_address.user_uuid = request_data.user_uuid
+        permanent_address.address_type = request_data.address_type
+        permanent_address.address_line1 = request_data.address_line1
+        permanent_address.address_line2 = request_data.address_line2
+        permanent_address.city = request_data.city
+        permanent_address.district_or_ward = request_data.district_or_ward
+        permanent_address.state_or_region = request_data.state_or_region
+        permanent_address.country_uuid = request_data.country_uuid
+        permanent_address.postal_code = request_data.postal_code
+        await self.db.commit()
+        await self.db.refresh(permanent_address)
+        return permanent_address
+    async def delete_address(self, uuid):
+        result = await self.db.execute(select(Addresses).where(Addresses.address_uuid == uuid))
+        address = result.scalar_one_or_none()
+        await self.db.delete(address)
+        await self.db.commit()
+        return address

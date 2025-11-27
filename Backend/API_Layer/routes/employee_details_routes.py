@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.utils.dependencies import get_db
 from ..interfaces.employee_details_interfaces import (PersonalDetailsRequest, PersonalDetailsResponse, PersonalDetails,
-                                                      UpdatePersonalRequest, CreateAddressRequest, CreateAddressResponse
-                                                      )
+                                                      UpdatePersonalRequest, CreateAddressRequest, CreateAddressResponse,
+                                                      AddressDetails, )
 from ...Business_Layer.services.employee_details_service import EmployeeDetailsService, AddressService
 
 router = APIRouter()
@@ -80,6 +80,53 @@ async def create_address(request_data: CreateAddressRequest, db: AsyncSession = 
         return CreateAddressResponse(
             address_uuid = result.address_uuid,
             message = "Address Created Successfully"
+        )
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/address/", response_model = list[AddressDetails])
+async def get_all_addresses(db: AsyncSession = Depends(get_db)):
+    try:
+        address_service = AddressService(db)
+        result = await address_service.get_all_addresses()
+        return result
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+@router.get("/address/{address_uuid}", response_model = AddressDetails)
+async def get_address_by_address_uuid(address_uuid: str, db: AsyncSession = Depends(get_db)):
+    try:
+        address_service = AddressService(db)
+        result = await address_service.get_address_by_address_uuid(address_uuid)
+        return result
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+@router.put("/address/{address_uuid}", response_model = CreateAddressResponse)
+async def update_address(address_uuid: str, request_data: CreateAddressRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        address_service = AddressService(db)
+        result = await address_service.update_address(address_uuid, request_data)
+        return CreateAddressResponse(
+            address_uuid = address_uuid,
+            message = "Address Updated Successfully"
+        )
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+@router.delete("/address/{address_uuid}", response_model=CreateAddressResponse)
+async def delete_address(address_uuid: str, db: AsyncSession = Depends(get_db)):
+    try:
+        address_service = AddressService(db)
+        await address_service.delete_address(address_uuid)
+        return CreateAddressResponse(
+            address_uuid = address_uuid,
+            message = "Address Deleted Successfully"
         )
     except HTTPException as he:
         raise he
