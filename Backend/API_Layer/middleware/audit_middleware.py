@@ -16,8 +16,8 @@ class AuditMiddleware(BaseHTTPMiddleware):
 
         # Endpoints that should not be audited
         self.open_endpoints = [
-            "/docs", "/openapi.json", "/redoc",
-            "/login", "/health", "/offerresponse"
+            "/docs", "/openapi.json",
+            "/redoc","/login", "/health",
         ]
         self.entity_mappings = AuditUtils().entity_mappings
         
@@ -94,7 +94,8 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 new_data.get("user_uuid") or 
                 new_data.get("uuid") or
                 new_data.get(f"{entity_name}_id") or
-                new_data.get("personal_uuid")
+                new_data.get("personal_uuid") or
+                new_data.get("pandadoc_draft_id")
             )
             
             if new_entity_id:

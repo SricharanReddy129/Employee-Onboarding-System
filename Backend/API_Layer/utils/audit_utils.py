@@ -5,8 +5,8 @@ class AuditUtils:
 
         # Endpoints that should not be audited
         self.open_endpoints = [
-            "/docs", "/openapi.json", "/redoc",
-            "/login", "/health", "/offerresponse"
+            "/docs", "/openapi.json",
+            "/redoc", "/login", "/health"
         ]
         
         # Entity mapping for common patterns
@@ -14,7 +14,7 @@ class AuditUtils:
             "offerletters": {
                 "table": "offer_letter_details",
                 "id_field": "user_uuid",
-                "alternate_id_fields": ["offer_uuid"]   # optional alternate key
+                "alternate_id_fields": ["offer_uuid", "pandadoc_draft_id"]   # optional alternate key
             },
             "masters-country": {
                 "table": "countries",
