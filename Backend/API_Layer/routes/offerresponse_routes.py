@@ -28,7 +28,7 @@ async def offerletter_accepted_webhook(
     print(f"[Offer Signed] Incoming IP: {client_ip}")
 
     # 2. Validate IP using utils
-    PANDADOC_ALLOWED_IPS = get_env_var("PANDADOC_ALLOWED_IPS")
+    PANDADOC_ALLOWED_IPS = [ip.strip() for ip in get_env_var("PANDADOC_ALLOWED_IPS").split(",")]
 
     if not validate_webhook_origin(client_ip, PANDADOC_ALLOWED_IPS):
         print("[Offer Signed] ❌ Origin validation failed")
@@ -54,8 +54,10 @@ async def offerletter_accepted_webhook(
                 response_offer = OfferResponseService(db)
                 response = await response_offer.process_offer_acceptance_webhook(payload)
                 responses.append(response)
+            except HTTPException:
+                raise e
             except Exception as e:
-                print("❌ Error processing single webhook entry:", e)
+                raise HTTPException(status_code=500, detail=str(e))
 
         # Always return OK
         return PandaDocWebhookResponse(status="ok")
@@ -85,7 +87,7 @@ async def offerletter_expired_webhook(
     print(f"[Offer Signed] Incoming IP: {client_ip}")
 
     # 2. Validate IP using utils
-    PANDADOC_ALLOWED_IPS = get_env_var("PANDADOC_ALLOWED_IPS")
+    PANDADOC_ALLOWED_IPS = [ip.strip() for ip in get_env_var("PANDADOC_ALLOWED_IPS").split(",")]
     
     if not validate_webhook_origin(client_ip, PANDADOC_ALLOWED_IPS):
         print("[Offer Signed] ❌ Origin validation failed")
@@ -120,8 +122,10 @@ async def offerletter_expired_webhook(
                 response = await response_offer.process_offer_expiration_webhook(expiration_data)
                 responses.append(response)
 
+            except HTTPException:
+                raise e
             except Exception as e:
-                print("❌ Error processing single expiration webhook entry:", e)
+                raise HTTPException(status_code=500, detail=str(e))
 
         # Always return OK
         return PandaDocWebhookResponse(status="ok")

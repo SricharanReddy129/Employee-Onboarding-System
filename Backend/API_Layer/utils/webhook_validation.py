@@ -1,4 +1,4 @@
-def validate_webhook_origin(client_ip: str, allowed_ips: list[str]) -> bool:
+def validate_webhook_origin(client_ip: str, allowed_ips: list) -> bool:
     """
     Validate webhook origin using IP allowlist.
     Only returns True/False. Debug prints included.
