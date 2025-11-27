@@ -17,7 +17,8 @@ CREATE TABLE offer_letter_details (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     file_path VARCHAR(255),
-    pandadoc_draft_id VARCHAR(255)
+    pandadoc_draft_id VARCHAR(255),
+    offer_response_at DATETIME
 );
 
 -- =========================================================
@@ -70,45 +71,41 @@ CREATE TABLE personal_details (
 );
 
 -- =========================================================
--- 5. Permanent Address Details
+-- 5. Employee Address Details
 -- =========================================================
-CREATE TABLE permanent_addresses (
+CREATE TABLE addresses (
     address_id INT PRIMARY KEY AUTO_INCREMENT,
     address_uuid CHAR(36) NOT NULL UNIQUE,
     user_uuid CHAR(36) NOT NULL,
-    address_line1 VARCHAR(255),
+
+    -- permanent / current / work / billing etc.
+    address_type ENUM(
+        'permanent',
+        'current'
+    ) NOT NULL,
+
+    -- Core address fields
+    address_line1 VARCHAR(255) NOT NULL,
     address_line2 VARCHAR(255),
-    city VARCHAR(100),
-    state VARCHAR(100),
-    country_uuid CHAR(36),
+
+    -- Internationally flexible fields
+    city VARCHAR(150),
+    district_or_ward VARCHAR(150),
+    state_or_region VARCHAR(150),
     postal_code VARCHAR(20),
+
+    country_uuid CHAR(36) NOT NULL,
+
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
     FOREIGN KEY (user_uuid) REFERENCES offer_letter_details(user_uuid),
     FOREIGN KEY (country_uuid) REFERENCES countries(country_uuid)
 );
 
--- =========================================================
--- 6. Current Address Details
--- =========================================================
-CREATE TABLE current_addresses (
-    address_id INT PRIMARY KEY AUTO_INCREMENT,
-    address_uuid CHAR(36) NOT NULL UNIQUE,
-    user_uuid CHAR(36) NOT NULL,
-    address_line1 VARCHAR(255),
-    address_line2 VARCHAR(255),
-    city VARCHAR(100),
-    state VARCHAR(100),
-    country_uuid CHAR(36),
-    postal_code VARCHAR(20),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_uuid) REFERENCES offer_letter_details(user_uuid),
-    FOREIGN KEY (country_uuid) REFERENCES countries(country_uuid)
-);
 
 -- =========================================================
--- 7. Identity Type Master
+-- 6. Identity Type Master
 -- =========================================================
 CREATE TABLE identity_type (
     identity_type_id INT PRIMARY KEY AUTO_INCREMENT,

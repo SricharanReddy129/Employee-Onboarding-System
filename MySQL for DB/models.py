@@ -1,7 +1,8 @@
 from typing import Any, Optional
 import datetime
+import decimal
 
-from sqlalchemy import CHAR, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, text
+from sqlalchemy import CHAR, DECIMAL, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, text
 from sqlalchemy.dialects.mysql import TINYINT, YEAR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -23,6 +24,7 @@ class AuditTrail(Base):
     ip_address: Mapped[Optional[str]] = mapped_column(String(50))
     host: Mapped[Optional[str]] = mapped_column(String(255))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    endpoint: Mapped[Optional[str]] = mapped_column(String(100))
 
 
 class Countries(Base):
@@ -39,11 +41,10 @@ class Countries(Base):
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
+    addresses: Mapped[list['Addresses']] = relationship('Addresses', back_populates='countries', lazy="selectin")
     contacts: Mapped[list['Contacts']] = relationship('Contacts', back_populates='countries', lazy="selectin")
     country_education_document_mapping: Mapped[list['CountryEducationDocumentMapping']] = relationship('CountryEducationDocumentMapping', back_populates='countries', lazy="selectin")
     country_identity_mapping: Mapped[list['CountryIdentityMapping']] = relationship('CountryIdentityMapping', back_populates='countries', lazy="selectin")
-    current_addresses: Mapped[list['CurrentAddresses']] = relationship('CurrentAddresses', back_populates='countries', lazy="selectin")
-    permanent_addresses: Mapped[list['PermanentAddresses']] = relationship('PermanentAddresses', back_populates='countries', lazy="selectin")
     personal_details: Mapped[list['PersonalDetails']] = relationship('PersonalDetails', foreign_keys='[PersonalDetails.nationality_country_uuid]', back_populates='countries', lazy="selectin")
     personal_details_: Mapped[list['PersonalDetails']] = relationship('PersonalDetails', foreign_keys='[PersonalDetails.residence_country_uuid]', back_populates='countries_', lazy="selectin")
 
@@ -137,12 +138,11 @@ class OfferLetterDetails(Base):
     pandadoc_draft_id: Mapped[Optional[str]] = mapped_column(String(255))
     offer_response_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
 
+    addresses: Mapped[list['Addresses']] = relationship('Addresses', back_populates='offer_letter_details', lazy="selectin")
     contacts: Mapped[list['Contacts']] = relationship('Contacts', back_populates='offer_letter_details', lazy="selectin")
-    current_addresses: Mapped[list['CurrentAddresses']] = relationship('CurrentAddresses', back_populates='offer_letter_details', lazy="selectin")
     employee_deliverables: Mapped[list['EmployeeDeliverables']] = relationship('EmployeeDeliverables', back_populates='offer_letter_details', lazy="selectin")
     employee_experience: Mapped[list['EmployeeExperience']] = relationship('EmployeeExperience', back_populates='offer_letter_details', lazy="selectin")
     employee_receivables: Mapped[list['EmployeeReceivables']] = relationship('EmployeeReceivables', back_populates='offer_letter_details', lazy="selectin")
-    permanent_addresses: Mapped[list['PermanentAddresses']] = relationship('PermanentAddresses', back_populates='offer_letter_details', lazy="selectin")
     personal_details: Mapped[list['PersonalDetails']] = relationship('PersonalDetails', back_populates='offer_letter_details', lazy="selectin")
     employee_education_document: Mapped[list['EmployeeEducationDocument']] = relationship('EmployeeEducationDocument', back_populates='offer_letter_details', lazy="selectin")
     employee_identity_document: Mapped[list['EmployeeIdentityDocument']] = relationship('EmployeeIdentityDocument', back_populates='offer_letter_details', lazy="selectin")
@@ -163,6 +163,34 @@ class ReceivableItems(Base):
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
 
     employee_receivables: Mapped[list['EmployeeReceivables']] = relationship('EmployeeReceivables', back_populates='receivable_items', lazy="selectin")
+
+
+class Addresses(Base):
+    __tablename__ = 'addresses'
+    __table_args__ = (
+        ForeignKeyConstraint(['country_uuid'], ['countries.country_uuid'], name='addresses_ibfk_2'),
+        ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='addresses_ibfk_1'),
+        Index('address_uuid', 'address_uuid', unique=True),
+        Index('country_uuid', 'country_uuid'),
+        Index('user_uuid', 'user_uuid')
+    )
+
+    address_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    address_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    address_type: Mapped[str] = mapped_column(Enum('permanent', 'current'), nullable=False)
+    address_line1: Mapped[str] = mapped_column(String(255), nullable=False)
+    country_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    address_line2: Mapped[Optional[str]] = mapped_column(String(255))
+    city: Mapped[Optional[str]] = mapped_column(String(150))
+    district_or_ward: Mapped[Optional[str]] = mapped_column(String(150))
+    state_or_region: Mapped[Optional[str]] = mapped_column(String(150))
+    postal_code: Mapped[Optional[str]] = mapped_column(String(20))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    countries: Mapped['Countries'] = relationship('Countries', back_populates='addresses', lazy="selectin")
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='addresses', lazy="selectin")
 
 
 class Contacts(Base):
@@ -236,32 +264,6 @@ class CountryIdentityMapping(Base):
     countries: Mapped['Countries'] = relationship('Countries', back_populates='country_identity_mapping', lazy="selectin")
     identity_type: Mapped['IdentityType'] = relationship('IdentityType', back_populates='country_identity_mapping', lazy="selectin")
     employee_identity_document: Mapped[list['EmployeeIdentityDocument']] = relationship('EmployeeIdentityDocument', back_populates='country_identity_mapping', lazy="selectin")
-
-
-class CurrentAddresses(Base):
-    __tablename__ = 'current_addresses'
-    __table_args__ = (
-        ForeignKeyConstraint(['country_uuid'], ['countries.country_uuid'], name='current_addresses_ibfk_2'),
-        ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='current_addresses_ibfk_1'),
-        Index('address_uuid', 'address_uuid', unique=True),
-        Index('country_uuid', 'country_uuid'),
-        Index('user_uuid', 'user_uuid')
-    )
-
-    address_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    address_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
-    user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
-    address_line1: Mapped[Optional[str]] = mapped_column(String(255))
-    address_line2: Mapped[Optional[str]] = mapped_column(String(255))
-    city: Mapped[Optional[str]] = mapped_column(String(100))
-    state: Mapped[Optional[str]] = mapped_column(String(100))
-    country_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
-    postal_code: Mapped[Optional[str]] = mapped_column(String(20))
-    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
-    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
-
-    countries: Mapped[Optional['Countries']] = relationship('Countries', back_populates='current_addresses', lazy="selectin")
-    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='current_addresses', lazy="selectin")
 
 
 class EmployeeDeliverables(Base):
@@ -340,32 +342,6 @@ class EmployeeReceivables(Base):
 
     receivable_items: Mapped['ReceivableItems'] = relationship('ReceivableItems', back_populates='employee_receivables', lazy="selectin")
     offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_receivables', lazy="selectin")
-
-
-class PermanentAddresses(Base):
-    __tablename__ = 'permanent_addresses'
-    __table_args__ = (
-        ForeignKeyConstraint(['country_uuid'], ['countries.country_uuid'], name='permanent_addresses_ibfk_2'),
-        ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='permanent_addresses_ibfk_1'),
-        Index('address_uuid', 'address_uuid', unique=True),
-        Index('country_uuid', 'country_uuid'),
-        Index('user_uuid', 'user_uuid')
-    )
-
-    address_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    address_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
-    user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
-    address_line1: Mapped[Optional[str]] = mapped_column(String(255))
-    address_line2: Mapped[Optional[str]] = mapped_column(String(255))
-    city: Mapped[Optional[str]] = mapped_column(String(100))
-    state: Mapped[Optional[str]] = mapped_column(String(100))
-    country_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
-    postal_code: Mapped[Optional[str]] = mapped_column(String(20))
-    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
-    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
-
-    countries: Mapped[Optional['Countries']] = relationship('Countries', back_populates='permanent_addresses', lazy="selectin")
-    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='permanent_addresses', lazy="selectin")
 
 
 class PersonalDetails(Base):

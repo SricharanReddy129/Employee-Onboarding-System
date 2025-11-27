@@ -1,4 +1,4 @@
-from ..models.models import PersonalDetails, PermanentAddresses, CurrentAddresses
+from ..models.models import PersonalDetails, Addresses
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 class EmployeeDetailsDAO:
@@ -50,3 +50,34 @@ class EmployeeDetailsDAO:
         self.db.delete(personal_details)
         await self.db.commit()
         return personal_details
+
+# Adresses DAO
+class AddressDAO:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+    async def get_address_by_user_uuid_and_address_type(self, user_uuid, address_type):
+        result = await self.db.execute(select(Addresses).where(Addresses.user_uuid == user_uuid).where(Addresses.address_type == address_type))
+        return result.scalar_one_or_none()
+    async def get_address_by_address_uuid(self, address_uuid):
+        result = await self.db.execute(select(Addresses).where(Addresses.address_uuid == address_uuid))
+        return result.scalar_one_or_none()
+    async def get_all_addresses(self):
+        result = await self.db.execute(select(Addresses))
+        return result.scalars().all()
+    async def create_address(self, request_data, uuid):
+        permanent_address = Addresses(
+            address_uuid = uuid,
+            user_uuid = request_data.user_uuid,
+            address_type = request_data.address_type,
+            address_line1 = request_data.address_line1,
+            address_line2 = request_data.address_line2,
+            city = request_data.city,
+            district_or_ward = request_data.district_or_ward,
+            state_or_region = request_data.state_or_region,
+            country_uuid = request_data.country_uuid,
+            postal_code = request_data.postal_code
+        )
+        self.db.add(permanent_address)
+        await self.db.commit()
+        await self.db.refresh(permanent_address)
+        return permanent_address

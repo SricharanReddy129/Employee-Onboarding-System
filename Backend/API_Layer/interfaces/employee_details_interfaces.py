@@ -1,6 +1,8 @@
 from enum import Enum
-from pydantic import BaseModel
+import re
+from pydantic import BaseModel, Field, validator
 from datetime import date, datetime
+from typing import Optional
 class Gender(str, Enum):
     MALE = "Male"
     FEMALE = "Female"
@@ -41,3 +43,48 @@ class UpdatePersonalRequest(BaseModel):
     blood_group: str
     nationality_country_uuid: str
     residence_country_uuid: str
+
+# Addresses Interfaces
+
+class AddressType(str, Enum):
+    permanent = "permanent"
+    current = "current"
+
+
+class CreateAddressRequest(BaseModel):
+    user_uuid: str
+    address_type: AddressType
+    address_line1: str = Field(..., min_length=3)
+    address_line2: Optional[str] = None
+    city: Optional[str] = None
+    district_or_ward: Optional[str] = None
+    state_or_region: Optional[str] = None
+    postal_code: Optional[str] = None
+    country_uuid: str
+
+    # Basic city validation
+    @validator("city")
+    def validate_city(cls, v):
+        if v and not re.match(r"^[A-Za-z\s\-'.]+$", v):
+            raise ValueError("City name contains invalid characters")
+        return v
+
+    # Basic state validation
+    @validator("state_or_region")
+    def validate_state(cls, v):
+        if v and not re.match(r"^[A-Za-z\s\-'.]+$", v):
+            raise ValueError("State/Region contains invalid characters")
+        return v
+
+    # At least one location field required
+    @validator("district_or_ward", always=True)
+    def validate_location_fields(cls, v, values):
+        city = values.get("city")
+        state = values.get("state_or_region")
+        
+        if not (city or state or v):
+            raise ValueError("At least one of city / district_or_ward / state_or_region must be provided")
+        return v
+class CreateAddressResponse(BaseModel):
+    address_uuid: str
+    message: str

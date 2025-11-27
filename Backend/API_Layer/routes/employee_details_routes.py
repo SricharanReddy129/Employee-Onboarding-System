@@ -3,9 +3,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.utils.dependencies import get_db
 from ..interfaces.employee_details_interfaces import (PersonalDetailsRequest, PersonalDetailsResponse, PersonalDetails,
-                                                      UpdatePersonalRequest,
+                                                      UpdatePersonalRequest, CreateAddressRequest, CreateAddressResponse
                                                       )
-from ...Business_Layer.services.employee_details_service import EmployeeDetailsService
+from ...Business_Layer.services.employee_details_service import EmployeeDetailsService, AddressService
 
 router = APIRouter()
 
@@ -64,6 +64,22 @@ async def delete_personal_details(personal_uuid: str, db: AsyncSession = Depends
         return PersonalDetailsResponse(
             personal_uuid = personal_uuid,
             message = "Personal Details Deleted Successfully"
+        )
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+## Addresses Routes ##
+
+@router.post("/address", response_model = CreateAddressResponse)
+async def create_address(request_data: CreateAddressRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        address_service = AddressService(db)
+        result = await address_service.create_address(request_data)
+        return CreateAddressResponse(
+            address_uuid = result.address_uuid,
+            message = "Address Created Successfully"
         )
     except HTTPException as he:
         raise he
