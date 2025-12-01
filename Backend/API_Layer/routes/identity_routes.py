@@ -1,0 +1,72 @@
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.ext.asyncio import AsyncSession
+from ...DAL.utils.dependencies import get_db
+from ..interfaces.identity_interfaces import(IdentityCreateRequest, IdentityResponse, IdentityDetails,
+                                             )
+from ...Business_Layer.services.identity_service import IdentityService
+
+router = APIRouter()
+
+@router.get("", response_model=list[IdentityDetails])
+async def get_all_identity_types(db: AsyncSession = Depends(get_db)):
+    try:
+        service = IdentityService(db)
+        result = await service.get_all_identity_types()
+        return result
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/{uuid}", response_model = IdentityDetails)
+async def get_identity_type_by_uuid(uuid: str, db: AsyncSession = Depends(get_db)):
+    try:
+        identity_service = IdentityService(db)
+        result = await identity_service.get_identity_type_by_uuid(uuid)
+        return result
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.post("", response_model = IdentityResponse)
+async def create_identity_type(request_data: IdentityCreateRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        identity_service = IdentityService(db)
+        result = await identity_service.create_identity_type(request_data)
+        return IdentityResponse(
+            identity_type_uuid = result.identity_type_uuid,
+            message = "Identity Type Created Successfully"
+        )
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/{uuid}", response_model = IdentityResponse)
+async def delete_identity_type(uuid: str, db: AsyncSession = Depends(get_db)):
+    try:
+        identity_service = IdentityService(db)
+        await identity_service.delete_identity_type(uuid)
+        return IdentityResponse(
+            identity_type_uuid = uuid,
+            message = "Identity Type Deleted Successfully"
+        )
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/{uuid}", response_model = IdentityResponse)
+async def update_identity_type(uuid: str, request_data: IdentityCreateRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        identity_service = IdentityService(db)
+        await identity_service.update_identity_type(uuid, request_data)
+        return IdentityResponse(
+            identity_type_uuid = uuid,
+            message = "Identity Type Updated Successfully"
+        )
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

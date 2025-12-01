@@ -49,6 +49,10 @@ class AuditUtils:
                 "table": "addresses",
                 "id_field": "address_uuid"
             },
+            "identity": {
+                "table": "identity_type",
+                "id_field": "identity_type_uuid"
+            }
         }
 
 
@@ -66,6 +70,9 @@ class AuditUtils:
             return entity_name, entity_id
         else:
             path_parts = path.strip("/").split("/")
+            if method == "POST":
+                entity_name = path_parts[0] if path_parts else "unknown"
+                return entity_name, None
             entity_name = path_parts[0] if path_parts else "unknown"
             entity_id = path_parts[-1] if path_parts else None
             return entity_name, entity_id

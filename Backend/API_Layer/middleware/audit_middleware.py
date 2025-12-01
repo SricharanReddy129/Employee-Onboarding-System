@@ -66,7 +66,6 @@ class AuditMiddleware(BaseHTTPMiddleware):
         old_data = None
         print("Old data", entity_id, entity_name)
         if operation in ["UPDATE", "DELETE"] and entity_id:
-            print("hello")
             async for db in get_db():
                 old_data = await AuditUtils().get_data(db, entity_name, entity_id)
                 break
@@ -87,8 +86,9 @@ class AuditMiddleware(BaseHTTPMiddleware):
             new_data = None
 
         # For CREATE operations, fetch the newly created data if we have an ID in response
+        print("New data before loop", new_data)
         new_entity_data = None
-        if new_data:
+        if new_data and operation == "CREATE":
             # Try to get the new entity ID from response
             new_entity_id = (
                 new_data.get("offer_uuid") or 
@@ -97,7 +97,8 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 new_data.get(f"{entity_name}_id") or
                 new_data.get("personal_uuid") or
                 new_data.get("pandadoc_draft_id") or
-                new_data.get("address_uuid")
+                new_data.get("address_uuid") or
+                new_data.get("identity_type_uuid")
             )
             print("New before loop", new_entity_data)
             print("New data", new_data)
@@ -107,6 +108,10 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 async for db in get_db():
                     new_entity_data = await AuditUtils().get_data(db, entity_name, new_entity_id)
                     break
+        if operation in ["UPDATE", "DELETE"] and entity_id:
+            async for db in get_db():
+                new_entity_data = await AuditUtils().get_data(db, entity_name, entity_id)
+                break
         print("after loop", new_entity_data)
         # Create new response with captured body
         response = Response(
