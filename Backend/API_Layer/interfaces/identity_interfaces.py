@@ -30,3 +30,18 @@ class IdentityCreateRequest(BaseModel):
 class IdentityResponse(BaseModel):
     identity_type_uuid: str
     message: str
+
+# Country Identity Mapping Intefaces
+class CountryIdentityMappingDetails(BaseModel):
+    mapping_uuid: str
+    country_uuid: str
+    identity_type_uuid: str
+    is_mandatory: Optional[bool] = True
+
+class CountryIdentityMappingRequest(BaseModel):
+    country_uuid: str
+    identity_type_uuid: str
+    is_mandatory: Optional[bool] = True
+class CountryIdentityMappingResponse(BaseModel):
+    mapping_uuid: str
+    message: str

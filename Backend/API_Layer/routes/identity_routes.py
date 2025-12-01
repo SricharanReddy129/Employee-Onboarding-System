@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.utils.dependencies import get_db
 from ..interfaces.identity_interfaces import(IdentityCreateRequest, IdentityResponse, IdentityDetails,
+                                             CountryIdentityMappingDetails, CountryIdentityMappingRequest, CountryIdentityMappingResponse,
                                              )
 from ...Business_Layer.services.identity_service import IdentityService
 
@@ -65,6 +66,72 @@ async def update_identity_type(uuid: str, request_data: IdentityCreateRequest, d
         return IdentityResponse(
             identity_type_uuid = uuid,
             message = "Identity Type Updated Successfully"
+        )
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+### Country Identity Mapping Routes ###
+
+@router.post("/country-mapping", response_model = CountryIdentityMappingResponse)
+async def create_country_identity_mapping(request_data: CountryIdentityMappingRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        identity_service = IdentityService(db)
+        result = await identity_service.create_country_identity_mapping(request_data)
+        return CountryIdentityMappingResponse(
+            mapping_uuid = result.mapping_uuid,
+            message = "Country Identity Mapping Created Successfully"
+        )
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/country-mapping/", response_model = list[CountryIdentityMappingDetails])
+async def get_all_country_identity_mappings(db: AsyncSession = Depends(get_db)):
+    try:
+        identity_service = IdentityService(db)
+        result = await identity_service.get_all_country_identity_mappings()
+        return result
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/country-mapping/{uuid}", response_model = CountryIdentityMappingDetails)
+async def get_country_identity_mapping_by_uuid(uuid: str, db: AsyncSession = Depends(get_db)):
+    try:
+        identity_service = IdentityService(db)
+        result = await identity_service.get_country_identity_mapping_by_uuid(uuid)
+        return result
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.put("/country-mapping/{uuid}", response_model= CountryIdentityMappingResponse)
+async def update_country_identity_mapping(uuid: str, request_data: CountryIdentityMappingRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        identity_service = IdentityService(db)
+        await identity_service.update_country_identity_mapping(uuid, request_data)
+        return CountryIdentityMappingResponse(
+            mapping_uuid = uuid,
+            message = "country Identity Mapping Updated Successfully"
+        )
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@router.delete("/country-mapping/{uuid}", response_model = CountryIdentityMappingResponse)
+async def delete_country_identity_mapping(uuid: str, db: AsyncSession = Depends(get_db)):
+    try:
+        identity_service = IdentityService(db)
+        await identity_service.delete_country_identity_mapping(uuid)
+        return CountryIdentityMappingResponse(
+            mapping_uuid = uuid,
+            message = "Country Identity Mapping Deleted Successfully"
         )
     except HTTPException as he:
         raise he

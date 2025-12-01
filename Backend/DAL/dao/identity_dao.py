@@ -45,3 +45,47 @@ class IdentityDAO:
         await self.db.commit()
         await self.db.refresh(identity_type)
         return identity_type
+    
+    # Country Identity Mapping DAO Methods
+    async def get_country_identity_mapping(self, country_uuid, identity_type_uuid):
+        result = await self.db.execute(select(CountryIdentityMapping).where(CountryIdentityMapping.country_uuid == country_uuid).where(
+            CountryIdentityMapping.identity_type_uuid == identity_type_uuid
+        ))
+        return result.scalar_one_or_none()
+    
+    async def create_country_identity_mapping(self, request_data, uuid):
+        country_identity_mapping = CountryIdentityMapping(
+            mapping_uuid = uuid,
+            country_uuid = request_data.country_uuid,
+            identity_type_uuid = request_data.identity_type_uuid,
+            is_mandatory = request_data.is_mandatory
+        )
+        self.db.add(country_identity_mapping)
+        await self.db.commit()
+        await self.db.refresh(country_identity_mapping)
+        return country_identity_mapping
+    async def get_country_identity_mapping_by_uuid(self, uuid):
+        result = await self.db.execute(select(CountryIdentityMapping).where(CountryIdentityMapping.mapping_uuid == uuid))
+        return result.scalar_one_or_none()
+    
+    async def get_all_country_identity_mappings(self):
+        result = await self.db.execute(select(CountryIdentityMapping))
+        return result.scalars().all()
+    
+    async def update_country_identity_mapping(self, uuid, request_data):
+        result = await self.db.execute(select(CountryIdentityMapping).where(CountryIdentityMapping.mapping_uuid == uuid))
+        mapping = result.scalar_one_or_none()
+        mapping.country_uuid = request_data.country_uuid
+        mapping.identity_type_uuid = request_data.identity_type_uuid
+        mapping.is_mandatory = request_data.is_mandatory
+        self.db.add(mapping)
+        await self.db.commit()
+        await self.db.refresh(mapping)
+        return mapping
+    
+    async def delete_country_identity_mapping(self, uuid):
+        result = await self.db.execute(select(CountryIdentityMapping).where(CountryIdentityMapping.mapping_uuid == uuid))
+        mapping = result.scalar_one_or_none()
+        await self.db.delete(mapping)
+        await self.db.commit()
+        return mapping

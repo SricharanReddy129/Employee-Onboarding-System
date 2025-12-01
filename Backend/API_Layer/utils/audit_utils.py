@@ -45,9 +45,17 @@ class AuditUtils:
                 "table": "personal_details",
                 "id_field": "personal_uuid"
             },
+            "employee-details/address": {
+                "table": "addresses",
+                "id_field": "address_uuis"
+            },
             "addresses": {
                 "table": "addresses",
                 "id_field": "address_uuid"
+            },
+            "identity/country-mapping": {
+                "table": "country_identity_mapping",
+                "id_field": "mapping_uuid"
             },
             "identity": {
                 "table": "identity_type",
@@ -57,25 +65,30 @@ class AuditUtils:
 
 
     def extract_entity_info(self, path: str, req_body: dict, method: str):
-        """Extract entity name and ID from request"""
         print("path", path, req_body)
-        if path.startswith("/employee-details/address") and method == "POST":
-            entity_name = "addresses"
-            path_parts = path.strip("/").split("/")
-            return entity_name, None
-        elif path.startswith("/employee-details/address") and (method == "PUT" or method =="DELETE"):
-            entity_name = "addresses"
-            path_parts = path.strip("/").split("/")
-            entity_id = path_parts[-1] if path_parts else None
-            return entity_name, entity_id
+
+        cleaned_path = path.strip("/")
+        path_parts = cleaned_path.split("/")
+        print("cleaned path", cleaned_path)
+
+        #  Step 1: find the longest matching entity key
+        matched_entity = None
+        for key in sorted(self.entity_mappings.keys(), key=len, reverse=True):
+            if cleaned_path.startswith(key):
+                matched_entity = key
+                break
+
+        if not matched_entity:
+            return "unknown", None
+
+        # Step 2: Extract entity_id only for PUT/DELETE
+        if method in ("PUT", "DELETE"):
+            entity_id = path_parts[-1] if len(path_parts) > 1 else None
         else:
-            path_parts = path.strip("/").split("/")
-            if method == "POST":
-                entity_name = path_parts[0] if path_parts else "unknown"
-                return entity_name, None
-            entity_name = path_parts[0] if path_parts else "unknown"
-            entity_id = path_parts[-1] if path_parts else None
-            return entity_name, entity_id
+            entity_id = None
+
+        return matched_entity, entity_id
+
 
     def get_operation_type(self, method: str) -> str:
         """Map HTTP method to operation type"""
