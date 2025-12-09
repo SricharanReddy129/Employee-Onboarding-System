@@ -32,4 +32,4 @@ pydantic[email]
 
 pandas
 requests
-PyJWT
+PyJWT[crypto]
