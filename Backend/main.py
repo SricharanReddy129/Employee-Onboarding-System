@@ -3,6 +3,7 @@ from fastapi.openapi.utils import get_openapi
 from .API_Layer.routes import (master_routes, offerletter_routes, education_routes, offerresponse_routes, employee_details_routes,
                                identity_routes)
 from .API_Layer.middleware.jwt_middleware import JWTMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 from .API_Layer.middleware.audit_middleware import AuditMiddleware
 # models.Base.metadata.create_all(bind=engine)
 
@@ -14,6 +15,16 @@ app.add_middleware(JWTMiddleware)
 
 # Add DB session middleware
 # app.add_middleware(DBSessionMiddleware)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["Content-Disposition"],
+    max_age=3600,
+)
 
 def custom_openapi():
     if app.openapi_schema:
