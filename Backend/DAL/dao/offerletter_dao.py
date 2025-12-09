@@ -80,7 +80,14 @@ class OfferLetterDAO:
         """
         result = await self.db.execute(select(OfferLetterDetails))
         return result.scalars().all()
-    
+    async def get_offer_by_user_id(self, user_id: int):
+        """
+        Get a single offer by user ID.
+        """
+        result = await self.db.execute(
+            select(OfferLetterDetails).where(OfferLetterDetails.created_by == user_id)
+        )
+        return result.scalars().all()
     async def get_offer_by_uuid(self, user_uuid: str):
         """
         Get a single offer by UUID.
