@@ -129,6 +129,24 @@ async def get_all_offers(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/user_id/details", response_model=list[OfferLetterDetailsResponse])
+async def get_offer_by_user_id(
+    request: Request,
+    db: AsyncSession = Depends(get_db)):
+    current_user_id = int(request.state.user.get("user_id"))
+    try:
+        offer_service = OfferLetterService(db)
+        offer = await offer_service.get_offer_by_user_id(current_user_id)
+        return offer
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+
+        
 # get offer by offer uuid
 @router.get("/offer/{user_uuid}", response_model=OfferLetterDetailsResponse)
 async def get_offer_by_uuid(
@@ -150,6 +168,8 @@ async def get_offer_by_uuid(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
+
+
 @router.put("/{user_uuid}", response_model=OfferUpdateResponse)
 async def update_offer_by_uuid(
     user_uuid: str,
@@ -203,3 +223,5 @@ async def bulk_send_offer_letters(
     offer_service = OfferLetterService(db)
     print('offer_service created in route')
     return await offer_service.send_bulk_offerletters(request_data, int(request.state.user.get("user_id")))
+
+    

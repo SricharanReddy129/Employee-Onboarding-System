@@ -240,7 +240,8 @@ class OfferLetterService:
             raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-
+    async def get_offer_by_user_id(self, user_id: int):
+        return await self.dao.get_offer_by_user_id(user_id)
 
     async def get_pending_offerletters(self, current_user_id: int):
         """
