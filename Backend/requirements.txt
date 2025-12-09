@@ -25,3 +25,11 @@ phonenumbers
 aioboto3
 
 httpx
+
+
+# email validation
+pydantic[email] 
+
+pandas
+requests
+PyJWT
