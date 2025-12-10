@@ -79,7 +79,7 @@ async def create_bulk_offer_letters(
         content = await file.read()
         
         try:
-            df = pd.read_excel(BytesIO(content))
+            df = pd.read_excel(BytesIO(content), engine="openpyxl")
         except Exception as e:
             raise HTTPException(
                 status_code=400, 

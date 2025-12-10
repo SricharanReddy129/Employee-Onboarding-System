@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from ...DAL.dao.offerletter_dao import OfferLetterDAO
 from ...DAL.dao.master_dao import  CountryDAO, EducationDAO, ContactDAO
 from ...DAL.dao.education_dao import EducationDocDAO
-from ..utils.validation_utils import validate_alphabets_only, validate_country, validate_phone_number
+from ..utils.validation_utils import validate_alphabets_only, validate_country, validate_phone_number, get_country_name
 from ..utils.uuid_generator import generate_uuid7
 from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest, EducLevelDetails
 
@@ -15,7 +15,7 @@ class CountryService:
         self.dao = CountryDAO(self.db)
     async def create_country(self, calling_code: str):
         try:
-            country_name = validate_country(calling_code)
+            country_name = get_country_name(calling_code)
             existing = await self.dao.get_country_by_code(calling_code)
 
             if existing:

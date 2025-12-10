@@ -20,3 +20,6 @@ venv/
 # OS files
 .DS_Store
 Thumbs.db
+
+# deploy files
+*.pem

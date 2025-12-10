@@ -108,6 +108,7 @@ class OfferLetterService:
                 package = validate_package(str(row['package']).strip())
                 currency = validate_currency(str(row['currency']).strip())
 
+                print(first_name, last_name, mail, country_code, str(row['contact_number']), designation, package, currency)
                 # Check for duplicates within the batch
                 if mail in seen_emails:
                     failed_offers.append({
