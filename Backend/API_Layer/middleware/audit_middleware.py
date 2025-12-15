@@ -17,7 +17,8 @@ class AuditMiddleware(BaseHTTPMiddleware):
         # Endpoints that should not be audited
         self.open_endpoints = [
             "/docs", "/openapi.json",
-            "/redoc","/login", "/health",
+            "/redoc","/login", "/health", "/masters/country, /employee-details"
+            
         ]
         self.entity_mappings = AuditUtils().entity_mappings
         

@@ -1,18 +1,20 @@
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...DAL.dao.employee_details_dao import EmployeeDetailsDAO, AddressDAO
+from ...DAL.dao.employee_details_dao import EmployeeDetailsDAO, AddressDAO, EmployeeIdentityDAO
 from ...DAL.dao.master_dao import CountryDAO
 from ...DAL.dao.offerletter_dao import OfferLetterDAO
+from ...DAL.dao.identity_dao import IdentityDAO
 from ..utils.validation_utils import validate_date_of_birth, validate_blood_group
 from ..utils.uuid_generator import generate_uuid7
 from ..utils.postal_code_validator import validate_postal_code
-
+from ...DAL.utils.storage_utils import S3StorageService
 class EmployeeDetailsService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.dao = EmployeeDetailsDAO(self.db)
         self.countrydao = CountryDAO(self.db)
         self.offerdao = OfferLetterDAO(self.db)
+        
     
     async def create_personal_details(self, request_data):
         try:
@@ -165,5 +167,36 @@ class AddressService:
             raise he
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+        
+class EmployeeIdentityService:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+        self.identitydao = IdentityDAO(self.db)
+        self.dao = EmployeeIdentityDAO(self.db)
 
+    async def create_employee_identity(self, mapping_uuid, user_uuid, expiry_date, file):
+        try:
+            existing = await self.identitydao.get_country_identity_mapping_by_uuid(mapping_uuid)
+            if not existing:
+                raise HTTPException(status_code=404, detail="Mapping Not Found")
+
+            # checking offer letter employee exists or not
+            existing = await self.dao.get_employee_identity_by_user_uuid_and_mapping_uuid(user_uuid, mapping_uuid)
+            if existing:
+                raise HTTPException(status_code=404, detail="Employee identity mapping Already Found")
             
+           
+
+            # checking identity already exists for employee
+            existing =  await self.dao.get_employee_identity_by_user_uuid_and_mapping_uuid(user_uuid, mapping_uuid)
+            if existing:
+                raise HTTPException(status_code=400, detail="Identity Document Already Exists for this Employee")   
+            blob_service = S3StorageService()
+            file_path = await blob_service.upload_file(file, "employee_identity_documents")
+            uuid = generate_uuid7()
+            result = await self.dao.create_employee_identity(mapping_uuid, user_uuid, expiry_date, file_path, uuid)
+            return result
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))

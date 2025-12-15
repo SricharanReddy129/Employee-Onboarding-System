@@ -1,12 +1,13 @@
 # Backend/API_Layer/routes/employee_details_routes.py
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Form, File, UploadFile
+from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.utils.dependencies import get_db
 from ..interfaces.employee_details_interfaces import (PersonalDetailsRequest, PersonalDetailsResponse, PersonalDetails,
                                                       UpdatePersonalRequest, CreateAddressRequest, CreateAddressResponse,
-                                                      AddressDetails, )
-from ...Business_Layer.services.employee_details_service import EmployeeDetailsService, AddressService
-
+                                                      AddressDetails, EmployeeIdentityResponse)
+from ...Business_Layer.services.employee_details_service import EmployeeDetailsService, AddressService, EmployeeIdentityService
+from datetime import date
 router = APIRouter()
 
 @router.post("", response_model=PersonalDetailsResponse)
@@ -132,3 +133,34 @@ async def delete_address(address_uuid: str, db: AsyncSession = Depends(get_db)):
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# Employee Identity Document Routes #
+@router.post("/identity", response_model=EmployeeIdentityResponse)
+async def create_employee_identity(
+    mapping_uuid: str = Form(...),
+    user_uuid: str = Form(...),
+    expiry_date: Optional[date] = Form(None),
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        employee_service = EmployeeIdentityService(db)
+
+        result = await employee_service.create_employee_identity(
+            mapping_uuid=mapping_uuid,
+            user_uuid=user_uuid,
+            expiry_date=expiry_date,
+            file=file
+        )
+
+        return EmployeeIdentityResponse(
+            identity_uuid=result.document_uuid,
+            message="Employee Identity Document Created Successfully"
+        )
+
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
