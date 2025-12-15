@@ -59,9 +59,9 @@ def send_offer_accepted_email(
     """
 
         msg = EmailMessage()
-        msg["Subject"] = subject
-        msg["From"] = EMAIL_USER
-        msg["To"] = to_email
+        msg['Subject'] = subject
+        msg['From'] = EMAIL_USER
+        msg['To'] = to_email
         msg.set_content(content)
 
         try:
@@ -69,6 +69,6 @@ def send_offer_accepted_email(
                 smtp.starttls()
                 smtp.login(EMAIL_USER, EMAIL_PASSWORD)
                 smtp.send_message(msg)
-            print(f"✅ Offer acceptance email sent to {to_email}")
+            print(f"✅ Email sent to {to_email}")
         except Exception as e:
             print(f"❌ Failed to send email to {to_email}: {e}")
