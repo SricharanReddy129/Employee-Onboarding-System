@@ -71,10 +71,9 @@ class OfferResponseService:
         # ----------------------------
         result = await self.dao.update_offer_acceptance_from_webhook(update_data)
         if result:
-            email_utils.send_email(
+            email_utils.send_offer_accepted_email(
                 to_email=result.mail,  # ✅ use DB email
-                subject="Offer Letter Accepted",
-                content=f"Hello {result.first_name},\n\nCongratulations on accepting your offer letter!"
+                name=result.first_name  # ✅ use DB name
             )   
         print("✅ Business Layer: Update request sent to DAO")
 
