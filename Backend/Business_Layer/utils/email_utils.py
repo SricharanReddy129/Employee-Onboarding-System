@@ -76,3 +76,48 @@ def send_offer_accepted_email(
             print(f"❌ Failed to send email to {to_email}: {e}")
             return f"Failed to send email: {e}"
         # ----------------------------
+def send_otp_email(
+    to_email: str,
+    otp: str,
+    subject: str = "Email Verification OTP"
+):
+    """
+    Sends a professional OTP verification email.
+    """
+
+    content = f"""
+Hello,
+
+We received a request to verify your email address as part of the Employee
+Onboarding process.
+
+Your One-Time Password (OTP) is:
+
+🔐 OTP: {otp}
+
+This OTP is valid for the next 5 minutes. Please do not share this OTP with
+anyone for security reasons.
+
+If you did not request this verification, please ignore this email.
+
+Warm regards,  
+Employee Onboarding System  
+Paves Technologies
+"""
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = EMAIL_USER
+    msg["To"] = to_email
+    msg.set_content(content)
+
+    try:
+        with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as smtp:
+            smtp.starttls()
+            smtp.login(EMAIL_USER, EMAIL_PASSWORD)
+            smtp.send_message(msg)
+        print(f"✅ OTP email sent to {to_email}")
+        return "OTP email sent successfully"
+    except Exception as e:
+        print(f"❌ Failed to send OTP email to {to_email}: {e}")
+        return f"Failed to send OTP email: {e}"

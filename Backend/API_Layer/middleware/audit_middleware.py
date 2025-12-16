@@ -1,4 +1,5 @@
 # Backend/API_Layer/middleware/audit_middleware.py
+from importlib.resources import path
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response, StreamingResponse
@@ -28,7 +29,11 @@ class AuditMiddleware(BaseHTTPMiddleware):
         print("Audit Middleware Entering...")
         path = request.url.path
         method = request.method
-
+        
+         # 🔕 Skip OTP routes
+        if path.startswith("/otp"):
+            return await call_next(request)
+        
         # Skip audit for certain methods and endpoints
         if method in ["GET", "OPTIONS"] or any(path.startswith(p) for p in self.open_endpoints):
             print(f"Skipping Audit: path={path}, method={method}")

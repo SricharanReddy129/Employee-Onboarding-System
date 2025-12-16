@@ -94,3 +94,15 @@ class OfferResponseDAO:
             "fullname": f"{first_name} {last_name}".strip(),
             "email": offer.mail
         }
+    async def is_email_accepted(self, email: str) -> bool:
+        result = await self.db.execute(
+            select(OfferLetterDetails).where(
+                OfferLetterDetails.mail == email
+            )
+        )
+        offer = result.scalar_one_or_none()
+
+        if not offer:
+            return False
+
+        return offer.status == "Accepted"
