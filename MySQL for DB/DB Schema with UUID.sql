@@ -346,3 +346,10 @@ CREATE TABLE audit_trail (
     host VARCHAR(255) DEFAULT NULL,            -- localhost:8000 or EC2 DNS
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE otptable (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    otp VARCHAR(10) NOT NULL,
+    expirytime DATETIME NOT NULL
+);

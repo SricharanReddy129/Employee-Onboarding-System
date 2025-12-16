@@ -1,8 +1,7 @@
 from typing import Any, Optional
 import datetime
-import decimal
 
-from sqlalchemy import CHAR, DECIMAL, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, text
+from sqlalchemy import CHAR, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, text
 from sqlalchemy.dialects.mysql import TINYINT, YEAR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -148,6 +147,15 @@ class OfferLetterDetails(Base):
     employee_identity_document: Mapped[list['EmployeeIdentityDocument']] = relationship('EmployeeIdentityDocument', back_populates='offer_letter_details', lazy="selectin")
     employee_pay_slips: Mapped[list['EmployeePaySlips']] = relationship('EmployeePaySlips', back_populates='offer_letter_details', lazy="selectin")
     employee_relieving_letter: Mapped[list['EmployeeRelievingLetter']] = relationship('EmployeeRelievingLetter', back_populates='offer_letter_details', lazy="selectin")
+
+
+class Otptable(Base):
+    __tablename__ = 'otptable'
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), nullable=False)
+    otp: Mapped[str] = mapped_column(String(10), nullable=False)
+    expirytime: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=False)
 
 
 class ReceivableItems(Base):

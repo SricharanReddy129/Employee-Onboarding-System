@@ -31,5 +31,5 @@ def fix_relationships(file_path):
 #         print("Usage: python fix_async_models.py models.py")
 #         print(sys.argv[1])
 #         sys.exit(1)
-file_path = r"C:\Users\Jagadish.Pannala\Employee_Onboarding_Module\Employee-Onboarding-System\MySQL for DB\models.py"
+file_path = r"C:\Users\Sumiya.Patan\EOS_System\Employee-Onboarding-System\MySQL for DB\models.py"
 fix_relationships(file_path)
