@@ -71,7 +71,7 @@ class OfferResponseService:
         # ----------------------------
         result = await self.dao.update_offer_acceptance_from_webhook(update_data)
         if result:
-            email_utils.send_offer_accepted_email(
+            emailres=email_utils.send_offer_accepted_email(
             to_email=result.mail,
             name=result.first_name
             )   
@@ -80,7 +80,8 @@ class OfferResponseService:
         # ----------------------------
         # 6️⃣ Return response to PandaDoc
         # ----------------------------
-        return PandaDocWebhookResponse(status="ok")
+        resultresponse=f"result: {result}, emailres: {emailres}"
+        return PandaDocWebhookResponse(status=resultresponse)
     
     async def process_offer_expiration_webhook(self, payload: PandaDocExpirationData):
         """

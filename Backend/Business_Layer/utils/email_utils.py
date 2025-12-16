@@ -70,5 +70,8 @@ def send_offer_accepted_email(
                 smtp.login(EMAIL_USER, EMAIL_PASSWORD)
                 smtp.send_message(msg)
             print(f"✅ Email sent to {to_email}")
+            return "Email sent successfully"
         except Exception as e:
             print(f"❌ Failed to send email to {to_email}: {e}")
+            return f"Failed to send email: {e}"
+        # ----------------------------
