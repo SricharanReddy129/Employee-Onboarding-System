@@ -72,9 +72,11 @@ class OfferResponseService:
         result = await self.dao.update_offer_acceptance_from_webhook(update_data)
         print("Result from DAO:", result)
         if result:
+            userdetails=self.dao.get_fullname_email_by_docid(update_data["doc_id"])
+            print("User details fetched:", userdetails)
             emailres=email_utils.send_offer_accepted_email(
-            to_email=result.mail,
-            name=result.first_name
+            to_email=userdetails["email"],
+            name=userdetails["fullname"]
             )   
         print("✅ Business Layer: Update request sent to DAO")
 
