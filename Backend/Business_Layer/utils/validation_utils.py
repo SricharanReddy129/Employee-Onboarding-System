@@ -194,9 +194,29 @@ def validate_country(calling_code: str):
     if not country:
         raise ValueError("Country not found in pycountry")
 
+    return calling_code
+
+def get_country_name(calling_code: str):
+    try:
+        code = int(calling_code)
+    except ValueError:
+        raise ValueError("Calling code must be a number")
+
+    # Validate calling code → get region (ISO country code, e.g. IN)
+    region = phonenumbers.region_code_for_country_code(code)
+
+    if not region:
+        raise ValueError("Invalid calling code")
+
+    # Convert region (ISO alpha-2) to country name
+    country = pycountry.countries.get(alpha_2=region)
+
+    if not country:
+        raise ValueError("Country not found in pycountry")
+
     return country.name
 
-def validate_phone_number(calling_code: str, phone_number: str, type: str) -> bool:
+def validate_phone_number(calling_code: str, phone_number: str, type: str) -> str:
     # 1. Validate calling code
     try:
         code = int(calling_code)
@@ -228,7 +248,7 @@ def validate_phone_number(calling_code: str, phone_number: str, type: str) -> bo
     if detected_region != region:
         raise ValueError(f"{type} does not match the calling code")
 
-    return True
+    return phone_number
 
 def validate_date_of_birth(date_of_birth: str):
     try:

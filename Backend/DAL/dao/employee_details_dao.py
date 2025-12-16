@@ -1,6 +1,8 @@
-from ..models.models import PersonalDetails, Addresses
+from ..models.models import PersonalDetails, Addresses, EmployeeIdentityDocument
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from typing import Optional
+from datetime import date
 class EmployeeDetailsDAO:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -104,3 +106,35 @@ class AddressDAO:
         await self.db.delete(address)
         await self.db.commit()
         return address
+    
+class EmployeeIdentityDAO:
+    def __init__(self, db: AsyncSession):
+        self.db = db
+
+    async def get_employee_identity_by_user_uuid_and_mapping_uuid(self, user_uuid, mapping_uuid):
+        result = await self.db.execute(select(EmployeeIdentityDocument).where(EmployeeIdentityDocument.user_uuid == user_uuid).
+                                       where(EmployeeIdentityDocument.mapping_uuid == mapping_uuid))
+        return result.scalar_one_or_none()
+    async def create_employee_identity(
+        self,
+        mapping_uuid: str,
+        user_uuid: str,
+        expiry_date: Optional[date],
+        file_path: str,
+        uuid: str
+    ):
+
+        employee_identity = EmployeeIdentityDocument(
+            document_uuid=uuid,
+            mapping_uuid=mapping_uuid,
+            user_uuid=user_uuid,
+            expiry_date=expiry_date,
+            file_path=file_path,
+            status="uploaded"
+        )
+
+        self.db.add(employee_identity)
+        await self.db.commit()
+        await self.db.refresh(employee_identity)
+
+        return employee_identity

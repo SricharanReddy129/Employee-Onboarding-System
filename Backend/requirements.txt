@@ -33,3 +33,4 @@ pydantic[email]
 pandas
 requests
 PyJWT[crypto]
+openpyxl

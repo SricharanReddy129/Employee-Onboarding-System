@@ -6,6 +6,7 @@ from ...API_Layer.interfaces.offerresponse_interface import(
 )
 from ...DAL.dao.offerresponse_dao import OfferResponseDAO
 from sqlalchemy.ext.asyncio import AsyncSession
+from ...Business_Layer.utils import email_utils
 
 
 class OfferResponseService:
@@ -68,8 +69,14 @@ class OfferResponseService:
         # ----------------------------
         # 5️⃣ Call DAO using constructor-injected DB
         # ----------------------------
-        await self.dao.update_offer_acceptance_from_webhook(update_data)
-
+        result = await self.dao.update_offer_acceptance_from_webhook(update_data)
+        if result:
+            userdetails= await self.dao.get_fullname_email_by_docid(update_data["doc_id"])
+            print("User details fetched:", userdetails)
+            email_utils.send_offer_accepted_email(
+            to_email=userdetails["email"],
+            name=userdetails["fullname"]
+            )   
         print("✅ Business Layer: Update request sent to DAO")
 
         # ----------------------------

@@ -100,3 +100,7 @@ class AddressDetails(BaseModel):
     state_or_region: Optional[str] = None
     postal_code: str
     country_uuid: str
+
+class EmployeeIdentityResponse(BaseModel):
+    identity_uuid: str
+    message: str
