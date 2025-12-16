@@ -70,6 +70,7 @@ class OfferResponseService:
         # 5️⃣ Call DAO using constructor-injected DB
         # ----------------------------
         result = await self.dao.update_offer_acceptance_from_webhook(update_data)
+        print("Result from DAO:", result)
         if result:
             emailres=email_utils.send_offer_accepted_email(
             to_email=result.mail,
@@ -82,7 +83,7 @@ class OfferResponseService:
         # ----------------------------
         resultresponse=f"result: {result}, emailres: {emailres}"
         print("Final response:", resultresponse)
-        return PandaDocWebhookResponse(status=resultresponse)
+        return PandaDocWebhookResponse(status="ok")
     
     async def process_offer_expiration_webhook(self, payload: PandaDocExpirationData):
         """
