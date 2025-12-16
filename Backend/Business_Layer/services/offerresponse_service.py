@@ -81,6 +81,7 @@ class OfferResponseService:
         # 6️⃣ Return response to PandaDoc
         # ----------------------------
         resultresponse=f"result: {result}, emailres: {emailres}"
+        print("Final response:", resultresponse)
         return PandaDocWebhookResponse(status=resultresponse)
     
     async def process_offer_expiration_webhook(self, payload: PandaDocExpirationData):

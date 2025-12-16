@@ -1,4 +1,7 @@
 from fastapi import APIRouter, Body, Depends, Request, HTTPException
+
+from Backend.Business_Layer.utils import email_utils
+from Backend.DAL.dao.offerresponse_dao import OfferResponseDAO
 from ...API_Layer.interfaces.offerresponse_interface import (
     PandaDocWebhookRequest, 
     PandaDocWebhookResponse,
@@ -11,6 +14,33 @@ from ..utils.webhook_validation import validate_webhook_origin
 from ...config.env_loader import get_env_var
 
 router = APIRouter()
+from fastapi import Query, Request, Depends
+@router.get("/email-test")
+async def email_test(
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+    doc_id: str = Query(...)
+):
+    """
+    Test endpoint to send a test email.
+    """
+
+    # ✅ Instantiate DAO with DB session
+    dao = OfferResponseDAO(db)
+    # ✅ Await async DAO method
+    result = await dao.get_fullname_email_by_docid(doc_id)
+
+    if not result:
+        return {"message": "No offer found for given doc_id"}
+
+    print("Fetched details:", result)
+
+    print("Sending test email...")
+    email_utils.send_offer_accepted_email(
+        to_email=result["email"],  # ✅ use DB email
+        name=result["fullname"]
+    )
+    return {"message": "Test email sent successfully."}
 
 @router.post("/offerletter-accepted", response_model=PandaDocWebhookResponse)
 async def offerletter_accepted_webhook(
