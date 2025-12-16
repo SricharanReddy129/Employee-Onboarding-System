@@ -113,7 +113,7 @@ class IdentityType(Base):
     country_identity_mapping: Mapped[list['CountryIdentityMapping']] = relationship('CountryIdentityMapping', back_populates='identity_type', lazy="selectin")
 
 
-class OfferLetterDetails(Base):
+class OfferLetterDetails(Base):   
     __tablename__ = 'offer_letter_details'
     __table_args__ = (
         Index('mail', 'mail', unique=True),

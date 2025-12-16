@@ -125,7 +125,7 @@ class OfferLetterDAO:
 
         return offer
     
-    async def fetch_pending_offerletters(self, created_by: int):
+    async def fetch_created_offerletters(self, created_by: int):
         """
         Returns all offer letters:
         - status = 'created'

@@ -98,7 +98,7 @@ class S3StorageService:
             if hasattr(file, 'read'):
                 # Ensure we're at the beginning of the file
                 if hasattr(file, 'seek'):
-                    file.seek(0)
+                    await file.seek(0)
                 file_content = file.read()
                 if asyncio.iscoroutine(file_content):
                     file_content = await file_content

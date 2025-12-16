@@ -241,4 +241,13 @@ def validate_blood_group(blood_group: str):
         raise ValueError("Invalid blood group. It must be one of A+, A-, B+, B-, O+, O-, AB+, AB-")
     return blood_group
 
-
+# def validate_date_format(date_str: str, field_name: str = "Date") -> str:
+#     """
+#     Validates that the given date string is in YYYY-MM-DD format.
+#     Raises ValueError if the format is incorrect.
+#     """
+#     try:
+#         datetime.strptime(date_str, "%Y-%m-%d")
+#     except ValueError:
+#         raise ValueError(f"{field_name} must be in YYYY-MM-DD format")
+#     return date_str

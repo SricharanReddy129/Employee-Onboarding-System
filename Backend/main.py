@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
+
+from Backend.API_Layer.routes import employee_experience_routes
 from .API_Layer.routes import (master_routes, offerletter_routes, education_routes, offerresponse_routes, employee_details_routes,
                                identity_routes)
 from .API_Layer.middleware.jwt_middleware import JWTMiddleware
@@ -57,3 +59,4 @@ app.include_router(education_routes.router, prefix="/education", tags=["Educatio
 app.include_router(offerresponse_routes.router, prefix="/offerresponse", tags=["Offer Response"])
 app.include_router(employee_details_routes.router, prefix="/employee-details", tags=["Employee Details"])
 app.include_router(identity_routes.router, prefix="/identity", tags=["Identity Details"])
+app.include_router(employee_experience_routes.router, prefix="/experience", tags=["Employee Experience"])
