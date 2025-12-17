@@ -29,11 +29,11 @@ def send_offer_accepted_email(
     to_email: str,
     name: str,
     subject: str = "Offer Accepted – Next Steps"
+    ,onboarding_url: str = ""
     ):
         """
         Sends a professional offer acceptance email to the candidate.
         """
-        upload_link = "http://13.202.204.204"
         content = f"""
     Hello {name},
 
@@ -45,7 +45,7 @@ def send_offer_accepted_email(
     To proceed with the onboarding process, we kindly request you to upload the
     required documents using the secure link below:
 
-    🔗 Upload Documents: {upload_link}
+    🔗 Upload Documents: {onboarding_url}
 
     Please ensure that all documents are submitted at your earliest convenience so
     we can complete the remaining formalities without delay.

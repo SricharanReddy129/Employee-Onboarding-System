@@ -89,10 +89,12 @@ class OfferResponseDAO:
 
         first_name = offer.first_name
         last_name = offer.last_name
+        uuid = offer.user_uuid
 
         return {
             "fullname": f"{first_name} {last_name}".strip(),
-            "email": offer.mail
+            "email": offer.mail,
+            "uuid": uuid
         }
     async def is_email_accepted(self, email: str) -> bool:
         result = await self.db.execute(

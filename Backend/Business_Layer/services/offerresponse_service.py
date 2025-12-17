@@ -7,13 +7,16 @@ from ...API_Layer.interfaces.offerresponse_interface import(
 from ...DAL.dao.offerresponse_dao import OfferResponseDAO
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...Business_Layer.utils import email_utils
+from ...DAL.dao.onboarding_links_dao import OnboardingLinkDAO
+from ...config.env_loader import get_env_var
 
+FRONTEND_URL = get_env_var("FRONTEND_URL")
 
 class OfferResponseService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.dao = OfferResponseDAO(self.db)
-
+        self.onboarding_links_dao = OnboardingLinkDAO(self.db)
     async def process_offer_acceptance_webhook(self, payload: PandaDocWebhookRequest):
         """
         Business logic:
@@ -73,9 +76,20 @@ class OfferResponseService:
         if result:
             userdetails= await self.dao.get_fullname_email_by_docid(update_data["doc_id"])
             print("User details fetched:", userdetails)
+
+            raw_token = await self.onboarding_links_dao.create_onboarding_link(
+                user_uuid=userdetails["uuid"],
+                email=userdetails["email"],
+                expires_in_hours=24
+            )
+            print("Onboarding link created with token:", raw_token)
+
+            onboarding_url = f"{FRONTEND_URL}/onboarding?token={raw_token}"
+
             email_utils.send_offer_accepted_email(
             to_email=userdetails["email"],
             name=userdetails["fullname"]
+            ,onboarding_url=onboarding_url
             )   
         print("✅ Business Layer: Update request sent to DAO")
 

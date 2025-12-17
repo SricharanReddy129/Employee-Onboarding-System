@@ -1,7 +1,7 @@
 from typing import Any, Optional
 import datetime
 
-from sqlalchemy import CHAR, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, text
+from sqlalchemy import BigInteger, CHAR, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, text
 from sqlalchemy.dialects.mysql import TINYINT, YEAR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -142,6 +142,7 @@ class OfferLetterDetails(Base):
     employee_deliverables: Mapped[list['EmployeeDeliverables']] = relationship('EmployeeDeliverables', back_populates='offer_letter_details', lazy="selectin")
     employee_experience: Mapped[list['EmployeeExperience']] = relationship('EmployeeExperience', back_populates='offer_letter_details', lazy="selectin")
     employee_receivables: Mapped[list['EmployeeReceivables']] = relationship('EmployeeReceivables', back_populates='offer_letter_details', lazy="selectin")
+    onboarding_links: Mapped[list['OnboardingLinks']] = relationship('OnboardingLinks', back_populates='offer_letter_details', lazy="selectin")
     personal_details: Mapped[list['PersonalDetails']] = relationship('PersonalDetails', back_populates='offer_letter_details', lazy="selectin")
     employee_education_document: Mapped[list['EmployeeEducationDocument']] = relationship('EmployeeEducationDocument', back_populates='offer_letter_details', lazy="selectin")
     employee_identity_document: Mapped[list['EmployeeIdentityDocument']] = relationship('EmployeeIdentityDocument', back_populates='offer_letter_details', lazy="selectin")
@@ -350,6 +351,23 @@ class EmployeeReceivables(Base):
 
     receivable_items: Mapped['ReceivableItems'] = relationship('ReceivableItems', back_populates='employee_receivables', lazy="selectin")
     offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_receivables', lazy="selectin")
+
+
+class OnboardingLinks(Base):
+    __tablename__ = 'onboarding_links'
+    __table_args__ = (
+        ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], ondelete='CASCADE', name='fk_onboarding_user_uuid'),
+        Index('uq_onboarding_token_hash', 'token_hash', unique=True),
+        Index('uq_onboarding_user_uuid', 'user_uuid', unique=True)
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    email: Mapped[str] = mapped_column(String(100), nullable=False)
+    token_hash: Mapped[str] = mapped_column(CHAR(64), nullable=False)
+    expires_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=False)
+
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='onboarding_links', lazy="selectin")
 
 
 class PersonalDetails(Base):
