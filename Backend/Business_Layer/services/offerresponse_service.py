@@ -10,7 +10,7 @@ from ...Business_Layer.utils import email_utils
 from ...DAL.dao.onboarding_links_dao import OnboardingLinkDAO
 from ...config.env_loader import get_env_var
 
-FRONTEND_URL = get_env_var("FRONTEND_URL")
+ONBOARDING_LINK_BASE_URL = get_env_var("ONBOARDING_LINK_BASE_URL")
 
 class OfferResponseService:
     def __init__(self, db: AsyncSession):
@@ -84,7 +84,7 @@ class OfferResponseService:
             )
             print("Onboarding link created with token:", raw_token)
 
-            onboarding_url = f"{FRONTEND_URL}/onboarding?token={raw_token}"
+            onboarding_url = f"{ONBOARDING_LINK_BASE_URL}?token={raw_token}"
 
             email_utils.send_offer_accepted_email(
             to_email=userdetails["email"],
