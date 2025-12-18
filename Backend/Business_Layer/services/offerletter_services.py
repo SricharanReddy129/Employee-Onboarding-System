@@ -244,7 +244,7 @@ class OfferLetterService:
     async def get_offer_by_user_id(self, user_id: int):
         return await self.dao.get_offer_by_user_id(user_id)
 
-    async def get_pending_offerletters(self, current_user_id: int):
+    async def get_created_offerletters(self, current_user_id: int):
         """
         Fetch all offer letters where:
         - status = 'created'
@@ -252,7 +252,7 @@ class OfferLetterService:
         """
         print("Fetching pending offer letters for user:", current_user_id)
 
-        records = await self.dao.fetch_pending_offerletters(current_user_id)
+        records = await self.dao.fetch_created_offerletters(current_user_id)
 
         return records
     

@@ -1,4 +1,7 @@
 from fastapi import APIRouter, Body, Depends, Request, HTTPException
+
+from Backend.Business_Layer.utils import email_utils
+from Backend.DAL.dao.offerresponse_dao import OfferResponseDAO
 from ...API_Layer.interfaces.offerresponse_interface import (
     PandaDocWebhookRequest, 
     PandaDocWebhookResponse,

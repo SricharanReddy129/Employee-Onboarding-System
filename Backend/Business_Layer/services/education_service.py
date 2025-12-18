@@ -28,6 +28,7 @@ class EducationDocService:
             raise HTTPException(status_code=500, detail=str(e))
     
     async def get_all_education_documents(self):
+        
         try:
             result = await self.dao.get_all_education_documents()
             return result

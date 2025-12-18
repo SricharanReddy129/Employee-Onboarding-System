@@ -72,3 +72,39 @@ class OfferResponseDAO:
         print(f"🧊 DAO: Marked offer {offer.user_uuid} as Expired successfully.")
 
         return offer
+
+    async def get_fullname_email_by_docid(self, doc_id: str):
+        """
+        Fetch candidate full name and email by PandaDoc document ID.
+        """
+        result = await self.db.execute(
+            select(OfferLetterDetails).where(
+                OfferLetterDetails.pandadoc_draft_id == doc_id
+            )
+        )
+        offer = result.scalar_one_or_none()
+
+        if not offer:
+            return None
+
+        first_name = offer.first_name
+        last_name = offer.last_name
+        uuid = offer.user_uuid
+
+        return {
+            "fullname": f"{first_name} {last_name}".strip(),
+            "email": offer.mail,
+            "uuid": uuid
+        }
+    async def is_email_accepted(self, email: str) -> bool:
+        result = await self.db.execute(
+            select(OfferLetterDetails).where(
+                OfferLetterDetails.mail == email
+            )
+        )
+        offer = result.scalar_one_or_none()
+
+        if not offer:
+            return False
+
+        return offer.status == "Accepted"

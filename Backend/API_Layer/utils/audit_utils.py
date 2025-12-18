@@ -60,6 +60,10 @@ class AuditUtils:
             "identity": {
                 "table": "identity_type",
                 "id_field": "identity_type_uuid"
+            },
+            "experience": {
+                "table": "employee_experience",
+                "id_field": "experience_uuid"
             }
         }
 

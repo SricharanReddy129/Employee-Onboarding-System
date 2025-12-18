@@ -196,18 +196,17 @@ async def update_offer_by_uuid(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/pending", response_model=list[OfferLetterDetailsResponse])
-async def get_pending_offerletters(
+@router.get("/created", response_model=list[OfferLetterDetailsResponse])
+async def get_created_offerletters(
     request: Request,
     db: AsyncSession = Depends(get_db)
 ):
-    print("Fetching pending offer letters endpoint called")
-
+    print("Fetching created offer letters endpoint called")
     # Extract user_id from JWT middleware
     current_user_id = request.state.user.get("user_id")
 
     offer_service = OfferLetterService(db)
-    result =  await offer_service.get_pending_offerletters(current_user_id)
+    result =  await offer_service.get_created_offerletters(current_user_id)
     for i in result:
         print("uuid", i.user_uuid)
     return result
