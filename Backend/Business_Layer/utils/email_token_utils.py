@@ -19,21 +19,18 @@ def generate_mixed_month_time_token() -> str:
     """
     now = datetime.utcnow()
 
-    # Month letters → February
-    month_letters = list(now.strftime("%B"))  # ['F','e','b','r','u','a','r','y']
+    month_letters = list(now.strftime("%B"))      # e.g. ['S','e','p','t','e','m','b','e','r']
+    time_digits = list(now.strftime("%H%M%S"))   # e.g. ['1','4','3','0','5','9']
+    date_month_year_digits = list(now.strftime("%d%m%Y")) # e.g. ['1','4','0','9','2','0','2','3']
+       
+    # 🔀 Shuffle both lists BEFORE mixing
+    random.shuffle(month_letters)
+    random.shuffle(time_digits)
+    random.shuffle(date_month_year_digits)
 
-    # Datetime digits → 20250213223323
-    datetime_digits = list(now.strftime("%Y%m%d%H%M%S"))
+    mixed = list(itertools.zip_longest(month_letters, time_digits, date_month_year_digits, fillvalue=""))
+    token_core = "".join(a + b + c for a, b, c in mixed)
 
-    # Interleave month letters and datetime digits
-    mixed = list(itertools.zip_longest(month_letters, datetime_digits, fillvalue=""))
-    token_core = "".join(a + b for a, b in mixed)
-
-    # Shuffle characters (excluding final random letter)
-    token_chars = list(token_core)
-    random.shuffle(token_chars)
-
-    # Random alphabet suffix
     random_letter = secrets.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-    return "".join(token_chars) + random_letter
+    return f"{token_core}{random_letter}"
