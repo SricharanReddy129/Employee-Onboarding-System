@@ -51,5 +51,3 @@ class OnboardingLinkDAO:
             except IntegrityError:
                 # Safety net for race conditions
                 await self.db.rollback()
-
-        raise RuntimeError("Unable to generate a unique onboarding token after retries")
