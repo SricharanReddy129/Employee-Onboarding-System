@@ -28,7 +28,7 @@ async def create_country(
         raise HTTPException(status_code=500, detail=str(e))
 
 # deactivate country by country uuid
-@router.put("/deactivateoractivate/{country_uuid}", response_model= CreateCountryResponse)
+@router.put("/country/deactivateoractivate/{country_uuid}", response_model= CreateCountryResponse)
 async def update_country(
     country_uuid: str,
     is_active: bool,
@@ -36,7 +36,7 @@ async def update_country(
 ):
     try:
         country_service = CountryService(db)
-        country = await country_service.update_country(country_uuid, is_active)
+        country= await country_service.update_country(country_uuid, is_active)
         return CreateCountryResponse(
             message=country,
             country_uuid=country_uuid

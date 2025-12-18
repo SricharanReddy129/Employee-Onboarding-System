@@ -21,7 +21,7 @@ class AuditUtils:
                 "id_field": "user_uuid",
                 "alternate_id_fields": ["offer_uuid", "pandadoc_draft_id"]   # optional alternate key
             },
-            "masters-country": {
+            "masters/country": {
                 "table": "countries",
                 "id_field": "country_uuid"
             },

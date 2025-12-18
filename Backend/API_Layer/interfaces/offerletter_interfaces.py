@@ -13,6 +13,7 @@ class OfferCreateRequest(BaseModel):
     package: str
     currency : str
 
+
 class OfferCreateResponse(BaseModel):
     message: str
     offer_id: str

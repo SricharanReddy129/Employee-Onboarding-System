@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.utils.dependencies import get_db
-from ..interfaces.identity_interfaces import(IdentityCreateRequest, IdentityResponse, IdentityDetails,
+from ..interfaces.identity_interfaces import(CountryIdentityDropdownResponse, IdentityCreateRequest, IdentityResponse, IdentityDetails,
                                              CountryIdentityMappingDetails, CountryIdentityMappingRequest, CountryIdentityMappingResponse,
                                              )
 from ...Business_Layer.services.identity_service import IdentityService
@@ -133,6 +133,18 @@ async def delete_country_identity_mapping(uuid: str, db: AsyncSession = Depends(
             mapping_uuid = uuid,
             message = "Country Identity Mapping Deleted Successfully"
         )
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/country-mapping/identities/{country_uuid}", response_model=list[CountryIdentityDropdownResponse])
+async def get_identities_by_country(country_uuid: str, db: AsyncSession = Depends(get_db)):
+    try:
+        identity_service = IdentityService(db)
+        result =await identity_service.get_identities_by_country(country_uuid)
+        return result
     except HTTPException as he:
         raise he
     except Exception as e:

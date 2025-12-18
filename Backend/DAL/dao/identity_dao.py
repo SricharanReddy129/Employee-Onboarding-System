@@ -1,3 +1,4 @@
+import dbm
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..models.models import IdentityType, CountryIdentityMapping, EmployeeIdentityDocument
 from sqlalchemy import select
@@ -89,3 +90,24 @@ class IdentityDAO:
         await self.db.delete(mapping)
         await self.db.commit()
         return mapping
+    
+    async def get_identities_by_country_uuid(self, country_uuid: str):
+        stmt = (
+            select(
+                IdentityType.identity_type_uuid,
+                IdentityType.identity_type_name,
+                CountryIdentityMapping.is_mandatory
+            )
+            .join(
+                IdentityType,
+                CountryIdentityMapping.identity_type_uuid
+                == IdentityType.identity_type_uuid
+            )
+            .where(
+                CountryIdentityMapping.country_uuid == country_uuid,
+                IdentityType.is_active == True
+            )
+        )
+
+        result = await self.db.execute(stmt)
+        return result.all()

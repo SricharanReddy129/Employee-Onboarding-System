@@ -45,3 +45,8 @@ class CountryIdentityMappingRequest(BaseModel):
 class CountryIdentityMappingResponse(BaseModel):
     mapping_uuid: str
     message: str
+
+class CountryIdentityDropdownResponse(BaseModel):
+    identity_type_uuid: str
+    identity_type_name: str
+ 

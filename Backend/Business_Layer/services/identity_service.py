@@ -9,7 +9,7 @@ class IdentityService:
         self.db = db
         self.dao = IdentityDAO(db)
         self.country_dao = CountryDAO(db)
-    
+        
     async def get_all_identity_types(self):
         try:
             result = await self.dao.get_all_identity_types()
@@ -136,3 +136,17 @@ class IdentityService:
             raise he
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+        
+  
+    async def get_identities_by_country(self, country_uuid: str):
+        try:
+            existing_country = await self.country_dao.get_country_by_uuid(country_uuid)
+            if not existing_country:
+                raise HTTPException(status_code=404, detail="Country Not Found")
+            result = await self.dao.get_identities_by_country_uuid(country_uuid)
+            return result
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
