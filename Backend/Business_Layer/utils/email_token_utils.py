@@ -33,4 +33,6 @@ def generate_mixed_month_time_token() -> str:
 
     random_letter = secrets.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
+    print("Generated token:", f"{token_core}{random_letter}")
+
     return f"{token_core}{random_letter}"

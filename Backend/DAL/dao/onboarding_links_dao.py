@@ -16,25 +16,13 @@ class OnboardingLinkDAO:
         email: str,
         expires_in_hours: int = 24
     ) -> str:
-        """
-        Creates onboarding link entry and returns the RAW token
-        (raw token should be sent via email).
-        """
+            """
+            Creates onboarding link entry and returns the RAW token
+            (raw token should be sent via email).
+            """
 
-        for _ in range(5):  # Retry up to 5 times for unique token
             raw_token = generate_mixed_month_time_token()
             token_hash = hash_token(raw_token)
-
-            # ✅ Pre-check if token hash already exists
-            exists_stmt = select(OnboardingLinks.id).where(
-                OnboardingLinks.token_hash == token_hash
-            )
-            result = await self.db.execute(exists_stmt)
-
-            if result.scalar_one_or_none():
-                # token collision → retry
-                continue
-
             print("Token ", raw_token, " Hash ", token_hash)
             onboarding_link = OnboardingLinks(
                 user_uuid=user_uuid,
