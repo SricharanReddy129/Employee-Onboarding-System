@@ -1,4 +1,5 @@
 from datetime import datetime
+import random
 import secrets
 import itertools
 import hashlib
@@ -18,12 +19,21 @@ def generate_mixed_month_time_token() -> str:
     """
     now = datetime.utcnow()
 
-    month_letters = list(now.strftime("%B"))      # e.g. ['S','e','p','t','e','m','b','e','r']
-    time_digits = list(now.strftime("%H%M%S"))    # e.g. ['1','4','3','2','4','5']
+    # Month letters → February
+    month_letters = list(now.strftime("%B"))  # ['F','e','b','r','u','a','r','y']
 
-    mixed = list(itertools.zip_longest(month_letters, time_digits, fillvalue=""))
+    # Datetime digits → 20250213223323
+    datetime_digits = list(now.strftime("%Y%m%d%H%M%S"))
+
+    # Interleave month letters and datetime digits
+    mixed = list(itertools.zip_longest(month_letters, datetime_digits, fillvalue=""))
     token_core = "".join(a + b for a, b in mixed)
 
+    # Shuffle characters (excluding final random letter)
+    token_chars = list(token_core)
+    random.shuffle(token_chars)
+
+    # Random alphabet suffix
     random_letter = secrets.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-    return f"{token_core}{random_letter}"
+    return "".join(token_chars) + random_letter

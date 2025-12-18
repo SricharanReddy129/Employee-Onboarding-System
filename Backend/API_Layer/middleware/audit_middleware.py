@@ -33,6 +33,8 @@ class AuditMiddleware(BaseHTTPMiddleware):
          # 🔕 Skip OTP routes
         if path.startswith("/otp"):
             return await call_next(request)
+        if path.startswith("/token-verification"):
+            return await call_next(request)
         
         # Skip audit for certain methods and endpoints
         if method in ["GET", "OPTIONS"] or any(path.startswith(p) for p in self.open_endpoints):
