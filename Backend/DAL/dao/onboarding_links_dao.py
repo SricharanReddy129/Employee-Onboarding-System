@@ -35,6 +35,7 @@ class OnboardingLinkDAO:
                 # token collision → retry
                 continue
 
+            print("Token ", raw_token, " Hash ", token_hash)
             onboarding_link = OnboardingLinks(
                 user_uuid=user_uuid,
                 email=email,
