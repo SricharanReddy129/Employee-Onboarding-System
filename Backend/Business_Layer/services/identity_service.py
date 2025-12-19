@@ -60,7 +60,7 @@ class IdentityService:
             existing = await self.dao.get_identity_type_by_uuid(uuid)
             if not existing:
                 raise HTTPException(status_code=404, detail = "Identity Type Not Found")
-            existing = await self.dao.get_identity_type_by_name(request_data.identity_type_name)
+            existing = await self.dao.get_identity_type_by_name_and_status(request_data.identity_type_name, request_data.is_active)
             if existing:
                 raise HTTPException(status_code=422, detail="Identity Type with this name already exists")
             await self.dao.update_identity_type(uuid, request_data)

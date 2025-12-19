@@ -15,6 +15,10 @@ class IdentityDAO:
         result = await self.db.execute(select(IdentityType).where(IdentityType.identity_type_uuid == uuid))
         return result.scalar_one_or_none()
     
+    async def get_identity_type_by_name_and_status(self, name, is_active):
+        result = await self.db.execute(select(IdentityType).where(IdentityType.identity_type_name == name).where(IdentityType.is_active == is_active))
+        return result.scalar_one_or_none()
+    
     async def get_identity_type_by_name(self, name):
         result = await self.db.execute(select(IdentityType).where(IdentityType.identity_type_name == name))
         return result.scalar_one_or_none()
@@ -105,7 +109,7 @@ class IdentityDAO:
             )
             .where(
                 CountryIdentityMapping.country_uuid == country_uuid,
-                IdentityType.is_active == True
+                CountryIdentityMapping.is_mandatory == True
             )
         )
 

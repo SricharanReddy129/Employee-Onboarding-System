@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.dao.education_dao import EducationDocDAO
-from ...DAL.dao.master_dao import EducationDAO
+from ...DAL.dao.master_dao import CountryDAO, EducationDAO
 from ...DAL.dao.offerletter_dao import OfferLetterDAO
 from ...DAL.utils.storage_utils import S3StorageService
 from ..utils.validation_utils import validate_alphabets_only
@@ -11,8 +11,9 @@ class EducationDocService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.dao = EducationDocDAO(self.db)
-        self.countrydao = EducationDAO(self.db)
+        self.educationdao = EducationDAO(self.db)
         self.offerdao = OfferLetterDAO(self.db)
+        self.countrydao = CountryDAO(self.db)
     async def create_education_document(self, request_data):
         try:
             document_name = validate_alphabets_only(request_data.document_name)
@@ -73,7 +74,7 @@ class EducationDocService:
     async def create_employee_education_document(self, request_data, file):
         try:
             # checking mapping exists or not
-            existing = await self.countrydao.get_education_country_mapping_by_uuid(request_data.mapping_uuid)
+            existing = await self.educationdao.get_education_country_mapping_by_uuid(request_data.mapping_uuid)
             if not existing:
                 raise HTTPException(status_code=404, detail="Mapping Not Found")
             
@@ -127,3 +128,18 @@ class EducationDocService:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
         
+
+    async def get_education_identity_mappings_by_country_uuid(self, country_uuid):
+        try:
+            print("In service")
+            existing = await self.countrydao.get_country_by_uuid(country_uuid)
+            if not existing:
+                raise HTTPException(status_code=404, detail="Country Not Found")
+            result = await self.dao.get_education_identity_mappings_by_country_uuid(country_uuid)
+            return result
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
+    

@@ -1,7 +1,7 @@
 # Backend/DAL/dao/education_dao.py
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...DAL.models.models import EducationDocumentType, EmployeeEducationDocument, CountryEducationDocumentMapping
+from ...DAL.models.models import EducationDocumentType, EducationLevel, EmployeeEducationDocument, CountryEducationDocumentMapping
 
 class EducationDocDAO:
     def __init__(self, db: AsyncSession):
@@ -80,3 +80,39 @@ class EducationDocDAO:
         await self.db.delete(edu_doc)
         await self.db.commit()
         return edu_doc
+    # Country Education Document Mapping DAO Methods
+
+
+    async def get_education_identity_mappings_by_country_uuid(self, country_uuid: str):
+        stmt = (
+            select(
+                CountryEducationDocumentMapping.mapping_uuid,
+                EducationLevel.education_name,
+                EducationDocumentType.document_name,
+                CountryEducationDocumentMapping.is_mandatory,
+            )
+            .join(
+                EducationLevel,
+                CountryEducationDocumentMapping.education_uuid
+                == EducationLevel.education_uuid,
+            )
+            .join(
+                EducationDocumentType,
+                CountryEducationDocumentMapping.education_document_uuid
+                == EducationDocumentType.education_document_uuid,
+            )
+            .where(CountryEducationDocumentMapping.country_uuid == country_uuid)
+        )
+
+        result = await self.db.execute(stmt)
+
+        # return [
+        #     {
+        #         "mapping_uuid": row.mapping_uuid,
+        #         "education_name": row.education_name,
+        #         "document_name": row.document_name,
+        #         "is_mandatory": row.is_mandatory,
+        #     }
+        #     for row in result.all()
+        # ]
+        return result.all()

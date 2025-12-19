@@ -47,4 +47,9 @@ class DeleteEmpEducResponse(BaseModel):
     message: str
 
 
+class CountryEducationMappingResponse(BaseModel):
+    mapping_uuid: str
+    education_name: str
+    document_name: str
+    is_mandatory: bool
 

@@ -1,9 +1,10 @@
+from Backend.API_Layer.interfaces.identity_interfaces import CountryIdentityDropdownResponse
 from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...Business_Layer.services.education_service import EducationDocService
 from ...DAL.utils.dependencies import get_db
 from ...DAL.utils.storage_utils import S3StorageService
-from ...API_Layer.interfaces.education_interfaces import (CreateEducDocRequest, EducDocResponse, EmployeEduDoc,DeleteEmpEducResponse,
+from ...API_Layer.interfaces.education_interfaces import (CountryEducationMappingResponse, CreateEducDocRequest, EducDocResponse, EmployeEduDoc,DeleteEmpEducResponse,
                                                           EducDocDetails, UploadFileResponse, EmployeEduDocDetails)
 
 router = APIRouter()
@@ -125,6 +126,19 @@ async def delete_employee_education_document_by_uuid(uuid: str, db: AsyncSession
             file_path = result,
             message = "Successfully Deleted Employee Education Document"
         )
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+
+@router.get("/country-mapping/{country_uuid}",response_model=list[CountryEducationMappingResponse])
+async def get_education_identity_mappings_by_country_uuid(country_uuid: str, db: AsyncSession = Depends(get_db)):
+    try:
+        print("In route")
+        education_service = EducationDocService(db)
+        result = await education_service.get_education_identity_mappings_by_country_uuid(country_uuid)
+        return result
     except HTTPException as he:
         raise he
     except Exception as e:
