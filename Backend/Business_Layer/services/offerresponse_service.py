@@ -77,7 +77,7 @@ class OfferResponseService:
             userdetails= await self.dao.get_fullname_email_by_docid(update_data["doc_id"])
             print("User details fetched:", userdetails)
 
-            raw_token = await self.onboarding_links_dao.create_onboarding_link(
+            raw_token = await self.onboarding_links_dao.get_or_create_onboarding_link(
                 user_uuid=userdetails["uuid"],
                 email=userdetails["email"],
                 expires_in_hours=24
