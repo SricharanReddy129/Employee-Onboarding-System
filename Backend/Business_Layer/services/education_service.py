@@ -74,16 +74,18 @@ class EducationDocService:
     async def create_employee_education_document(self, request_data, file):
         try:
             # checking mapping exists or not
-            existing = await self.educationdao.get_education_country_mapping_by_uuid(request_data.mapping_uuid)
+            print("in service method")
+            existing = await self.educationdao.get_education_country_mapping_by_uuid(request_data["mapping_uuid"])
+            print("existing", existing)
             if not existing:
                 raise HTTPException(status_code=404, detail="Mapping Not Found")
             
             # checking offer letter employee exists or not
-            existing = await self.offerdao.get_offer_by_uuid(request_data.user_uuid)
+            existing = await self.offerdao.get_offer_by_uuid(request_data["user_uuid"])
             if not existing:
                 raise HTTPException(status_code=404, detail="Employee Not Found")
-            validate_alphabets_only(request_data.institution_name)
-            validate_alphabets_only(request_data.specialization)
+            validate_alphabets_only(request_data["institution_name"])
+            validate_alphabets_only(request_data["specialization"])
             uuid = generate_uuid7()
             blob_upload_service = S3StorageService()
             folder = "education_documents"

@@ -77,12 +77,25 @@ async def delete_education_document_by_uuid(uuid: str, db: AsyncSession = Depend
     
 # creating employee eductaion documents and related details
 @router.post("/employee-education-document", response_model=UploadFileResponse)
-async def create_employee_education_document(request_data: str = Form(...), file: UploadFile = File(...),
-                                              db: AsyncSession = Depends(get_db)):
+async def create_employee_education_document(
+    mapping_uuid: str = Form(...),
+    user_uuid: str = Form(...),
+    institution_name: str = Form(...),
+    specialization: str = Form(...),
+    year_of_passing: int = Form(...),
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db)):
     try:
         education_service = EducationDocService(db)
-        data = EmployeEduDoc.model_validate_json(request_data)
-        result = await education_service.create_employee_education_document(data, file)
+        request_data = {
+            "mapping_uuid": mapping_uuid,   
+            "user_uuid": user_uuid,
+            "institution_name": institution_name,
+            "specialization": specialization,
+            "year_of_passing": year_of_passing
+        }
+
+        result = await education_service.create_employee_education_document(request_data, file)
         return UploadFileResponse(
             file_path = result,
             message = "Employee Education Document Created Successfully"

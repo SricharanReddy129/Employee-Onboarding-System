@@ -53,11 +53,11 @@ class EducationDocDAO:
     async def create_employee_education_document(self, request_data, uuid, file_path):
         new_edu_doc = EmployeeEducationDocument(
             document_uuid = uuid,
-            mapping_uuid = request_data.mapping_uuid,
-            user_uuid = request_data.user_uuid,
-            institution_name = request_data.institution_name,
-            specialization = request_data.specialization,
-            year_of_passing = request_data.year_of_passing,
+            mapping_uuid = request_data["mapping_uuid"],
+            user_uuid = request_data["user_uuid"],
+            institution_name = request_data["institution_name"],
+            specialization = request_data["specialization"],
+            year_of_passing = request_data["year_of_passing"],
             file_path = file_path
         )
         self.db.add(new_edu_doc)
