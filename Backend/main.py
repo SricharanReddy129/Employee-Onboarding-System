@@ -8,6 +8,8 @@ from .API_Layer.middleware.jwt_middleware import JWTMiddleware
 from fastapi.middleware.cors import CORSMiddleware
 from .API_Layer.middleware.audit_middleware import AuditMiddleware
 from Backend.API_Layer.routes import token_verification_router
+from Backend.API_Layer.routes import offer_acceptance_request_routes
+
 # models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Employee Onboarding System API")
@@ -64,3 +66,4 @@ app.include_router(identity_routes.router, prefix="/identity", tags=["Identity D
 app.include_router(employee_experience_routes.router, prefix="/experience", tags=["Employee Experience"])
 app.include_router(otp_routes.router, prefix="/otp", tags=["Otp Verification"])
 app.include_router(token_verification_router.router, prefix="/token-verification", tags=["Token Verification"])
+app.include_router(offer_acceptance_request_routes.router, prefix="/offer-approval-requests", tags=["Offer Approval Requests"])

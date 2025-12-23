@@ -36,6 +36,9 @@ class AuditMiddleware(BaseHTTPMiddleware):
         if path.startswith("/token-verification"):
             return await call_next(request)
         
+        if path.startswith("/offer-approval-requests"):
+            return await call_next(request)
+        
         # Skip audit for certain methods and endpoints
         if method in ["GET", "OPTIONS"] or any(path.startswith(p) for p in self.open_endpoints):
             print(f"Skipping Audit: path={path}, method={method}")
