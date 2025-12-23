@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 from ...Business_Layer.services.offer_approval_service import OfferApprovalRequestService
-from ...API_Layer.interfaces.offer_request_interfaces import OfferRequestCreateResponse, OfferRequestUpdateResponse, OfferRequestDelete
+from ...API_Layer.interfaces.offer_request_interfaces import OfferRequestCreateResponse, OfferRequestUpdateResponse, OfferRequestDelete,OfferRequestListResponse,OfferRequestUpdateResponse2
 
 from ...DAL.utils.dependencies import get_db
 
@@ -11,7 +11,7 @@ router = APIRouter()
 
 @router.post("/request")
 async def create_offer_approval_requests(
-    payload: list[OfferRequestCreateResponse],
+    payload: list[OfferRequestListResponse],
     request: Request,
     db: AsyncSession = Depends(get_db)
 ):
@@ -49,7 +49,7 @@ async def create_offer_approval_requests(
 
 @router.put("/request/update")
 async def update_offer_approval_requests(
-    payload: list[OfferRequestUpdateResponse],
+    payload: list[OfferRequestUpdateResponse2],
     request: Request,
     db: AsyncSession = Depends(get_db)
 ):

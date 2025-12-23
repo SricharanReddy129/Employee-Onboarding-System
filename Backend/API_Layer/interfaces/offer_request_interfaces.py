@@ -21,3 +21,12 @@ class OfferRequestDetailsResponse(BaseModel):
     status: str
     created_at: str
     updated_at: str
+
+
+class OfferRequestListResponse(BaseModel):
+    user_uuid: str
+    action_taker_id: int
+
+class OfferRequestUpdateResponse2(BaseModel):
+    user_uuid: str
+    action_taker_id: int
