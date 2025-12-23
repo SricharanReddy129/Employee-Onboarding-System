@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
 
 from Backend.DAL.models.models import OfferApprovalRequest, OfferApprovalAction
@@ -64,3 +64,28 @@ class OfferApprovalActionDAO:
         )
         result = await self.db.execute(stmt)
         return result.scalar() is not None
+    
+    async def get_action_by_request_id(self, request_id: int):
+        stmt = select(OfferApprovalAction).where(
+            OfferApprovalAction.request_id == request_id
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+    
+    async def update_action(
+        self,
+        action_id: int,
+        action: str,
+        comment: str | None
+    ) -> bool:
+        stmt = (
+            update(OfferApprovalAction)
+            .where(OfferApprovalAction.id == action_id)
+            .values(
+                action=action,
+                comment=comment
+            )
+        )
+        await self.db.execute(stmt)
+        await self.db.commit()
+        return True

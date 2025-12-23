@@ -108,3 +108,16 @@ class OfferResponseDAO:
             return False
 
         return offer.status == "Accepted"
+    
+    async def get_offer_by_uuid(self, user_uuid: str):
+        """
+        Fetch offer letter details by user UUID.
+        """
+        result = await self.db.execute(
+            select(OfferLetterDetails).where(
+                OfferLetterDetails.user_uuid == user_uuid
+            )
+        )
+        offer = result.scalar_one_or_none()
+
+        return offer

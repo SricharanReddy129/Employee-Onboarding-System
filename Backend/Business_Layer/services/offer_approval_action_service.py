@@ -5,11 +5,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from Backend.DAL.dao.offer_approval_action_dao import OfferApprovalActionDAO
 from Backend.API_Layer.interfaces.offer_request_interfaces import OfferRequestResponse
 
+from Backend.DAL.dao.offer_approval_action_dao import OfferApprovalActionDAO
+from Backend.API_Layer.interfaces.offer_request_interfaces import OfferRequestResponse
+
+from Backend.DAL.dao.offerresponse_dao import OfferResponseDAO
+
 
 class OfferApprovalActionService:
     def __init__(self, db: AsyncSession):
         self.db = db
         self.dao = OfferApprovalActionDAO(db)
+        self.offer_response_dao = OfferResponseDAO(db)
 
     async def get_offer_status(self, user_uuid: str) -> OfferRequestResponse:
         """
@@ -150,3 +156,67 @@ class OfferApprovalActionService:
             })
 
         return "Successfully created actions"
+    
+    async def update_offer_action(
+    self,
+    user_uuid: str,
+    action: str,
+    comments: str,
+    current_user_id: int
+):
+
+        # 🔍 Fetch offer letter
+        offer = await self.offer_response_dao.get_offer_by_uuid(user_uuid)
+        if not offer:
+            raise HTTPException(
+                status_code=404,
+                detail="Offer letter not found"
+            )
+
+        # ❌ Status must be Created
+        if offer.status != "Created":
+            raise HTTPException(
+                status_code=400,
+                detail="Offer already processed"
+            )
+
+        # 🔍 Fetch approval request
+        request = await self.dao.get_request_by_user_uuid(user_uuid)
+        if not request:
+            raise HTTPException(
+                status_code=404,
+                detail="Approval request not found"
+            )
+
+        # 🔐 Action taker validation
+        if request.action_taker_id != current_user_id:
+            raise HTTPException(
+                status_code=403,
+                detail="You are not authorized to take action"
+            )
+
+        # ✅ Normalize & validate action
+        action = action.upper()
+        if action not in {"APPROVED", "REJECTED", "ON_HOLD"}:
+            raise HTTPException(
+                status_code=422,
+                detail="Invalid action"
+            )
+
+        # 🔍 Fetch existing action (IMPORTANT)
+        existing_action = await self.dao.get_action_by_request_id(request.id)
+        if not existing_action:
+            raise HTTPException(
+                status_code=400,
+                detail="No existing action found to update"
+            )
+        
+        # ✅ Update action fields # 🔄 UPDATE action (NOT INSERT)
+        await self.dao.update_action(
+            action_id=existing_action.id,
+            action=action,
+            comment=comments
+        )
+        return {
+            "message": "Offer action updated successfully"
+        }
