@@ -1,7 +1,7 @@
 from typing import Any, Optional
 import datetime
 
-from sqlalchemy import BigInteger, CHAR, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, text
+from sqlalchemy import BigInteger, CHAR, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, TIMESTAMP, Text, text
 from sqlalchemy.dialects.mysql import TINYINT, YEAR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -142,6 +142,7 @@ class OfferLetterDetails(Base):
     employee_deliverables: Mapped[list['EmployeeDeliverables']] = relationship('EmployeeDeliverables', back_populates='offer_letter_details', lazy="selectin")
     employee_experience: Mapped[list['EmployeeExperience']] = relationship('EmployeeExperience', back_populates='offer_letter_details', lazy="selectin")
     employee_receivables: Mapped[list['EmployeeReceivables']] = relationship('EmployeeReceivables', back_populates='offer_letter_details', lazy="selectin")
+    offer_approval_request: Mapped[list['OfferApprovalRequest']] = relationship('OfferApprovalRequest', back_populates='offer_letter_details', lazy="selectin")
     onboarding_links: Mapped[list['OnboardingLinks']] = relationship('OnboardingLinks', back_populates='offer_letter_details', lazy="selectin")
     personal_details: Mapped[list['PersonalDetails']] = relationship('PersonalDetails', back_populates='offer_letter_details', lazy="selectin")
     employee_education_document: Mapped[list['EmployeeEducationDocument']] = relationship('EmployeeEducationDocument', back_populates='offer_letter_details', lazy="selectin")
@@ -353,6 +354,23 @@ class EmployeeReceivables(Base):
     offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_receivables', lazy="selectin")
 
 
+class OfferApprovalRequest(Base):
+    __tablename__ = 'offer_approval_request'
+    __table_args__ = (
+        ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], ondelete='CASCADE', name='fk_offer_req_user_uuid'),
+        Index('idx_user_uuid', 'user_uuid')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    request_by: Mapped[int] = mapped_column(Integer, nullable=False)
+    action_taker_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    request_time: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
+
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='offer_approval_request', lazy="selectin")
+    offer_approval_action: Mapped[list['OfferApprovalAction']] = relationship('OfferApprovalAction', back_populates='request', lazy="selectin")
+
+
 class OnboardingLinks(Base):
     __tablename__ = 'onboarding_links'
     __table_args__ = (
@@ -505,3 +523,19 @@ class EmployeeRelievingLetter(Base):
 
     offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_relieving_letter', lazy="selectin")
     employee_experience: Mapped['EmployeeExperience'] = relationship('EmployeeExperience', back_populates='employee_relieving_letter', lazy="selectin")
+
+
+class OfferApprovalAction(Base):
+    __tablename__ = 'offer_approval_action'
+    __table_args__ = (
+        ForeignKeyConstraint(['request_id'], ['offer_approval_request.id'], ondelete='CASCADE', name='fk_offer_action_request'),
+        Index('idx_request_id', 'request_id')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    request_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    action: Mapped[str] = mapped_column(Enum('APPROVED', 'REJECTED', 'ON_HOLD'), nullable=False)
+    comment: Mapped[Optional[str]] = mapped_column(Text)
+    action_time: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
+
+    request: Mapped['OfferApprovalRequest'] = relationship('OfferApprovalRequest', back_populates='offer_approval_action', lazy="selectin")
