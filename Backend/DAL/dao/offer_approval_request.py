@@ -110,3 +110,9 @@ class OfferApprovalRequestDAO:
         except Exception:
             await self.db.rollback()
             return False
+        
+    async def get_all_requests(self):
+        stmt = select(OfferApprovalRequest)
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
+    

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
-from Backend.API_Layer.routes import employee_experience_routes, otp_routes
+from Backend.API_Layer.routes import employee_experience_routes, offer_approval_action_routes, otp_routes
 from .API_Layer.routes import (master_routes, offerletter_routes, education_routes, offerresponse_routes, employee_details_routes,
                                identity_routes)
 from .API_Layer.middleware.jwt_middleware import JWTMiddleware
@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .API_Layer.middleware.audit_middleware import AuditMiddleware
 from Backend.API_Layer.routes import token_verification_router
 from Backend.API_Layer.routes import offer_acceptance_request_routes
+from Backend.API_Layer.routes import offer_approval_action_routes
 
 # models.Base.metadata.create_all(bind=engine)
 
@@ -67,3 +68,4 @@ app.include_router(employee_experience_routes.router, prefix="/experience", tags
 app.include_router(otp_routes.router, prefix="/otp", tags=["Otp Verification"])
 app.include_router(token_verification_router.router, prefix="/token-verification", tags=["Token Verification"])
 app.include_router(offer_acceptance_request_routes.router, prefix="/offer-approval-requests", tags=["Offer Approval Requests"])
+app.include_router(offer_approval_action_routes.router, prefix="/offer-approval", tags=["Offer Approval"])

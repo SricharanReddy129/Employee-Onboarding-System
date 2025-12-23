@@ -30,3 +30,10 @@ class OfferRequestListResponse(BaseModel):
 class OfferRequestUpdateResponse2(BaseModel):
     user_uuid: str
     action_taker_id: int
+
+class OfferRequestResponse(BaseModel):
+    user_uuid: str
+    action_taker_id: int
+    action_taker_name: str
+    status: str
+    comments: str
