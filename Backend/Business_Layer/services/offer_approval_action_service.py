@@ -1,3 +1,5 @@
+from fastapi import HTTPException
+from Backend.API_Layer.interfaces.offer_approve_action_interfaces import OfferApproveActionRequest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Backend.DAL.dao.offer_approval_action_dao import OfferApprovalActionDAO
@@ -83,3 +85,68 @@ class OfferApprovalActionService:
             )
 
         return response
+    
+    async def create_offer_actions(
+        self,
+        payload: list[OfferApproveActionRequest],
+        current_user_id: int
+    ):
+        if not payload:
+            raise HTTPException(status_code=422, detail="Payload cannot be empty")
+
+        created = []
+
+        for item in payload:
+            # 🔍 Validate request
+            request = await self.dao.get_request_by_user_uuid(item.user_uuid)
+            if not request:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"No approval request found users"
+                )
+            
+             # 🔐 VALIDATION: only assigned approver can act
+            if request.action_taker_id != current_user_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"You are not authorized to take action."
+                    )
+                )
+            
+             # ❌ NEW VALIDATION — already reviewed
+            already_reviewed = await self.dao.has_action_for_request(request.id)
+            if already_reviewed:
+                raise HTTPException(
+                    status_code=400,   # Conflict
+                    detail="Action already taken for this user"
+                )
+
+            # ✅ Normalize action
+            action = item.action.upper()
+            if action not in {"APPROVED", "REJECTED", "ON_HOLD"}:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Invalid action should be APPROVED / REJECTED / ON_HOLD"
+                )
+            
+
+            result = await self.dao.create_action(
+                request_id=request.id,
+                action=action,
+                comment=item.comments
+            )
+
+            if not result:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Failed to insert action "
+                )
+
+            created.append({
+                "user_uuid": item.user_uuid,
+                "status": action,
+                "comments": item.comments
+            })
+
+        return "Successfully created actions"
