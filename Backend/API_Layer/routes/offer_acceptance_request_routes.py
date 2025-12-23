@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 from ...Business_Layer.services.offer_approval_service import OfferApprovalRequestService
-from ...API_Layer.interfaces.offer_request_interfaces import OfferRequestCreateResponse
+from ...API_Layer.interfaces.offer_request_interfaces import OfferRequestCreateResponse, OfferRequestUpdateResponse, OfferRequestDelete
 
 from ...DAL.utils.dependencies import get_db
 
@@ -46,3 +46,39 @@ async def create_offer_approval_requests(
         )
 
     return result
+
+@router.put("/request/update")
+async def update_offer_approval_requests(
+    payload: list[OfferRequestUpdateResponse],
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    HR updates existing offer approval requests (bulk)
+    """
+    service = OfferApprovalRequestService(db)
+
+    current_user_id = int(request.state.user.get("user_id"))
+
+    return await service.update_offer_approval_requests(
+        data_list=payload,
+        current_user_id=current_user_id
+    )
+
+@router.delete("/request/delete")
+async def delete_offer_approval_requests(
+    payload: list[OfferRequestDelete],
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    HR deletes offer approval requests (bulk)
+    """
+    service = OfferApprovalRequestService(db)
+
+    current_user_id = int(request.state.user.get("user_id"))
+
+    return await service.delete_offer_approval_requests(
+        data_list=payload,
+        current_user_id=current_user_id
+    )

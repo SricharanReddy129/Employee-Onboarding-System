@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Backend.DAL.dao.offer_approval_request import OfferApprovalRequestDAO
-from Backend.API_Layer.interfaces.offer_request_interfaces import OfferRequestCreateResponse
+from Backend.API_Layer.interfaces.offer_request_interfaces import OfferRequestCreateResponse, OfferRequestUpdateResponse, OfferRequestDelete
 
 
 class OfferApprovalRequestService:
@@ -60,3 +60,89 @@ class OfferApprovalRequestService:
             raise he
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+
+    async def update_offer_approval_requests(
+        self,
+        data_list: list[OfferRequestUpdateResponse],
+        current_user_id: int
+    ):
+        """
+        Bulk update offer approval requests
+        """
+        if not data_list:
+            raise HTTPException(
+                status_code=422,
+                detail="Request list cannot be empty"
+            )
+
+        updated_count = 0
+        not_found_users = []
+
+        for data in data_list:
+            # 🔍 Check if record exists
+            existing_request = await self.dao.get_by_user_uuid(data.user_uuid)
+
+            if not existing_request:
+                not_found_users.append(data.user_uuid)
+                continue
+
+            updated = await self.dao.update_approval_request(
+                user_uuid=data.user_uuid,
+                request_by=current_user_id,   # always current user
+                action_taker_id=data.action_taker_id
+            )
+
+            if updated:
+                updated_count += 1
+
+        if updated_count == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="No records were updated"
+            )
+
+        return {
+            "message": "Offer approval requests updated successfully",
+            "updated_count": updated_count
+        }
+    
+    async def delete_offer_approval_requests(
+        self,
+        data_list: list[OfferRequestDelete],
+        current_user_id: int
+    ):
+        """
+        Bulk delete offer approval requests
+        """
+        if not data_list:
+            raise HTTPException(
+                status_code=422,
+                detail="Request list cannot be empty"
+            )
+
+        deleted_count = 0
+        not_found_users = []
+
+        for data in data_list:
+            existing = await self.dao.get_by_user_uuid(data.user_uuid)
+
+            if not existing:
+                not_found_users.append(data.user_uuid)
+                continue
+
+            deleted = await self.dao.delete_by_user_uuid(data.user_uuid)
+
+            if deleted:
+                deleted_count += 1
+
+        if deleted_count == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="No records were deleted"
+            )
+
+        return {
+            "message": "Offer approval requests deleted successfully",
+            "deleted_count": deleted_count,
+            "deleted_by": current_user_id
+        }
