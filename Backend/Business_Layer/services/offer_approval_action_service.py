@@ -140,7 +140,7 @@ class OfferApprovalActionService:
              # 🔐 VALIDATION: only assigned approver can act
             if request.action_taker_id != current_user_id:
                 raise HTTPException(
-                    status_code=400,
+                    status_code=401,
                     detail=(
                         f"You are not authorized to take action."
                     )
