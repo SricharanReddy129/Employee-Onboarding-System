@@ -1,4 +1,6 @@
+from http.client import HTTPException
 from Backend.API_Layer.interfaces.offer_approve_action_interfaces import OfferApproveActionRequest
+from Backend.Business_Layer.utils.ums_users_list import fetch_admin_users_reformed
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,20 +17,44 @@ router = APIRouter()
 )
 async def get_offer_approval_status(
     user_uuid: str,
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     """
     Get approval status for an offer using user_uuid
     """
+
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header:
+        raise HTTPException(
+            status_code=401,
+            detail="Authorization token missing"
+        )
+    
     service = OfferApprovalActionService(db)
-    return await service.get_offer_status(user_uuid)
+    return await service.get_offer_status(user_uuid=user_uuid, auth_header=auth_header)
 
 @router.get("/all")
 async def get_all_offer_statuses(
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ):
+    
+    """
+    Get all offer approval statuses 
+    """
+
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header:
+        raise HTTPException(
+            status_code=401,
+            detail="Authorization token missing"
+        )
+
     service = OfferApprovalActionService(db)
-    return await service.get_all_offer_statuses()
+    return await service.get_all_offer_statuses(auth_header=auth_header)
 
 @router.post("/action")
 async def create_offer_approval_actions(
@@ -79,7 +105,33 @@ async def get_my_offer_actions(
     """
     Admin / Manager / Approver view
     """
+
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        raise HTTPException(
+            status_code=400,
+            detail="Authorization token missing"
+        )
     current_user_id = int(request.state.user.get("user_id"))
 
     service = OfferApprovalActionService(db)
-    return await service.get_admin_actions(current_user_id)
+    return await service.get_admin_actions(current_user_id, auth_header)
+
+
+@router.get("/admin-users")
+async def get_admin_users(request: Request):
+    """
+    Controller passes token to service
+    """
+
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header:
+        raise HTTPException(
+            status_code=401,
+            detail="Authorization token missing"
+        )
+
+    return await fetch_admin_users_reformed(
+        token=auth_header
+    )

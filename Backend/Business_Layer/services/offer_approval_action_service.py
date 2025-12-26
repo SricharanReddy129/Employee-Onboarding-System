@@ -1,3 +1,4 @@
+from Backend.Business_Layer.utils.ums_users_list import fetch_admin_users_reformed
 from fastapi import HTTPException
 from Backend.API_Layer.interfaces.offer_approve_action_interfaces import OfferApproveActionRequest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,12 +20,25 @@ class OfferApprovalActionService:
         self.dao = OfferApprovalActionDAO(db)
         self.offer_response_dao = OfferResponseDAO(db)
 
-    async def get_offer_status(self, user_uuid: str) -> OfferRequestResponse:
+    async def get_offer_status(self, user_uuid: str, auth_header: str) -> OfferRequestResponse:
         """
         Resolve offer approval status using business rules
         """
 
         request = await self.dao.get_request_with_actions(user_uuid)
+
+        user_details = await fetch_admin_users_reformed(token=auth_header)
+
+        action_taker = next(
+            (u for u in user_details if u["user_id"] == request.action_taker_id),
+            None
+        )
+
+        if not action_taker:
+            raise HTTPException(
+                status_code=400,
+                detail="Action taker not found in user list"
+            )
 
         # ❌ No request exists
         if not request:
@@ -41,7 +55,7 @@ class OfferApprovalActionService:
             return OfferRequestResponse(
                 user_uuid=user_uuid,
                 action_taker_id=request.action_taker_id,
-                action_taker_name="Ajay",  # demo
+                action_taker_name=action_taker['name'],  # demo
                 status="PENDING",
                 comments="Awaiting approval"
             )
@@ -49,30 +63,40 @@ class OfferApprovalActionService:
         # ✅ Request + action exists → take latest action
         latest_action = request.offer_approval_action[-1]
 
+
         return OfferRequestResponse(
             user_uuid=user_uuid,
             action_taker_id=request.action_taker_id,
-            action_taker_name="Ajay",  # demo
+            action_taker_name=action_taker['name'],  # demo
             status=latest_action.action,
             comments=latest_action.comment or ""
         )
-    
-    async def get_all_offer_statuses(self) -> list[OfferRequestResponse]:
+
+    async def get_all_offer_statuses(self, auth_header: str) -> list[OfferRequestResponse]:
         """
         Resolve offer approval status for ALL users
         """
+
+        user_details = await fetch_admin_users_reformed(token=auth_header)
+        
         requests = await self.dao.get_all_requests_with_actions()
 
         response: list[OfferRequestResponse] = []
 
         for request in requests:
+
+            action_taker = next(
+                (u for u in user_details if u["user_id"] == request.action_taker_id),
+                None
+            )
+
             # ❌ Request exists but no action
             if not request.offer_approval_action:
                 response.append(
                     OfferRequestResponse(
                         user_uuid=request.user_uuid,
                         action_taker_id=request.action_taker_id,
-                        action_taker_name="Ajay",  # replace with user lookup later
+                        action_taker_name=action_taker['name'] if action_taker else "Unknown",
                         status="PENDING",
                         comments="Awaiting approval"
                     )
@@ -86,7 +110,7 @@ class OfferApprovalActionService:
                 OfferRequestResponse(
                     user_uuid=request.user_uuid,
                     action_taker_id=request.action_taker_id,
-                    action_taker_name="Ajay",
+                    action_taker_name=action_taker['name'] if action_taker else "Unknown",
                     status=latest_action.action,
                     comments=latest_action.comment or ""
                 )
@@ -225,7 +249,8 @@ class OfferApprovalActionService:
     
     async def get_admin_actions(
         self,
-        current_user_id: int
+        current_user_id: int,
+        auth_header: str
     ) -> list[OfferActionAdminResponse]:
 
         requests = await self.dao.get_requests_for_action_taker(current_user_id)
@@ -233,6 +258,10 @@ class OfferApprovalActionService:
         response: list[OfferActionAdminResponse] = []
 
         for req in requests:
+
+            user_details = await fetch_admin_users_reformed(token=auth_header)
+            action_taker = next((u for u in user_details if u["user_id"] == req.request_by), None)
+
             offer = req.offer_letter_details
 
             # 🔍 Determine action status
@@ -254,7 +283,7 @@ class OfferApprovalActionService:
                     request_id=str(req.request_by),
 
                     # 🧪 Mock value for now
-                    requested_name="HR User",
+                    requested_name=action_taker['name'] if action_taker else "Unknown",
 
                     action=action,
                     message=message
