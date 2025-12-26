@@ -89,3 +89,19 @@ class OfferApprovalActionDAO:
         await self.db.execute(stmt)
         await self.db.commit()
         return True
+    
+    async def get_requests_for_action_taker(self, action_taker_id: int):
+        """
+        Fetch all approval requests assigned to this user
+        """
+        stmt = (
+            select(OfferApprovalRequest)
+            .where(OfferApprovalRequest.action_taker_id == action_taker_id)
+            .options(
+                selectinload(OfferApprovalRequest.offer_approval_action),
+                selectinload(OfferApprovalRequest.offer_letter_details)
+            )
+        )
+
+        result = await self.db.execute(stmt)
+        return result.scalars().all()

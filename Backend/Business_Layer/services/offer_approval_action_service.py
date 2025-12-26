@@ -9,6 +9,8 @@ from Backend.DAL.dao.offer_approval_action_dao import OfferApprovalActionDAO
 from Backend.API_Layer.interfaces.offer_request_interfaces import OfferRequestResponse
 
 from Backend.DAL.dao.offerresponse_dao import OfferResponseDAO
+from Backend.API_Layer.interfaces.OfferActionAdmin_interfaces import OfferActionAdminResponse
+
 
 
 class OfferApprovalActionService:
@@ -220,3 +222,43 @@ class OfferApprovalActionService:
         return {
             "message": "Offer action updated successfully"
         }
+    
+    async def get_admin_actions(
+        self,
+        current_user_id: int
+    ) -> list[OfferActionAdminResponse]:
+
+        requests = await self.dao.get_requests_for_action_taker(current_user_id)
+
+        response: list[OfferActionAdminResponse] = []
+
+        for req in requests:
+            offer = req.offer_letter_details
+
+            # 🔍 Determine action status
+            if req.offer_approval_action:
+                latest_action = req.offer_approval_action[-1]
+                action = latest_action.action
+                message = latest_action.comment or "Action taken"
+            else:
+                action = "PENDING"
+                message = "Awaiting approval"
+
+            response.append(
+                OfferActionAdminResponse(
+                    user_uuid=offer.user_uuid,
+                    user_first_name=offer.first_name,
+                    user_last_name=offer.last_name,
+
+                    # ✅ request_id = request_by (HR user id)
+                    request_id=str(req.request_by),
+
+                    # 🧪 Mock value for now
+                    requested_name="HR User",
+
+                    action=action,
+                    message=message
+                )
+            )
+
+        return response

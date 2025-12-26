@@ -70,3 +70,16 @@ async def update_offer_action(
     )
 
     return response
+
+@router.get("/admin/my-actions")
+async def get_my_offer_actions(
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Admin / Manager / Approver view
+    """
+    current_user_id = int(request.state.user.get("user_id"))
+
+    service = OfferApprovalActionService(db)
+    return await service.get_admin_actions(current_user_id)
