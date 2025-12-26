@@ -27,8 +27,18 @@ class OfferApprovalActionService:
 
         request = await self.dao.get_request_with_actions(user_uuid)
 
-        user_details = await fetch_admin_users_reformed(token=auth_header)
 
+        # ❌ No request exists
+        if not request:
+            return OfferRequestResponse(
+                user_uuid=user_uuid,
+                action_taker_id=0,
+                action_taker_name="No user",
+                status="No Request",
+                comments="No Request."
+            )
+        
+        user_details = await fetch_admin_users_reformed(token=auth_header)
         action_taker = next(
             (u for u in user_details if u["user_id"] == request.action_taker_id),
             None
@@ -39,17 +49,7 @@ class OfferApprovalActionService:
                 status_code=400,
                 detail="Action taker not found in user list"
             )
-
-        # ❌ No request exists
-        if not request:
-            return OfferRequestResponse(
-                user_uuid=user_uuid,
-                action_taker_id=None,
-                action_taker_name="No user",
-                status="No Request",
-                comments="No Request."
-            )
-
+        
         # ✅ Request exists but no action yet
         if not request.offer_approval_action:
             return OfferRequestResponse(
@@ -140,7 +140,7 @@ class OfferApprovalActionService:
              # 🔐 VALIDATION: only assigned approver can act
             if request.action_taker_id != current_user_id:
                 raise HTTPException(
-                    status_code=400,
+                    status_code=401,
                     detail=(
                         f"You are not authorized to take action."
                     )
