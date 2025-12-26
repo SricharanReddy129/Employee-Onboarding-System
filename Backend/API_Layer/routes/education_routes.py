@@ -1,4 +1,6 @@
+import uuid
 from Backend.API_Layer.interfaces.identity_interfaces import CountryIdentityDropdownResponse
+from Backend.Business_Layer.utils.uuid_generator import generate_uuid7
 from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...Business_Layer.services.education_service import EducationDocService
@@ -86,6 +88,8 @@ async def create_employee_education_document(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db)):
     try:
+        print("ROUTE RECEIVED:", mapping_uuid, institution_name, file.filename)
+
         education_service = EducationDocService(db)
         request_data = {
             "mapping_uuid": mapping_uuid,   
@@ -97,6 +101,7 @@ async def create_employee_education_document(
 
         result = await education_service.create_employee_education_document(request_data, file)
         return UploadFileResponse(
+            document_uuid = generate_uuid7(),
             file_path = result,
             message = "Employee Education Document Created Successfully"
         )
@@ -156,3 +161,4 @@ async def get_education_identity_mappings_by_country_uuid(country_uuid: str, db:
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
