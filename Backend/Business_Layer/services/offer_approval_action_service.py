@@ -1,4 +1,7 @@
+from http import client
+from wsgiref import headers
 from Backend.Business_Layer.utils.ums_users_list import fetch_admin_users_reformed
+from Backend.config.env_loader import get_env_var
 from fastapi import HTTPException
 from Backend.API_Layer.interfaces.offer_approve_action_interfaces import OfferApproveActionRequest
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,7 +14,7 @@ from Backend.API_Layer.interfaces.offer_request_interfaces import OfferRequestRe
 
 from Backend.DAL.dao.offerresponse_dao import OfferResponseDAO
 from Backend.API_Layer.interfaces.OfferActionAdmin_interfaces import OfferActionAdminResponse
-
+import httpx
 
 
 class OfferApprovalActionService:
@@ -291,3 +294,42 @@ class OfferApprovalActionService:
             )
 
         return response
+    async def get_all_my_actions(self, current_user_id, token):
+        try:
+            rows = await self.dao.get_all_my_actions(current_user_id)
+
+            if not rows:
+                return []
+
+            # ✅ Convert RowMapping → dict
+            actions = [dict(row) for row in rows]
+
+            headers = {
+                "Authorization": token
+            }
+
+            async with httpx.AsyncClient() as client:
+                for item in actions:
+                    requester_id = item["request_by"]
+
+                    resp = await client.get(
+                        f"{get_env_var('UMS_URL')}/admin/users/{requester_id}",
+                        headers=headers
+                    )
+
+                    if resp.status_code == 200:
+                        user = resp.json()
+                        item["requested_by_name"] = (
+                            user.get("first_name", "") + " " + user.get("last_name", "")
+                        ).strip()
+                    else:
+                        item["requested_by_name"] = None
+
+            return actions
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error fetching actions: {str(e)}"
+            )
+

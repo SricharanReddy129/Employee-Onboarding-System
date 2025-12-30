@@ -1,5 +1,5 @@
 from http.client import HTTPException
-from Backend.API_Layer.interfaces.offer_approve_action_interfaces import OfferApproveActionRequest
+from Backend.API_Layer.interfaces.offer_approve_action_interfaces import OfferApproveActionRequest, OfferApproveActionResponse
 from Backend.Business_Layer.utils.ums_users_list import fetch_admin_users_reformed
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -135,3 +135,26 @@ async def get_admin_users(request: Request):
     return await fetch_admin_users_reformed(
         token=auth_header
     )
+@router.get("/my-actions", response_model=list[OfferApproveActionResponse])
+async def get_all_my_actions(
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        """
+        User views their own offer approval actions
+        """
+
+        current_user_id = int(request.state.user.get("user_id"))
+        token = request.headers.get("Authorization")
+        print("Current User ID:", current_user_id)  # Debugging line
+
+        service = OfferApprovalActionService(db)
+        result = await service.get_all_my_actions(current_user_id, token)
+        return result
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"An error occurred: {str(e)}"
+        )
+    
