@@ -16,6 +16,7 @@ class EducDocDetails(BaseModel):
     description: str
 
 class UploadFileResponse(BaseModel):
+    document_uuid: str
     file_path: str
     message: str
 

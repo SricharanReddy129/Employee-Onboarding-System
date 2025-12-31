@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
 
-from Backend.DAL.models.models import OfferApprovalRequest, OfferApprovalAction
+from Backend.DAL.models.models import OfferApprovalRequest, OfferApprovalAction, OfferLetterDetails
 
 
 class OfferApprovalActionDAO:
@@ -105,3 +105,30 @@ class OfferApprovalActionDAO:
 
         result = await self.db.execute(stmt)
         return result.scalars().all()
+    async def get_all_my_actions(self, current_user_id):
+        stmt = (
+            select(
+                OfferApprovalRequest.id,
+                OfferApprovalRequest.user_uuid,
+                OfferApprovalRequest.request_by,
+                OfferLetterDetails.first_name,
+                OfferLetterDetails.last_name,
+                OfferLetterDetails.mail,
+                OfferLetterDetails.designation,
+                OfferApprovalAction.action
+            )
+            .join(
+                OfferApprovalAction,
+                OfferApprovalAction.request_id == OfferApprovalRequest.id
+            )
+            .join(
+                OfferLetterDetails,
+                OfferLetterDetails.user_uuid == OfferApprovalRequest.user_uuid
+            )
+            .where(OfferApprovalRequest.action_taker_id == current_user_id)
+        )
+
+        result = await self.db.execute(stmt)
+        return result.mappings().all()
+
+    

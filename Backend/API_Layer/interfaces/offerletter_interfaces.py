@@ -6,7 +6,7 @@ from typing import List, Optional
 class OfferCreateRequest(BaseModel):
     first_name: str
     last_name: str
-    mail: EmailStr
+    mail: str
     country_code: str
     contact_number: str
     designation: str

@@ -97,7 +97,7 @@ async def create_education_level(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
 # get all education levels
 @router.get("/education-level", response_model=list[AllEducLevelDetails])
 
