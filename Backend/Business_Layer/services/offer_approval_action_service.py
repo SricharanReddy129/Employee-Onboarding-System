@@ -1,10 +1,12 @@
 from http import client
 from wsgiref import headers
+from Backend.API_Layer.interfaces.offer_request_approve_resign import OfferReassignApprovalRequest, OfferReassignApprovalResponse
 from Backend.Business_Layer.utils.ums_users_list import fetch_admin_users_reformed
 from Backend.config.env_loader import get_env_var
 from fastapi import HTTPException
 from Backend.API_Layer.interfaces.offer_approve_action_interfaces import OfferApproveActionRequest
 from sqlalchemy.ext.asyncio import AsyncSession
+
 
 from Backend.DAL.dao.offer_approval_action_dao import OfferApprovalActionDAO
 from Backend.API_Layer.interfaces.offer_request_interfaces import OfferRequestResponse
@@ -333,3 +335,58 @@ class OfferApprovalActionService:
                 detail=f"Error fetching actions: {str(e)}"
             )
 
+    async def reassign_offer_approval_action(
+            self,
+            payload: OfferReassignApprovalRequest,
+            current_user_id: int
+        ) -> OfferReassignApprovalResponse:
+            """
+            Reassign approver ONLY when approval is pending
+            """
+
+            # 🔍 Fetch approval request
+            request = await self.dao.get_request_by_user_uuid(payload.user_uuid)
+
+            if not request:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Approval request not found"
+                )
+
+            # ❌ Cannot reassign if action already taken
+            if request.offer_approval_action:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Cannot reassign after approval action is taken"
+                )
+
+            # 🚫 Same approver check
+            if request.action_taker_id == payload.new_approver_id:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Approval already assigned to this user"
+                )
+
+            previous_approver_id = request.action_taker_id
+
+            # 🔄 Update approver
+            updated = await self.dao.reassign_approval_request(
+                user_uuid=payload.user_uuid,
+                new_action_taker_id=payload.new_approver_id
+            )
+
+            if not updated:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Failed to reassign approval"
+                )
+
+            return OfferReassignApprovalResponse(
+                id=request.id,
+                user_uuid=request.user_uuid,
+                previous_approver_id=previous_approver_id,
+                new_approver_id=payload.new_approver_id,
+                reassigned_by=current_user_id,
+                reassigned_by_name=None,
+                action="PENDING"
+            )

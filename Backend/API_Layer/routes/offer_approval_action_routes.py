@@ -1,5 +1,6 @@
 from http.client import HTTPException
 from Backend.API_Layer.interfaces.offer_approve_action_interfaces import OfferApproveActionRequest, OfferApproveActionResponse
+from Backend.API_Layer.interfaces.offer_request_approve_resign import OfferReassignApprovalRequest, OfferReassignApprovalResponse
 from Backend.Business_Layer.utils.ums_users_list import fetch_admin_users_reformed
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -157,4 +158,17 @@ async def get_all_my_actions(
             status_code=500,
             detail=f"An error occurred: {str(e)}"
         )
+@router.put("/reassign", response_model=OfferReassignApprovalResponse)
+async def reassign_offer_approval(
+    payload: OfferReassignApprovalRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    current_user_id = int(request.state.user.get("user_id"))
+
+    service = OfferApprovalActionService(db)
+    return await service.reassign_offer_approval_action(
+        payload,
+        current_user_id
+    )
     
