@@ -1,6 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, update
-from Backend.DAL.models.models import OfferApprovalRequest
+from sqlalchemy.exc import SQLAlchemyError
+from datetime import datetime
+from Backend.DAL.models.models import OfferApprovalRequest, OfferApprovalAction
 
 
 class OfferApprovalRequestDAO:
@@ -15,22 +17,43 @@ class OfferApprovalRequestDAO:
     ):
         """
         Insert a new offer approval request
+        and create initial approval action as Pending
         """
 
-        new_request = OfferApprovalRequest(
-            user_uuid=user_uuid,
-            request_by=request_by,
-            action_taker_id=action_taker_id
-        )
-
         try:
+            # 1️⃣ Create OfferApprovalRequest
+            new_request = OfferApprovalRequest(
+                user_uuid=user_uuid,
+                request_by=request_by,
+                action_taker_id=action_taker_id
+            )
+
             self.db.add(new_request)
+            await self.db.flush()  
+            # flush is IMPORTANT → generates new_request.id without commit
+
+            # 2️⃣ Create OfferApprovalAction using generated request_id
+            new_action = OfferApprovalAction(
+                request_id=new_request.id,
+                action="Pending",
+                comment=None,
+                action_time=datetime.utcnow()
+            )
+
+            self.db.add(new_action)
+
+            # 3️⃣ Commit both inserts together
             await self.db.commit()
+
+            # Optional refresh
             await self.db.refresh(new_request)
+
             return new_request
-        except Exception as e:
+
+        except SQLAlchemyError as e:
             await self.db.rollback()
-            return None
+            raise e
+
         
     async def get_request_by_id(self, request_id: int):
         query = select(OfferApprovalRequest).where(
