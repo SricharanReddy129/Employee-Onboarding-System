@@ -5,6 +5,7 @@ from Backend.DAL.dao.offer_approval_request import OfferApprovalRequestDAO
 from Backend.API_Layer.interfaces.offer_request_interfaces import OfferRequestCreateResponse, OfferRequestUpdateResponse, OfferRequestDelete
 
 
+
 class OfferApprovalRequestService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -146,3 +147,6 @@ class OfferApprovalRequestService:
             "deleted_count": deleted_count,
             "deleted_by": current_user_id
         }
+    
+  
+    

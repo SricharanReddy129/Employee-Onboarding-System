@@ -7,24 +7,26 @@ class OnboardingVerifyLinkService:
         self.db = db
         self.dao = TokenVerificationDAO(self.db)
     async def verify_token(self, request: TokenVerificationRequest) -> TokenVerificationResponse:
-        """
-        Business logic:
-        - Hash the raw token
-        - Query the DAO for a valid link
-        - Return the result
-        """
+        try:
+            print("📌 Business Layer: Verifying token")
 
-        print("📌 Business Layer: Verifying token")
+            # ----------------------------
+            # 1️⃣ Query DAO for valid link
+            # ----------------------------
+            valid_link = await self.dao.get_valid_link_by_token(request.raw_token)
 
-        # ----------------------------
-        # 1️⃣ Query DAO for valid link
-        # ----------------------------
-        valid_link = await self.dao.get_valid_link_by_token(request.raw_token)
-
-        # ----------------------------
-        # 2️⃣ Prepare response
-        if valid_link:
-            return TokenVerificationResponse(is_valid=True, message="Token is valid.")
-        else:
-            return TokenVerificationResponse(is_valid=False, message="Token is invalid or expired.")
+            # ----------------------------
+            # 2️⃣ Prepare response
+            if valid_link:
+                return valid_link.user_uuid
+        except Exception as e:
+            raise ValueError(f"Error verifying token: {str(e)}")
+        
+        
+    
+    async def get_user_uuid_by_token(self, raw_token):
+        try:
+            return await self.dao.get_user_uuid_by_token(raw_token)
+        except Exception as e:
+            raise ValueError(f"Error retrieving user UUID: {str(e)}")
         

@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import and_, select, update
 from sqlalchemy.orm import selectinload
 
 from Backend.DAL.models.models import OfferApprovalRequest, OfferApprovalAction, OfferLetterDetails
@@ -131,4 +131,33 @@ class OfferApprovalActionDAO:
         result = await self.db.execute(stmt)
         return result.mappings().all()
 
-    
+    async def reassign_approval_request(
+        self,
+        user_uuid: str,
+        new_action_taker_id: int
+    ) -> bool:
+        """
+        Reassign approver for a pending approval request
+        """
+
+        stmt = (
+            update(OfferApprovalRequest)
+            .where(
+                and_(
+                    OfferApprovalRequest.user_uuid == user_uuid,
+                    OfferApprovalRequest.action_taker_id != new_action_taker_id
+                )
+            )
+            .values(
+                action_taker_id=new_action_taker_id
+            )
+        )
+
+        result = await self.db.execute(stmt)
+
+        if result.rowcount == 0:
+            await self.db.rollback()
+            return False
+
+        await self.db.commit()
+        return True

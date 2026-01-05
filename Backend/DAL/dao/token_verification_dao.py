@@ -18,3 +18,11 @@ class TokenVerificationDAO:
         )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()
+    async def get_user_uuid_by_token(self, raw_token: str):
+        token_hash = hash_token(raw_token)
+        stmt = (
+            select(OnboardingLinks.user_uuid)
+            .where(OnboardingLinks.token_hash == token_hash)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()

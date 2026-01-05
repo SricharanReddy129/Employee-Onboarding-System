@@ -5,7 +5,7 @@ from Backend.API_Layer.interfaces.token_verification_interfaces import TokenVeri
 from Backend.Business_Layer.services.token_verification_service import OnboardingVerifyLinkService
 
 router = APIRouter()
-@router.post("/verify_token", response_model=TokenVerificationResponse)
+@router.post("/verify_token")
 async def verify_token(
     requestdata: TokenVerificationRequest,
     db: AsyncSession = Depends(get_db)
@@ -17,10 +17,12 @@ async def verify_token(
 
     result = await service.verify_token(requestdata)
 
-    if not result.is_valid:
-        raise HTTPException(
-            status_code=400,
-            detail=result.message
-        )
-
     return result
+@router.get("/{raw_token}")
+async def get_user_uuid_by_token(
+    raw_token: str,
+    db: AsyncSession = Depends(get_db)
+):
+    service = OnboardingVerifyLinkService(db)
+    user_uuid = await service.get_user_uuid_by_token(raw_token)
+    return user_uuid
