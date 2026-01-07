@@ -1,5 +1,7 @@
+from fastapi import HTTPException
+from Backend.DAL.utils.storage_utils import S3StorageService
 from ...DAL.dao.hr_onboarding_dao import HrOnboardingDAO
-
+import re
 class HrOnboardingService:
     def __init__(self, db):
         self.dao = HrOnboardingDAO(db)
@@ -37,3 +39,34 @@ class HrOnboardingService:
             "education_documents": len(education) > 0,
             "experience": len(experience) > 0
         }
+    async def view_onboarding_documents(self, file_path: str):
+        try:
+            print("File path in service:", file_path)
+            pattern = r"^s3://[^/]+/(.+?/[0-9a-fA-F-]{36})"
+            match = re.search(pattern, file_path).group(1)
+            names = match.split('/')
+            print("Names:", names)
+            if len(names) == 2:
+                print("Entering identity and education document check")
+                table_name = names[0]
+                existing  = await self.dao.identity_and_education_document_exists(table_name, file_path)
+                if not existing:
+                    print("Document not found in identity and education check")
+                    raise HTTPException(status_code=404, detail="Document Not Found")
+            elif len(names) == 3:
+                print(names)
+                table_name = names[0]
+                col_name = names[1]
+                existing = await self.dao.experience_document_exists(table_name, col_name, file_path)
+                if not existing:    
+                    raise HTTPException(status_code=404, detail="Document Not Found")
+            else:
+                raise ValueError("Invalid file path format")
+            print("hello")
+            blob_service = S3StorageService()
+            document_url = await blob_service.get_presigned_url(file_path)
+            return document_url
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))

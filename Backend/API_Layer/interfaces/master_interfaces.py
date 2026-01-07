@@ -21,7 +21,7 @@ class CreateEducLevelResponse(BaseModel):
     education_uuid: str
     message: str
 class CreateEducLevelRequest(BaseModel):
-    education_name: str
+    education_name: str 
     description: str
 
 class EducLevelDetails(BaseModel):

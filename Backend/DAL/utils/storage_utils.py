@@ -152,57 +152,47 @@ class S3StorageService:
         self,
         s3_path: str,
         expiration: int = 3600,
-        download: bool = True
+        download: bool = False  # default open in browser
     ) -> str:
-        """
-        Generate temporary download URL for file
-        
-        Args:
-            s3_path: S3 URI
-            expiration: URL expiration time in seconds (default: 1 hour)
-            download: If True, forces download; if False, opens in browser
-        
-        Returns:
-            str: Pre-signed URL
-        
-        Example:
-            url = await storage.get_presigned_url('s3://bucket/file.pdf', expiration=1800)
-        """
         try:
             # Parse S3 path
             if s3_path.startswith('s3://'):
                 s3_path = s3_path.replace('s3://', '')
-                parts = s3_path.split('/', 1)
-                bucket = parts[0]
-                s3_key = parts[1] if len(parts) > 1 else ''
+                bucket, s3_key = s3_path.split('/', 1)
             else:
                 bucket = self.bucket_name
                 s3_key = s3_path
-            
-            # Generate presigned URL
+
             async with self.get_client() as s3_client:
                 params = {
                     'Bucket': bucket,
                     'Key': s3_key
                 }
-                
+
+                filename = s3_key.split('/')[-1]
+
                 if download:
-                    # Extract filename from s3_key
-                    filename = s3_key.split('/')[-1]
-                    params['ResponseContentDisposition'] = f'attachment; filename="{filename}"'
-                
+                    # Force download
+                    params['ResponseContentDisposition'] = (
+                        f'attachment; filename="{filename}"'
+                    )
+                else:
+                    # Open in browser
+                    params['ResponseContentDisposition'] = (
+                        f'inline; filename="{filename}"'
+                    )
+
                 url = await s3_client.generate_presigned_url(
                     'get_object',
                     Params=params,
                     ExpiresIn=expiration
                 )
-                
+
                 return url
-            
+
         except ClientError as e:
             raise Exception(f"URL generation failed: {str(e)}")
-        except Exception as e:
-            raise Exception(f"Error generating URL: {str(e)}")
+
     
     async def delete_file(self, s3_path: str) -> bool:
         """

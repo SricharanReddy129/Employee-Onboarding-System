@@ -49,6 +49,11 @@ class EducationDocService:
         
     async def update_education_document(self, uuid, request_data):
         try:
+            print("In service method", uuid)
+            existing = await self.dao.get_education_document_by_uuid(uuid)
+            if not existing:
+                raise HTTPException(status_code=404, detail="Document Not Found")
+    
             document_name = validate_alphabets_only(request_data.document_name)
             existing = await self.dao.get_document_by_name(document_name)
             if existing:

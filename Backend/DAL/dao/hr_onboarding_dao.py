@@ -289,3 +289,32 @@ class HrOnboardingDAO:
                 for _, action in rows if action
             ],
         }
+    async def identity_and_education_document_exists(self, table_name, file_path):
+        if table_name == "identity_documents":
+            print("Checking identity document existence in DAO")
+            stmt = select(EmployeeIdentityDocument).where(
+                EmployeeIdentityDocument.file_path == file_path
+            )
+            res = await self.db.execute(stmt)
+            document = res.scalar_one_or_none()
+            print("Document found:", document)
+            return document is not None
+        elif table_name == "education_documents":
+            stmt = select(EmployeeEducationDocument).where(
+                EmployeeEducationDocument.file_path == file_path
+            )
+            res = await self.db.execute(stmt)
+            document = res.scalar_one_or_none()
+            return document is not None
+        else:
+            return False
+    
+    async def experience_document_exists(self, table_name, col_name, filepath):
+        if table_name == "experience_documents":
+            stmt = select(EmployeeExperience).where(getattr(EmployeeExperience, col_name) == filepath)
+            
+            res = await self.db.execute(stmt)
+            document = res.scalar_one_or_none()
+            return document is not None
+        else:
+            return False

@@ -101,62 +101,64 @@ class AuditMiddleware(BaseHTTPMiddleware):
 
         print("new data from response", new_data)
 
-        # For CREATE operations, fetch the newly created data if we have an ID in response
-        new_entity_data = None
-
-        if new_data and operation == "CREATE":
-            
-            # Step 1: Get ID column name from mapping
-            id_field = self.entity_mappings.get(entity_name, {}).get("id_field")
-            
-            # Step 2: Extract actual ID value from response
-            new_entity_id = new_data.get(id_field)
-            
-            print("ID field:", id_field)
-            print("New entity id:", new_entity_id)
-
-            if new_entity_id:
-                async for db in get_db():
-                    new_entity_data = await AuditUtils().get_data(db, entity_name, new_entity_id)
-                    break
-
-        # For UPDATE
-        if operation in ["UPDATE"] and entity_id:
-            async for db in get_db():
-                new_entity_data = await AuditUtils().get_data(db, entity_name, entity_id)
-                break
-            # Identify which columns changed
-            changed_fields = {
-                key for key in old_data.keys()
-                if key in new_entity_data and old_data[key] != new_entity_data[key]
-            }
-
-            old_data = {key: old_data[key] for key in changed_fields}
-            new_entity_data = {key: new_entity_data[key] for key in changed_fields}
-        print("new entity data after query db", new_entity_data)
-        # Create new response with captured body
-        response = Response(
-            content=response_body,
-            status_code=response.status_code,
-            headers=dict(response.headers),
-            media_type=response.media_type
-        )
-        table_name = self.entity_mappings[entity_name]["table"]
-        # my_dict = {
-        #     "entity_name": table_name,
-        #     "entity_id": entity_id,
-        #     "operation": operation,
-        #     "user_id": user_id,
-        #     "old_data": old_data,
-        #     "new_data": new_data,
-        #     "ip address": ip_address,
-        #     'host': host,
-        #     'new_entity_data': new_entity_data
-        # }
-        # print("Audit Logs:", my_dict)
-
-        # Log audit trail (only if response is successful)
         if 200 <= response.status_code < 300:
+
+            # For CREATE operations, fetch the newly created data if we have an ID in response
+            new_entity_data = None
+
+            if new_data and operation == "CREATE":
+                
+                # Step 1: Get ID column name from mapping
+                id_field = self.entity_mappings.get(entity_name, {}).get("id_field")
+                
+                # Step 2: Extract actual ID value from response
+                new_entity_id = new_data.get(id_field)
+                
+                print("ID field:", id_field)
+                print("New entity id:", new_entity_id)
+
+                if new_entity_id:
+                    async for db in get_db():
+                        new_entity_data = await AuditUtils().get_data(db, entity_name, new_entity_id)
+                        break
+
+            # For UPDATE
+            if operation in ["UPDATE"] and entity_id:
+                async for db in get_db():
+                    new_entity_data = await AuditUtils().get_data(db, entity_name, entity_id)
+                    break
+                # Identify which columns changed
+                changed_fields = {
+                    key for key in old_data.keys()
+                    if key in new_entity_data and old_data[key] != new_entity_data[key]
+                }
+
+                old_data = {key: old_data[key] for key in changed_fields}
+                new_entity_data = {key: new_entity_data[key] for key in changed_fields}
+            print("new entity data after query db", new_entity_data)
+            # Create new response with captured body
+            response = Response(
+                content=response_body,
+                status_code=response.status_code,
+                headers=dict(response.headers),
+                media_type=response.media_type
+            )
+            table_name = self.entity_mappings[entity_name]["table"]
+            # my_dict = {
+            #     "entity_name": table_name,
+            #     "entity_id": entity_id,
+            #     "operation": operation,
+            #     "user_id": user_id,
+            #     "old_data": old_data,
+            #     "new_data": new_data,
+            #     "ip address": ip_address,
+            #     'host': host,
+            #     'new_entity_data': new_entity_data
+            # }
+            # print("Audit Logs:", my_dict)
+
+            # Log audit trail (only if response is successful)
+            
             try:
                 async for db in get_db():
                     audit = AuditTrails(db)
@@ -178,4 +180,12 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 print(f"Audit logging failed: {e}")
                 # Don't fail the request if audit logging fails
 
-        return response
+            return response
+        else:
+            # For non-success responses, just return as is
+            return Response(
+                content=response_body,
+                status_code=response.status_code,
+                headers=dict(response.headers),
+                media_type=response.media_type
+            )
