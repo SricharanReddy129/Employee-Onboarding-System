@@ -548,7 +548,7 @@ class OfferApprovalAction(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     request_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    action: Mapped[str] = mapped_column(Enum('APPROVED', 'REJECTED', 'ON_HOLD'), nullable=False)
+    action: Mapped[str] = mapped_column(Enum('Pending', 'APPROVED', 'REJECTED', 'ON_HOLD'), nullable=False, default='Pending')
     comment: Mapped[Optional[str]] = mapped_column(Text)
     action_time: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
 

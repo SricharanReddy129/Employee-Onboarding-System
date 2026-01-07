@@ -123,7 +123,7 @@ async def get_all_employee_education_documents(db: AsyncSession = Depends(get_db
         raise HTTPException(status_code=500, detail=str(e))
 
 # get employee education document by uuid
-@router.get("/employee-education-document/{uuid}", response_model=EmployeEduDocDetails)
+@router.get("/employee-education-document/{document_uuid}", response_model=EmployeEduDocDetails)
 async def get_employee_education_document_by_uuid(uuid: str, db: AsyncSession = Depends(get_db)):
     try:
         education_service = EducationDocService(db)
