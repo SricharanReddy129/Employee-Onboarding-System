@@ -25,6 +25,13 @@ class CertificateStatus(str, Enum):
     VERIFIED = "verified"
     REJECTED = "rejected"
 
+class ExperienceDocumentType(str, Enum):
+    EXPERIENCE_LETTER = "experience_letter"
+    PAYSLIP = "payslip"
+    CONTRACT = "contract"
+    FORM16 = "form16"
+    INTERN_CERTIFICATE = "intern_certificate"
+    OTHER = "other"
 
 # ---------------------------------------------------------
 # BASE VALIDATION UTILS
@@ -101,6 +108,13 @@ class ExperienceUpdateRequest(BaseModel):
 # RESPONSE MODELS
 # ---------------------------------------------------------
 
+class ExperienceDocumentResponse(BaseModel):
+    doc_uuid: str
+    doc_type: ExperienceDocumentType
+    file_name: str
+    status: CertificateStatus
+    uploaded_at: datetime
+
 class ExperienceResponse(BaseModel):
     experience_uuid: str
     employee_uuid: str
@@ -108,14 +122,15 @@ class ExperienceResponse(BaseModel):
     start_date: date
     end_date: Optional[date]
     role_title: Optional[str]
-    employment_type: Optional[str]
+    employment_type:Optional[str]
     is_current: Optional[int]
-    exp_certificate_path: Optional[str]
-    certificate_status: Optional[str]
-    uploaded_at: Optional[datetime]
+    # exp_certificate_path: Optional[str]
+    # certificate_status: Optional[str]
+    # uploaded_at: Optional[datetime]
     verified_by: Optional[str]
     verified_at: Optional[datetime]
     remarks: Optional[str]
+    documents:list[ExperienceDocumentResponse]
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
 

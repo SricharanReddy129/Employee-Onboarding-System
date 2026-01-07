@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 
 
-from Backend.API_Layer.interfaces.employee_experience_interfaces import ExperienceCreateRequest
-
+from Backend.API_Layer.interfaces.employee_experience_interfaces import  ExperienceCreateRequest, ExperienceCreateResponse
+from Backend.Business_Layer.utils.experience_document_rules import EMPLOYMENT_DOCUMENT_RULES
 
 from ...DAL.dao.employee_experience_dao import EmployeeExperienceDAO
 from ...DAL.dao.offerletter_dao import OfferLetterDAO
@@ -18,35 +18,62 @@ class EmployeeExperienceService:
         self.db = db
         self.dao = EmployeeExperienceDAO(self.db)
         self.offerdao = OfferLetterDAO(self.db)
-        self.storage = S3StorageService
+        self.storage = get_storage_service()
         
 
     # ------------------ CREATE EXPERIENCE ------------------
 
-    async def create_experience(self, request_data: ExperienceCreateRequest, file):
-        # 1️ Check if employee exists
-        user_exists = await self.offerdao.get_offer_by_uuid(request_data.employee_uuid)
-        if not user_exists:
-            raise HTTPException(status_code=404, detail="Employee Not Found")
+    async def create_experience(
+        self,
+        request_data: ExperienceCreateRequest,
+        doc_types: list[str],
+        files: list[UploadFile],
+    ):
+        # 1️⃣ Validate required docs
+        rules = EMPLOYMENT_DOCUMENT_RULES[request_data.employment_type.value]
+        if len(doc_types) == 1 and "," in doc_types[0]:
+            doc_types = [d.strip() for d in doc_types[0].split(",")]
 
-        # 2️ Validate dates
-        start_date = request_data.start_date
-        end_date = request_data.end_date
-        if start_date and end_date and end_date < start_date:
+
+        missing = set(rules) - set(doc_types)
+        if missing:
             raise HTTPException(
                 status_code=400,
-                detail="end_date cannot be earlier than start_date"
+                detail=f"Missing required documents: {list(missing)}",
             )
 
-        # 3️ Generate UUID
-        experience_uuid = generate_uuid7()
-        blob_upload_service = S3StorageService()
-        folder = "experience_documents"
-        file_path = await blob_upload_service.upload_file(file, folder)
+        if len(doc_types) != len(files):
+            raise HTTPException(
+                status_code=400,
+                detail="Each document must have a matching file",
+            )
 
-        # 4️ Call DAO to create record
-        result = await self.dao.create_experience(request_data, experience_uuid, file_path)
-        return result
+        # 2️⃣ Upload files to S3 (type-based folders)
+        paths = {
+            "exp_certificate_path": None,
+            "payslip_path": None,
+            "internship_certificate_path": None,
+            "contract_aggrement_path": None,
+        }
+
+        for file, doc_type in zip(files, doc_types):
+            folder = f"experience_documents/{doc_type}"
+            file_path = await self.storage.upload_file(file, folder, original_filename=file.filename, employee_uuid=request_data.employee_uuid)
+            print("service", file_path)
+            paths[doc_type] = file_path
+
+        # 3️⃣ Create DB record
+        experience_uuid = generate_uuid7()
+
+        return await self.dao.create_experience(
+            request_data=request_data,
+            experience_uuid=experience_uuid,
+            exp_certificate_path=paths["exp_certificate_path"],
+            payslip_path=paths["payslip_path"],
+            internship_certificate_path=paths["internship_certificate_path"],
+            contract_aggrement_path=paths["contract_aggrement_path"],
+        )
+
                      
 
     # ------------------ GET EXPERIENCE ------------------

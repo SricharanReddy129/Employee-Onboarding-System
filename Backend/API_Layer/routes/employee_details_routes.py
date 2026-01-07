@@ -156,6 +156,7 @@ async def create_employee_identity(
 
         return EmployeeIdentityResponse(
             identity_uuid=result.document_uuid,
+            file_path=result.file_path,
             message="Employee Identity Document Created Successfully"
         )
 

@@ -317,7 +317,21 @@ class EmployeeExperience(Base):
     employment_type: Mapped[Optional[str]] = mapped_column(Enum('Full-Time', 'Part-Time', 'Intern', 'Contract', 'Freelance'))
     end_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
     is_current: Mapped[Optional[int]] = mapped_column(TINYINT(1), server_default=text("'0'"))
-    exp_certificate_path: Mapped[Optional[str]] = mapped_column(String(255))
+    exp_certificate_path: Mapped[Optional[str]] = mapped_column(
+        "exp_certificate_path", String(255)
+    )
+
+    internship_certificate_path: Mapped[Optional[str]] = mapped_column(
+        "internship_certificate_path", String(255)
+    )
+
+    payslip_path: Mapped[Optional[str]] = mapped_column(
+        "payslip_path", String(255)
+    )
+
+    contract_aggrement_path: Mapped[Optional[str]] = mapped_column(
+        "contract_aggrement_path", String(255)
+    )
     certificate_status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'pending', 'verified', 'rejected'), server_default=text("'pending'"))
     uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     verified_by: Mapped[Optional[str]] = mapped_column(CHAR(36))
@@ -539,3 +553,5 @@ class OfferApprovalAction(Base):
     action_time: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
 
     request: Mapped['OfferApprovalRequest'] = relationship('OfferApprovalRequest', back_populates='offer_approval_action', lazy="selectin")
+
+

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Form
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date
-
+from typing import List
 from Backend.API_Layer.interfaces.employee_experience_interfaces import (ExperienceCreateRequest, ExperienceResponse, 
                                                                          ExperienceCreateResponse, EmploymentType)
 
@@ -20,43 +20,31 @@ router = APIRouter()
 async def create_experience(
     employee_uuid: str = Form(...),
     company_name: str = Form(...),
-    start_date: date = Form(...),
-    end_date: date | None = Form(None),
     role_title: str | None = Form(None),
     employment_type: EmploymentType = Form(...),
+    start_date: date = Form(...),
+    end_date: date | None = Form(None),
     is_current: int = Form(0),
     remarks: str | None = Form(None),
-    file: UploadFile = File(...),
+
+    doc_types: List[str] = Form(...),
+    files: List[UploadFile] = File(...),
+
     db: AsyncSession = Depends(get_db),
 ):
-    try:
-        service = EmployeeExperienceService(db)
+    request_data = ExperienceCreateRequest(
+        employee_uuid=employee_uuid,
+        company_name=company_name,
+        role_title=role_title,
+        employment_type=employment_type,
+        start_date=start_date,
+        end_date=end_date,
+        is_current=is_current,
+        remarks=remarks,
+    )
 
-        # Build Pydantic model manually
-        request_data = ExperienceCreateRequest(
-            employee_uuid=employee_uuid,
-            company_name=company_name,
-            start_date=start_date,
-            end_date=end_date,
-            role_title=role_title,
-            employment_type=employment_type,
-            is_current=is_current,
-            remarks=remarks,
-        )
-
-        print("request data in route:", request_data)
-
-        new_exp = await service.create_experience(request_data, file)
-
-        return ExperienceCreateResponse(
-            experience_uuid=new_exp.experience_uuid,
-            message="Experience record created successfully",
-        )
-
-    except HTTPException as he:
-        raise he
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    service = EmployeeExperienceService(db)
+    return await service.create_experience(request_data, doc_types, files)
 
 
 # -------------------------------------------------------

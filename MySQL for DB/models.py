@@ -539,3 +539,4 @@ class OfferApprovalAction(Base):
     action_time: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
 
     request: Mapped['OfferApprovalRequest'] = relationship('OfferApprovalRequest', back_populates='offer_approval_action', lazy="selectin")
+
