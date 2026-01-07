@@ -44,85 +44,63 @@ class S3StorageService:
     
     async def upload_file(
         self,
-        file: BinaryIO,
+        file,                       # UploadFile OR bytes
         folder: str,
         original_filename: str = None,
         employee_uuid: str = None,
         custom_filename: str = None
     ) -> str:
-        """
-        Upload file to S3 and return file path
-        
-        Args:
-            file: File object (from FastAPI UploadFile.file or file-like object)
-            folder: S3 folder path (e.g., 'relieving_letters', 'offer_letters')
-            original_filename: Original filename from upload (optional)
-            employee_uuid: Employee UUID for organizing files (optional)
-            custom_filename: Custom filename if you want to override (optional)
-        
-        Returns:
-            str: S3 file path (e.g., 's3://bucket-name/folder/filename.pdf')
-        
-        Example:
-            file_path = await storage.upload_file(
-                file=upload_file.file,
-                folder='relieving_letters',
-                original_filename=upload_file.filename,
-                employee_uuid='uuid-123'
-            )
-        """
         try:
-            # Generate unique filename
+            print("UPLOAD_FILE ARGS:", self, file, folder)
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             unique_id = str(uuid4())[:8]
-            
+
+            # ✅ Determine filename & extension safely
             if custom_filename:
                 filename = custom_filename
+
             elif original_filename:
-                file_extension = original_filename.split('.')[-1] if '.' in original_filename else 'bin'
-                safe_name = original_filename.rsplit('.', 1)[0].replace(' ', '_')[:50]
-                filename = f"{safe_name}_{timestamp}_{unique_id}.{file_extension}"
+                name, ext = os.path.splitext(original_filename)
+                ext = ext if ext else ".bin"   # fallback only if truly missing
+                safe_name = name.replace(" ", "_")[:50]
+                filename = f"{safe_name}_{timestamp}_{unique_id}{ext}"
+
             else:
                 filename = f"file_{timestamp}_{unique_id}.bin"
-            
-            # Construct S3 key (path)
+
+            # ✅ Build S3 key
             if employee_uuid:
                 s3_key = f"{folder}/{employee_uuid}/{filename}"
             else:
                 s3_key = f"{folder}/{filename}"
-            
-            # Detect content type
-            content_type = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
-            
-            # Read file content
-            if hasattr(file, 'read'):
-                # Ensure we're at the beginning of the file
-                if hasattr(file, 'seek'):
+
+            # ✅ Detect content type
+            content_type = mimetypes.guess_type(filename)[0] or "application/octet-stream"
+
+            # ✅ Read file correctly
+            if hasattr(file, "read"):
+                if hasattr(file, "seek"):
                     await file.seek(0)
-                file_content = file.read()
-                if asyncio.iscoroutine(file_content):
-                    file_content = await file_content
+                file_content = await file.read()
             else:
                 file_content = file
-            
-            # Upload to S3
+
+            # ✅ Upload to S3
             async with self.get_client() as s3_client:
                 await s3_client.put_object(
                     Bucket=self.bucket_name,
                     Key=s3_key,
                     Body=file_content,
                     ContentType=content_type,
-                    ServerSideEncryption='AES256',  # Encrypt at rest
+                    ServerSideEncryption="AES256",
                     Metadata={
-                        'uploaded_at': datetime.utcnow().isoformat(),
-                        'original_filename': original_filename or 'unknown'
+                        "uploaded_at": datetime.utcnow().isoformat(),
+                        "original_filename": original_filename or "unknown"
                     }
                 )
-            
-            # Return S3 URI
-            file_path = f"s3://{self.bucket_name}/{s3_key}"
-            return file_path
-            
+
+            return f"s3://{self.bucket_name}/{s3_key}"
+
         except ClientError as e:
             raise Exception(f"S3 upload failed: {str(e)}")
         except Exception as e:

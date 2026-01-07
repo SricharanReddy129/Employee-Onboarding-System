@@ -36,43 +36,45 @@ class EmployeeExperienceDAO:
     # CREATE
     # ----------------------------------------------------
 
-    async def create_experience(self, request_data, experience_uuid, file_path):
-        """
-        request_data = ExperienceCreateRequest
-        """
-
-        # Convert Enum → String safely
-        employment_type = (
-            request_data.employment_type.value
-            if request_data.employment_type is not None
-            else None
-        )
-
-        # Validate enum manually to avoid "unknown"
-        VALID_EMPLOYMENT_TYPES = ["Full-Time", "Part-Time", "Intern", "Contract", "Freelance"]
-        if employment_type and employment_type not in VALID_EMPLOYMENT_TYPES:
-            raise ValueError(f"Invalid employment_type '{employment_type}'")
-
+    async def create_experience(
+        self,
+        request_data,
+        experience_uuid: str,
+        exp_certificate_path: str | None,
+        payslip_path: str | None,
+        internship_certificate_path: str | None,
+        contract_aggrement_path: str | None,
+    ):
         new_exp = EmployeeExperience(
             experience_uuid=experience_uuid,
             employee_uuid=request_data.employee_uuid,
             company_name=request_data.company_name,
+            role_title=request_data.role_title,
+            employment_type=request_data.employment_type.value,
             start_date=request_data.start_date,
             end_date=request_data.end_date,
-            role_title=request_data.role_title,
-            employment_type=employment_type,
-            exp_certificate_path=file_path,
             is_current=request_data.is_current,
             remarks=request_data.remarks,
-            certificate_status="pending",
-            uploaded_at=datetime.utcnow()
+
+            exp_certificate_path=exp_certificate_path,
+            payslip_path=payslip_path,
+            internship_certificate_path=internship_certificate_path,
+            contract_aggrement_path=contract_aggrement_path,
+
+            certificate_status="uploaded",
+            uploaded_at=datetime.utcnow(),
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
         )
 
         self.db.add(new_exp)
         await self.db.commit()
         await self.db.refresh(new_exp)
 
-        return new_exp
+        return {
+            "experience_uuid": experience_uuid,
+            "message": "Experience record created successfully",
+        }
 
     # ----------------------------------------------------
     # UPDATE
