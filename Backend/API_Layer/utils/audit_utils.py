@@ -25,7 +25,7 @@ class AuditUtils:
                 "table": "countries",
                 "id_field": "country_uuid"
             },
-            "masters-education-level": {
+            "masters/education-level": {
                 "table": "education_level",
                 "id_field": "education_uuid"
             },
