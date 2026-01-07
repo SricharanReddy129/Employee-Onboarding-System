@@ -212,7 +212,7 @@ async def get_created_offerletters(
     return result
 
 
-@router.post("/bulk-send", response_model=BulkSendOfferLettersResponse)
+@router.post("/bulk-send")
 async def bulk_send_offer_letters(
     request_data: BulkSendOfferLettersRequest,
     request: Request,
@@ -221,6 +221,6 @@ async def bulk_send_offer_letters(
     print("Bulk send offer letters endpoint called")
     offer_service = OfferLetterService(db)
     print('offer_service created in route')
-    return await offer_service.send_bulk_offerletters(request_data, int(request.state.user.get("user_id")))
+    return await offer_service.send_bulk_offerletters_via_docusign(request_data, int(request.state.user.get("user_id")))
 
     

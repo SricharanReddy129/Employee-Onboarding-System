@@ -1,7 +1,7 @@
 # Backend/Business_Layer/services/offerletter_service.py
 import asyncio
-import uuid
 from fastapi import HTTPException
+import requests
 from httpx import AsyncClient
 import httpx
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,6 +12,7 @@ from ...API_Layer.interfaces.offerletter_interfaces import(
     BulkSendOfferLettersResult,
     BulkSendOfferLettersResponse
 )
+from Backend.API_Layer.utils.docusign_token_genearation_utils import generate_docusign_access_token
 from ...DAL.dao.offerletter_dao import OfferLetterDAO
 from ..utils.uuid_generator import generate_uuid7
 from ...config.env_loader import get_env_var
@@ -24,7 +25,9 @@ from ..utils.validation_utils import (
     validate_package,
     validate_currency
 )
- 
+DOCUSIGN_BASE_URL = get_env_var("DOCUSIGN_BASE_URL")
+DOCUSIGN_ACCOUNT_ID = get_env_var("DOCUSIGN_ACCOUNT_ID")
+DOCUSIGN_TEMPLATE_ID = get_env_var("DOCUSIGN_TEMPLATE_ID")
 class OfferLetterService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -618,4 +621,117 @@ class OfferLetterService:
             raise he
         except Exception as e:
             print('Unexpected error in send_bulk_offerletters:', str(e))
+            raise HTTPException(status_code=500, detail=str(e))
+        
+    async def send_bulk_offerletters_via_docusign(
+        self,
+        request_data,
+        current_user_id: int
+    ):
+        print("🚀 Bulk DocuSign offer letter service started")
+
+        uuids = request_data.user_uuid_list
+        successful = []
+        failed = []
+
+        if not uuids:
+            raise HTTPException(status_code=400, detail="No UUIDs provided")
+        try:
+            for user_uuid in uuids:
+                print(f"\n🔁 Processing user_uuid: {user_uuid}")
+
+                try:
+                    # 1️⃣ Fetch offer letter record
+                    record = await self.dao.get_offer_by_uuid(user_uuid)
+                    if not record:
+                        failed.append({
+                            "offerletter_uuid": user_uuid,
+                            "error": "Offer letter not found"
+                        })
+                        continue
+
+                    # 2️⃣ Build DocuSign payload
+                    full_name = f"{record.first_name} {record.last_name}"
+
+                    payload = {
+                        "templateId": DOCUSIGN_TEMPLATE_ID,
+                        "templateRoles": [
+                            {
+                                "roleName": "Employee",
+                                "name": full_name,
+                                "email": record.mail,
+                                "tabs": {
+                                    "textTabs": [
+                                        {"tabLabel": "EF", "value": full_name},
+                                        {"tabLabel": "EE", "value": record.mail},
+                                        {"tabLabel": "ET", "value": record.designation},
+                                        {"tabLabel": "EP", "value": record.package},
+                                        {"tabLabel": "EC", "value": record.country_code},
+                                        {"tabLabel": "EN", "value": record.contact_number},
+                                    ]
+                                }
+                            }
+                        ],
+                        "status": "sent"
+                    }
+
+                    print("📄 DocuSign payload prepared")
+                    print(payload)
+                    # 3️⃣ Get DocuSign access token
+                    token_data = generate_docusign_access_token()
+                    access_token = token_data["access_token"]
+                    print("🔑 DocuSign access token obtained")
+
+                    # 4️⃣ Call DocuSign Create Envelope API
+                    url = f"{DOCUSIGN_BASE_URL}/v2.1/accounts/{DOCUSIGN_ACCOUNT_ID}/envelopes"
+
+                    headers = {
+                        "Authorization": f"Bearer {access_token}",
+                        "Content-Type": "application/json"
+                    }
+
+                    response = requests.post(url, json=payload, headers=headers)
+                    response.raise_for_status()
+
+                    response_data = response.json()
+                    envelope_id = response_data.get("envelopeId")
+
+                    if not envelope_id:
+                        raise Exception("Envelope ID not returned by DocuSign")
+
+                    print(f"✅ Envelope sent successfully: {envelope_id}")
+
+                    # 5️⃣ Store envelopeId (replace PandaDoc ID)
+                    await self.dao.update_pandadoc_draft_id(
+                        user_uuid=user_uuid,
+                        draft_id=envelope_id
+                    )
+
+                    # 6️⃣ Update offer letter status
+                    await self.dao.update_offerletter_status(
+                        user_uuid=user_uuid,
+                        new_status="Offered",
+                        current_user_id=current_user_id
+                    )
+
+                    successful.append({
+                        "offerletter_uuid": user_uuid,
+                        "email": record.mail,
+                        "status": "success",
+                        "message": "Offer letter sent via DocuSign"
+                    })
+
+                except Exception as e:
+                    print(f"❌ Error processing {user_uuid}: {str(e)}")
+                    failed.append({
+                        "offerletter_uuid": user_uuid,
+                        "email": getattr(record, "mail", None),
+                        "error": str(e)
+                    })
+
+            print("📊 Bulk DocuSign sending completed")
+
+            return "Offer letters sent via DocuSign successfully"
+        except Exception as e:
+            print("❗ Unexpected error in bulk DocuSign service:", str(e))
             raise HTTPException(status_code=500, detail=str(e))

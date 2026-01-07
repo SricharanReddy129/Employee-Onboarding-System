@@ -42,6 +42,12 @@ class AuditMiddleware(BaseHTTPMiddleware):
         if path.startswith("/offer-approval"):
             return await call_next(request)
         
+        if path.startswith("/docusign"):
+                return await call_next(request)
+        
+        if path.startswith("/offerletters"):
+                return await call_next(request)
+        
         # Skip audit for certain methods and endpoints
         if method in ["GET", "OPTIONS"] or any(path.startswith(p) for p in self.open_endpoints):
             print(f"Skipping Audit: path={path}, method={method}")
