@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Request
 
 from Backend.API_Layer.utils.docusign_token_genearation_utils import generate_docusign_access_token
+from Backend.Business_Layer.services.docusign_webhook_service import DocuSignWebhookService
   
 router = APIRouter()
 @router.get("/docusign/token")
@@ -27,34 +28,14 @@ async def docusign_webhook(request: Request):
 
         payload = await request.json()
         print("📦 Payload received:")
-        print(payload)
+        # print(payload)
 
-        data = payload.get("data", {})
-        envelope_id = data.get("envelopeId")
-
-        envelope_summary = data.get("envelopeSummary", {})
-        status = envelope_summary.get("status", "").lower()
-
-        if not envelope_id or not status:
-            print("⚠️ Missing envelopeId or status")
-            return {"ok": True}
-
-        if status == "completed":
-            print(f"✅ Envelope completed: {envelope_id}")
-            # update onboarding status
-            # trigger next step
-
-        elif status == "declined":
-            print(f"❌ Envelope declined: {envelope_id}")
-            # mark onboarding failed
-
-        else:
-            print(f"ℹ️ Ignored envelope status: {status}")
-
+        service = DocuSignWebhookService()
+        await service.process_offer_acceptance_webhook_docusign(payload)
         return {"ok": True}
 
     except Exception as e:
-        # IMPORTANT: never break DocuSign webhook
-        print("🔥 Error processing DocuSign webhook")
+        # ❗ Never break DocuSign webhook
+        print("🔥 Error in DocuSign webhook router")
         print("Error:", str(e))
-        return {"ok": True}
+        return {"ok": False}
