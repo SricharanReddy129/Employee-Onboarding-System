@@ -43,6 +43,10 @@ class HrOnboardingService:
         try:
             print("File path in service:", file_path)
             pattern = r"^s3://[^/]+/(.+?/[0-9a-fA-F-]{36})"
+            match = re.search(pattern, file_path)
+
+            if not match:
+                raise ValueError("Invalid S3 file path format")
             match = re.search(pattern, file_path).group(1)
             names = match.split('/')
             print("Names:", names)
