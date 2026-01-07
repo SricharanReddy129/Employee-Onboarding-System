@@ -23,3 +23,6 @@ Thumbs.db
 
 # deploy files
 *.pem
+
+# key
+private.key
