@@ -192,7 +192,7 @@ class EmployeeIdentityService:
             if existing:
                 raise HTTPException(status_code=400, detail="Identity Document Already Exists for this Employee")   
             blob_service = S3StorageService()
-            folder = "employee_identity_documents"
+            folder = "identity_documents"
             file_path = await blob_service.upload_file(file, folder, original_filename=file.filename, employee_uuid=user_uuid)
             uuid = generate_uuid7()
             result = await self.dao.create_employee_identity(mapping_uuid, user_uuid, expiry_date, file_path, uuid)
