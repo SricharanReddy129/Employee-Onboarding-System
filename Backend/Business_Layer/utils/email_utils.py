@@ -2,6 +2,7 @@ import http
 import smtplib
 from email.message import EmailMessage
 from ...config.env_loader import get_env_var 
+from datetime import datetime
  
 EMAIL_USER = get_env_var("EMAIL_USER")
 EMAIL_PASSWORD = get_env_var("EMAIL_PASSWORD")
@@ -121,3 +122,93 @@ Paves Technologies
     except Exception as e:
         print(f"❌ Failed to send OTP email to {to_email}: {e}")
         return f"Failed to send OTP email: {e}"
+
+def send_candidate_onboarding_submitted_email(
+    to_email: str,
+    candidate_name: str,
+    subject: str = "Onboarding Submitted Successfully"
+):
+    """
+    Email sent to candidate after final onboarding submit
+    """
+
+    content = f"""
+Hello {candidate_name},
+
+Your onboarding details have been successfully submitted.
+
+Our HR team will review your information and verify the submitted documents.
+You will be notified if any additional action is required from your side.
+
+Thank you for completing the onboarding process.
+
+Warm regards,  
+Employee Onboarding System  
+Paves Technologies
+"""
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = EMAIL_USER
+    msg["To"] = to_email
+    msg.set_content(content)
+
+    try:
+        with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as smtp:
+            smtp.starttls()
+            smtp.login(EMAIL_USER, EMAIL_PASSWORD)
+            smtp.send_message(msg)
+        print(f"✅ Candidate onboarding email sent to {to_email}")
+    except Exception as e:
+        print(f"❌ Failed to send candidate onboarding email: {e}")
+
+def send_hr_onboarding_submitted_email(
+    hr_email: str,
+    candidate_name: str,
+    candidate_uuid: str,
+    submitted_at: datetime,
+    verify_documents_url: str,
+    subject: str = "Candidate Onboarding Submitted"
+):
+    """
+    Email sent to HR when candidate submits onboarding
+    """
+
+    submitted_time = submitted_at.strftime("%d-%m-%Y %H:%M:%S")
+
+    content = f"""
+Hello HR Team,
+
+A candidate has completed the onboarding submission.
+
+Candidate Details:
+-------------------
+Candidate Name : {candidate_name}
+Candidate UUID : {candidate_uuid}
+Submitted At   : {submitted_time}
+
+Verify Documents:
+-----------------
+{verify_documents_url}
+
+
+Regards,  
+Employee Onboarding System  
+Paves Technologies
+"""
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = EMAIL_USER
+    msg["To"] = hr_email
+    msg.set_content(content)
+
+    try:
+        with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as smtp:
+            smtp.starttls()
+            smtp.login(EMAIL_USER, EMAIL_PASSWORD)
+            smtp.send_message(msg)
+        print(f"✅ HR onboarding notification email sent to {hr_email}")
+    except Exception as e:
+        print(f"❌ Failed to send HR onboarding email: {e}")
+

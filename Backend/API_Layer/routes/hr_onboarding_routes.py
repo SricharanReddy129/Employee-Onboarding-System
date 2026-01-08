@@ -5,10 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...DAL.utils.dependencies import get_db
 from ...Business_Layer.services.hr_onboarding_service import (HrOnboardingService)
-
+from ...API_Layer.interfaces.candidate_submit_forms_interfaces import HrOnboardingSubmitRequest
 router = APIRouter()
 
-@router.get("/onboarding/{user_uuid}")
+@router.get("/hr/{user_uuid}")
 async def get_full_onboarding_details(user_uuid: str,request: Request, db: AsyncSession = Depends(get_db)):
     current_user_id = int(request.state.user.get("user_id"))
     service = HrOnboardingService(db)
@@ -17,3 +17,11 @@ async def get_full_onboarding_details(user_uuid: str,request: Request, db: Async
         raise HTTPException(status_code=404, detail="User onboarding data not found")
 
     return data
+@router.post("/candidate/submit")
+async def submit_onboarding(
+    payload: HrOnboardingSubmitRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    service = HrOnboardingService(db)
+    await service.final_submit_onboarding(payload)
+    return {"message": "Onboarding submitted successfully"}

@@ -1,5 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.dialects.mysql import insert
 
 from ...DAL.models.models import (
     OfferLetterDetails,
@@ -22,6 +23,62 @@ from ...DAL.models.models import (
 class HrOnboardingDAO:
     def __init__(self, db: AsyncSession):
         self.db = db
+
+
+
+        
+    # =================================================
+    # =============== CREATE METHODS ==================
+    # =================================================
+
+    async def create_personal_details(self, data: dict):
+        stmt = insert(PersonalDetails).values(**data)
+        await self.db.execute(stmt)
+
+    async def create_address(self, data: dict):
+        stmt = insert(Addresses).values(**data)
+        await self.db.execute(stmt)
+
+    async def create_identity_document(
+        self,
+        user_uuid: str,
+        mapping_uuid: str,
+        file_path: str,
+        expiry_date=None,
+        status="uploaded",
+        remarks=None,
+    ):
+        stmt = insert(EmployeeIdentityDocument).values(
+            user_uuid=user_uuid,
+            mapping_uuid=mapping_uuid,
+            file_path=file_path,
+            expiry_date=expiry_date,
+            status=status,
+            remarks=remarks,
+        )
+        await self.db.execute(stmt)
+
+    async def create_education_document(self, data: dict):
+        stmt = insert(EmployeeEducationDocument).values(**data)
+        await self.db.execute(stmt)
+
+    async def create_experience(self, data: dict):
+        stmt = insert(EmployeeExperience).values(**data)
+        await self.db.execute(stmt)
+
+    async def create_offer_approval_request(
+        self,
+        user_uuid: str,
+        requested_by: int,
+        action_taker_id: int,
+    ):
+        stmt = insert(OfferApprovalRequest).values(
+            user_uuid=user_uuid,
+            request_by=requested_by,
+            action_taker_id=action_taker_id,
+        )
+        await self.db.execute(stmt)
+
 
     # -------------------------------------------------
     # OFFER / BASIC USER DETAILS
@@ -49,6 +106,7 @@ class HrOnboardingDAO:
             "created_at": offer.created_at,
             "updated_at": offer.updated_at,
         }
+    
 
     # -------------------------------------------------
     # PERSONAL DETAILS
@@ -84,6 +142,7 @@ class HrOnboardingDAO:
             "nationality_country_uuid": personal.nationality_country_uuid,
             "residence_country_uuid": personal.residence_country_uuid,
         }
+    
 
     # -------------------------------------------------
     # ADDRESS DETAILS
