@@ -52,10 +52,14 @@ async def update_education_document(uuid: str, request_data: CreateEducDocReques
     try:
         education_service = EducationDocService(db)
         result = await education_service.update_education_document(uuid, request_data)
+
+        if result is None:
+            raise HTTPException(status_code=404, detail="Education document not found")
+
         return EducDocResponse(
-            education_document_uuid = result.education_document_uuid,
-            message = "Education Document Updated Successfully"
-        )
+        education_document_uuid=result.education_document_uuid,
+        message="Education Document Updated Successfully"
+    )
     except HTTPException as he:
         raise he
     except Exception as e:

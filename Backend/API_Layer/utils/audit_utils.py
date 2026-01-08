@@ -29,7 +29,7 @@ class AuditUtils:
                 "table": "education_level",
                 "id_field": "education_uuid"
             },
-            "masters-mapping": {
+            "masters/": {
                 "table": "country_education_document_mapping",
                 "id_field": "mapping_uuid"
             },
@@ -37,9 +37,13 @@ class AuditUtils:
                 "table": "contacts",
                 "id_field": "contact_uuid"
             },
-            "education": {
+            "education/employee-education-document": {
                 "table": "employee_education_document",
                 "id_field": "document_uuid"
+            },
+            "education/education-document": {
+                "table": "education_document_type", 
+                "id_field": "education_document_uuid"
             },
             "employee-details": {
                 "table": "personal_details",

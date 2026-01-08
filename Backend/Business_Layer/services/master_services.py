@@ -142,6 +142,7 @@ class EducationService:
             if not existing:
                 raise HTTPException(status_code=404, detail="Education Level Not Found")
             existing = await self.educationdao.get_education_document_by_uuid(educ_doc_uuid)
+            print("country uuid", country_uuid)
             if not existing:
                 raise HTTPException(status_code=404, detail="Education Document Not Found")
             existing = await self.countrydao.get_country_by_uuid(country_uuid)
