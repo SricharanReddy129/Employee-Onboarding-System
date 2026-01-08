@@ -130,9 +130,7 @@ class EducationDAO:
         return result.scalar_one_or_none()
     
     async def get_education_country_mapping_by_uuid(self, mappng_uuid):
-        print("in dao", mappng_uuid)
         result = await self.db.execute(select(CountryEducationDocumentMapping).where(CountryEducationDocumentMapping.mapping_uuid == mappng_uuid))
-        print("in dao", result)
         return result.scalar_one_or_none()
     async def delete_education_country_mapping(self, mappng_uuid):
         result = await self.db.execute(select(CountryEducationDocumentMapping).where(CountryEducationDocumentMapping.mapping_uuid == mappng_uuid))

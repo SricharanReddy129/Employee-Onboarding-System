@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
-from Backend.API_Layer.routes import employee_experience_routes, hr_onboarding_routes, offer_approval_action_routes, otp_routes
+from Backend.API_Layer.routes import docusign_token_generation_route, employee_experience_routes, hr_onboarding_routes, offer_approval_action_routes, otp_routes
 from .API_Layer.routes import (master_routes, offerletter_routes, education_routes, offerresponse_routes, employee_details_routes,
                                identity_routes)
 from .API_Layer.middleware.jwt_middleware import JWTMiddleware
@@ -69,4 +69,5 @@ app.include_router(otp_routes.router, prefix="/otp", tags=["Otp Verification"])
 app.include_router(token_verification_router.router, prefix="/token-verification", tags=["Token Verification"])
 app.include_router(offer_acceptance_request_routes.router, prefix="/offer-approval-requests", tags=["Offer Approval Requests"])
 app.include_router(offer_approval_action_routes.router, prefix="/offer-approval", tags=["Offer Approval"])
-app.include_router(hr_onboarding_routes.router, prefix="/onboarding", tags=["HR Onboarding"])
+app.include_router(hr_onboarding_routes.router, prefix="/hr", tags=["HR Onboarding"])
+app.include_router(docusign_token_generation_route.router, prefix="/docusign", tags=["DocuSign Token Generation"])

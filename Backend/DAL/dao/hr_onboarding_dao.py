@@ -1,6 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.mysql import insert
+from sqlalchemy.orm import aliased
 
 from ...DAL.models.models import (
     OfferLetterDetails,
@@ -112,14 +113,22 @@ class HrOnboardingDAO:
     # PERSONAL DETAILS
     # -------------------------------------------------
     async def get_personal_details(self, user_uuid: str):
+        NationalityCountry = aliased(Countries)
+        ResidenceCountry = aliased(Countries)
         stmt = (
             select(
                 PersonalDetails,
-                Countries
+                NationalityCountry,
+                ResidenceCountry
             )
             .join(
-                Countries,
-                PersonalDetails.nationality_country_uuid == Countries.country_uuid,
+                NationalityCountry,
+                PersonalDetails.nationality_country_uuid == NationalityCountry.country_uuid,
+                isouter=True
+            )
+            .join(
+                ResidenceCountry,
+                PersonalDetails.residence_country_uuid == ResidenceCountry.country_uuid,
                 isouter=True
             )
             .where(PersonalDetails.user_uuid == user_uuid)
@@ -131,14 +140,15 @@ class HrOnboardingDAO:
         if not row:
             return None
 
-        personal, nationality = row
-
+        personal, nationality, residence = row
+        
         return {
             "date_of_birth": personal.date_of_birth,
             "gender": personal.gender,
             "marital_status": personal.marital_status,
             "blood_group": personal.blood_group,
             "nationality": nationality.country_name if nationality else None,
+            "residence": residence.country_name if residence else None,
             "nationality_country_uuid": personal.nationality_country_uuid,
             "residence_country_uuid": personal.residence_country_uuid,
         }
@@ -338,3 +348,32 @@ class HrOnboardingDAO:
                 for _, action in rows if action
             ],
         }
+    async def identity_and_education_document_exists(self, table_name, file_path):
+        if table_name == "identity_documents":
+            print("Checking identity document existence in DAO")
+            stmt = select(EmployeeIdentityDocument).where(
+                EmployeeIdentityDocument.file_path == file_path
+            )
+            res = await self.db.execute(stmt)
+            document = res.scalar_one_or_none()
+            print("Document found:", document)
+            return document is not None
+        elif table_name == "education_documents":
+            stmt = select(EmployeeEducationDocument).where(
+                EmployeeEducationDocument.file_path == file_path
+            )
+            res = await self.db.execute(stmt)
+            document = res.scalar_one_or_none()
+            return document is not None
+        else:
+            return False
+    
+    async def experience_document_exists(self, table_name, col_name, filepath):
+        if table_name == "experience_documents":
+            stmt = select(EmployeeExperience).where(getattr(EmployeeExperience, col_name) == filepath)
+            
+            res = await self.db.execute(stmt)
+            document = res.scalar_one_or_none()
+            return document is not None
+        else:
+            return False
