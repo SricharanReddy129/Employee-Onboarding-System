@@ -140,6 +140,7 @@ async def delete_address(address_uuid: str, db: AsyncSession = Depends(get_db)):
 async def create_employee_identity(
     mapping_uuid: str = Form(...),
     user_uuid: str = Form(...),
+    identity_file_number: str = Form(...),
     expiry_date: Optional[date] = Form(None),
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
@@ -150,12 +151,14 @@ async def create_employee_identity(
         result = await employee_service.create_employee_identity(
             mapping_uuid=mapping_uuid,
             user_uuid=user_uuid,
+            identity_file_number=identity_file_number,
             expiry_date=expiry_date,
             file=file
         )
 
         return EmployeeIdentityResponse(
             identity_uuid=result.document_uuid,
+            identity_file_number=result.identity_file_number,
             file_path=result.file_path,
             message="Employee Identity Document Created Successfully"
         )

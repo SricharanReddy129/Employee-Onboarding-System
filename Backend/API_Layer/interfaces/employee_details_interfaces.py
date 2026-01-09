@@ -103,5 +103,6 @@ class AddressDetails(BaseModel):
 
 class EmployeeIdentityResponse(BaseModel):
     identity_uuid: str
+    identity_file_number: str
     file_path: str
     message: str

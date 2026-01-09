@@ -474,6 +474,7 @@ class EmployeeIdentityDocument(Base):
     document_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     mapping_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    identity_file_number: Mapped[Optional[str]] = mapped_column(String(100))
     file_path: Mapped[Optional[str]] = mapped_column(String(255))
     expiry_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
     status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'pending', 'verified', 'rejected'), server_default=text("'pending'"))

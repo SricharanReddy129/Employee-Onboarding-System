@@ -174,7 +174,7 @@ class EmployeeIdentityService:
         self.identitydao = IdentityDAO(self.db)
         self.dao = EmployeeIdentityDAO(self.db)
 
-    async def create_employee_identity(self, mapping_uuid, user_uuid, expiry_date, file):
+    async def create_employee_identity(self, mapping_uuid, user_uuid,identity_file_number, expiry_date, file):
         try:
             existing = await self.identitydao.get_country_identity_mapping_by_uuid(mapping_uuid)
             if not existing:
@@ -195,7 +195,7 @@ class EmployeeIdentityService:
             folder = "identity_documents"
             file_path = await blob_service.upload_file(file, folder, original_filename=file.filename, employee_uuid=user_uuid)
             uuid = generate_uuid7()
-            result = await self.dao.create_employee_identity(mapping_uuid, user_uuid, expiry_date, file_path, uuid)
+            result = await self.dao.create_employee_identity(mapping_uuid, user_uuid,identity_file_number, expiry_date, file_path, uuid)
             return result
         except HTTPException as he:
             raise he

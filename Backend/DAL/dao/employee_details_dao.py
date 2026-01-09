@@ -119,6 +119,7 @@ class EmployeeIdentityDAO:
         self,
         mapping_uuid: str,
         user_uuid: str,
+        identity_file_number: Optional[str],
         expiry_date: Optional[date],
         file_path: str,
         uuid: str
@@ -128,6 +129,7 @@ class EmployeeIdentityDAO:
             document_uuid=uuid,
             mapping_uuid=mapping_uuid,
             user_uuid=user_uuid,
+            identity_file_number=identity_file_number,
             expiry_date=expiry_date,
             file_path=file_path,
             status="uploaded"
