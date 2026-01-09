@@ -47,6 +47,7 @@ class CountryIdentityMappingResponse(BaseModel):
     message: str
 
 class CountryIdentityDropdownResponse(BaseModel):
+    mapping_uuid: str
     identity_type_uuid: str
     identity_type_name: str
     is_mandatory: bool
