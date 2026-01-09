@@ -4,7 +4,7 @@ from ...DAL.dao.education_dao import EducationDocDAO
 from ...DAL.dao.master_dao import CountryDAO, EducationDAO
 from ...DAL.dao.offerletter_dao import OfferLetterDAO
 from ...DAL.utils.storage_utils import S3StorageService
-from ..utils.validation_utils import validate_alphabets_only
+from ..utils.validation_utils import validate_alphabets_only, validate_document_name
 from ..utils.uuid_generator import generate_uuid7
 
 class EducationDocService:
@@ -49,20 +49,28 @@ class EducationDocService:
         
     async def update_education_document(self, uuid, request_data):
         try:
-            print("In service method", uuid)
             existing = await self.dao.get_education_document_by_uuid(uuid)
             if not existing:
                 raise HTTPException(status_code=404, detail="Document Not Found")
-    
-            document_name = validate_alphabets_only(request_data.document_name)
-            existing = await self.dao.get_document_by_name(document_name)
-            if existing:
-                raise HTTPException(status_code=404, detail="Document Already Exists")
-            return await self.dao.update_education_document(uuid, request_data)
-        except HTTPException as he:
-            raise he
+            if request_data.document_name:
+                document_name = validate_document_name(request_data.document_name)
+
+                existing = await self.dao.get_document_by_name(document_name, uuid)
+                if existing:
+                    raise HTTPException(
+                        status_code=409,
+                        detail="Document name already exists"
+                    )
+
+            result = await self.dao.update_education_document(uuid, request_data)
+
+            return result
+
+        except HTTPException:
+            raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+
         
     async def delete_education_document_by_uuid(self, uuid):
         try:

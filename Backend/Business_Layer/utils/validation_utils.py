@@ -42,8 +42,8 @@ def validate_alphabets_only(value: str, field_name: str = "Field") -> str:
     """
     cleaned = validate_non_empty(value, field_name)
 
-    if not re.match(r"^[A-Za-z\s]+$", cleaned):
-        raise ValueError(f"{field_name} must contain only alphabets and spaces")
+    if not re.match(r"^[A-Za-z\s0-9]+$", cleaned):
+        raise ValueError(f"{field_name} must contain only alphabets and spaces and numbers")
 
     return cleaned
 
@@ -65,15 +65,22 @@ def validate_name(first_name: str) -> str:
     # Trim spaces first
     first_name = first_name.strip()
 
-    # Allow only alphabets and spaces
-    if not re.match(r"^[A-Za-z ]+$", first_name):
+    # Allow only alphabets, spaces, and numbers
+    if not re.match(r"^[A-Za-z0-9 ]+$", first_name):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="First name can only contain alphabets and spaces"
+            detail="First name can only contain alphabets, spaces, and numbers"
         )
 
     return first_name
 
+def validate_document_name(value: str, field_name: str = "Document Name") -> str:
+    cleaned = validate_non_empty(value, field_name)
+
+    if not re.match(r"^[A-Za-z\s0-9]+$", cleaned):
+        raise ValueError(f"{field_name} must contain only alphabets and spaces")
+
+    return cleaned
 
 def validate_email(email: str) -> str:
     """

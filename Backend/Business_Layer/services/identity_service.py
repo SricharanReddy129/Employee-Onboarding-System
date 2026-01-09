@@ -112,25 +112,58 @@ class IdentityService:
         
     async def update_country_identity_mapping(self, uuid, request_data):
         try:
-            existing_country = await self.country_dao.get_country_by_uuid(request_data.country_uuid)
+            # 🔒 Check mapping exists
+            existing_mapping = await self.dao.get_country_identity_mapping_by_uuid(uuid)
+            if not existing_mapping:
+                raise HTTPException(status_code=404, detail="Country Identity Mapping Not Found")
+
+            # 🔒 Validate country
+            existing_country = await self.country_dao.get_country_by_uuid(
+                request_data.country_uuid
+            )
             if not existing_country:
                 raise HTTPException(status_code=404, detail="Country Not Found")
-            existing_identity = await self.dao.get_identity_type_by_uuid(request_data.identity_type_uuid)
+
+            # 🔒 Validate identity type
+            existing_identity = await self.dao.get_identity_type_by_uuid(
+                request_data.identity_type_uuid
+            )
             if not existing_identity:
                 raise HTTPException(status_code=404, detail="Identity Type Not Found")
-            
-            await self.dao.update_country_identity_mapping(uuid, request_data)
+
+            return await self.dao.update_country_identity_mapping(uuid, request_data)
 
         except HTTPException as he:
             raise he
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+
             
     async def delete_country_identity_mapping(self, uuid):
         try:
             existing = await self.dao.get_country_identity_mapping_by_uuid(uuid)
             if not existing:
                 raise HTTPException(status_code=404, detail = "Country Identity mapping not found")
+            employee_existing = await self.dao.get_employee_identity_documents_by_mapping_uuid(uuid)
+
+            if employee_existing:
+                raise HTTPException(
+                    status_code=422,
+                    detail={
+                        "message": "Cannot delete mapping as it is associated with employee identity documents",
+                        "employees": [
+                            {
+                                "user_uuid": row.user_uuid,
+                                "mapping_uuid": row.mapping_uuid,
+                                "first_name": row.first_name,
+                                "last_name": row.last_name,
+                                "document_uuid": row.document_uuid
+                            }
+                            for row in employee_existing
+                        ]
+                    }
+                )
+
             await self.dao.delete_country_identity_mapping(uuid)
         except HTTPException as he:
             raise he

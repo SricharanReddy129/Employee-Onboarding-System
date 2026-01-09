@@ -7,11 +7,17 @@ class EducationDocDAO:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_document_by_name(self, document_name):
-        result = await self.db.execute(select(EducationDocumentType).where(EducationDocumentType.document_name == document_name))
+    async def get_document_by_name(self, document_name: str, uuid: str):
+        result = await self.db.execute(
+            select(EducationDocumentType).where(
+                EducationDocumentType.document_name == document_name,
+                EducationDocumentType.education_document_uuid != uuid
+            )
+        )
         return result.scalar_one_or_none()
 
 
+    
     async def create_education_document(self, request_data, uuid):
         new_edu_doc = EducationDocumentType(
             education_document_uuid = uuid,
@@ -30,15 +36,26 @@ class EducationDocDAO:
         result = await self.db.execute(select(EducationDocumentType).where(EducationDocumentType.education_document_uuid == uuid))
         return result.scalar_one_or_none()
     async def update_education_document(self, uuid, request_data):
-        result = await self.db.execute(select(EducationDocumentType).where(EducationDocumentType.education_document_uuid == uuid))
+        result = await self.db.execute(
+            select(EducationDocumentType).where(
+                EducationDocumentType.education_document_uuid == uuid
+            )
+        )
         edu_doc = result.scalar_one_or_none()
+
         if edu_doc is None:
             return None
-        edu_doc.document_name = request_data.document_name
-        edu_doc.description = request_data.description
+
+        if request_data.document_name is not None:
+            edu_doc.document_name = request_data.document_name
+
+        if request_data.description is not None:
+            edu_doc.description = request_data.description
+
         await self.db.commit()
         await self.db.refresh(edu_doc)
         return edu_doc
+
     async def delete_education_document_by_uuid(self, uuid):
         result = await self.db.execute(select(EducationDocumentType).where(EducationDocumentType.education_document_uuid == uuid))
         edu_doc = result.scalar_one_or_none()
