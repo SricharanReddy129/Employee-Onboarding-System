@@ -49,6 +49,10 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 return await call_next(request)
         
         # Skip audit for certain methods and endpoints
+        # print("Path:", path, "Method:", method)
+        # for p in self.open_endpoints:
+        #     print("Open Endpoint:", p)
+            
         if method in ["GET", "OPTIONS"] or any(path.startswith(p) for p in self.open_endpoints):
             print(f"Skipping Audit: path={path}, method={method}")
             return await call_next(request)
@@ -56,6 +60,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
         # Extract user info
         payload = getattr(request.state, "user", None)
         user_id = payload.get("user_id") if payload else "anonymous"
+        print("User ID from middleware:", user_id)
 
         # Get request body
         try:

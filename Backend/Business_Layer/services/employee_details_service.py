@@ -14,37 +14,17 @@ class EmployeeDetailsService:
         self.dao = EmployeeDetailsDAO(self.db)
         self.countrydao = CountryDAO(self.db)
         self.offerdao = OfferLetterDAO(self.db)
-        
     
-    async def create_personal_details(self, request_data):
-        try:
-            existing = await self.offerdao.get_offer_by_uuid(request_data.user_uuid)
-            if not existing:
-                raise ValueError("User Not Found")
-            validate_blood_group(request_data.blood_group)
-            validate_date_of_birth(request_data.date_of_birth)
-            existing = await self.countrydao.get_country_by_uuid(request_data.nationality_country_uuid)
-            if not existing:
-                raise ValueError("Nationality Country Not Found")
-            existing = await self.countrydao.get_country_by_uuid(request_data.residence_country_uuid)
-            if not existing:
-                raise ValueError("Residence Country Not Found")
-            uuid = generate_uuid7()
-            result = await self.dao.create_personal_details(request_data, uuid)
-            return result
-        except HTTPException as he:
-            raise he
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-        
     async def get_all_personal_details(self):
-        try:
-            result = await self.dao.get_all_personal_details()
-            return result
-        except HTTPException as he:
-            raise he
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            try:
+                result = await self.dao.get_all_personal_details()
+                return result
+            except HTTPException as he:
+                raise he
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+    
+    
     async def get_personal_details_by_user_uuid(self, uuid):
         try:
             result = await self.dao.get_personal_details_by_uuid(uuid)
@@ -93,26 +73,7 @@ class AddressService:
         self.dao = AddressDAO(self.db)
         self.countrydao = CountryDAO(self.db)
         self.offerdao = OfferLetterDAO(self.db)
-    async def create_address(self, request_data):
-        try:
-            existing = await self.offerdao.get_offer_by_uuid(request_data.user_uuid)
-            if not existing:
-                raise HTTPException(status_code = 404, detail = "User Not Found")
-            country_existing = await self.countrydao.get_country_by_uuid(request_data.country_uuid)
-            if not country_existing:
-                raise HTTPException(status_code = 404, detail = "Country Not Found")
-            existing = await self.dao.get_address_by_user_uuid_and_address_type(request_data.user_uuid, request_data.address_type)
-            if existing:
-                raise ValueError(f"{request_data.address_type} Address for this user already exists")
-            calling_code = country_existing.calling_code
-            validate_postal_code(calling_code, request_data.postal_code)
-            uuid = generate_uuid7()
-            result = await self.dao.create_address(request_data, uuid)
-            return result
-        except HTTPException as he:
-            raise he
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+    
     async def get_all_addresses(self):
         try:
             result = await self.dao.get_all_addresses()
@@ -174,28 +135,15 @@ class EmployeeIdentityService:
         self.identitydao = IdentityDAO(self.db)
         self.dao = EmployeeIdentityDAO(self.db)
 
-    async def create_employee_identity(self, mapping_uuid, user_uuid,identity_file_number, expiry_date, file):
+    
+        
+        
+    async def delete_employee_identity(self, document_uuid):
         try:
-            existing = await self.identitydao.get_country_identity_mapping_by_uuid(mapping_uuid)
+            existing = await self.dao.get_employee_identity_by_document_uuid(document_uuid)
             if not existing:
-                raise HTTPException(status_code=404, detail="Mapping Not Found")
-
-            # checking offer letter employee exists or not
-            existing = await self.dao.get_employee_identity_by_user_uuid_and_mapping_uuid(user_uuid, mapping_uuid)
-            if existing:
-                raise HTTPException(status_code=404, detail="Employee identity mapping Already Found")
-            
-           
-
-            # checking identity already exists for employee
-            existing =  await self.dao.get_employee_identity_by_user_uuid_and_mapping_uuid(user_uuid, mapping_uuid)
-            if existing:
-                raise HTTPException(status_code=400, detail="Identity Document Already Exists for this Employee")   
-            blob_service = S3StorageService()
-            folder = "identity_documents"
-            file_path = await blob_service.upload_file(file, folder, original_filename=file.filename, employee_uuid=user_uuid)
-            uuid = generate_uuid7()
-            result = await self.dao.create_employee_identity(mapping_uuid, user_uuid,identity_file_number, expiry_date, file_path, uuid)
+                raise HTTPException(status_code=404, detail="Employee Identity Document Not Found")
+            result = await self.dao.delete_employee_identity(document_uuid)
             return result
         except HTTPException as he:
             raise he

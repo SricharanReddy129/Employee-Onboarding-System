@@ -6,7 +6,7 @@ class AuditUtils:
         # Endpoints that should not be audited
         self.open_endpoints = [
             "/docs", "/openapi.json",
-            "/redoc", "/login", "/health"
+            "/redoc", "/login", "/health", "/employee-details"
         ]
         
         # Entity mapping for common patterns
@@ -49,9 +49,10 @@ class AuditUtils:
                 "table": "personal_details",
                 "id_field": "personal_uuid"
             },
+            
             "employee-details/address": {
                 "table": "addresses",
-                "id_field": "address_uuis"
+                "id_field": "address_uuid"
             },
             "addresses": {
                 "table": "addresses",
@@ -64,6 +65,10 @@ class AuditUtils:
             "identity": {
                 "table": "identity_type",
                 "id_field": "identity_type_uuid"
+            },
+            "employee-details/identity": {
+                "table": "employee_identity_document",
+                "id_field": "document_uuid"
             },
             "experience": {
                 "table": "employee_experience",

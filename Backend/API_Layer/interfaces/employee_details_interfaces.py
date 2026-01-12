@@ -106,3 +106,7 @@ class EmployeeIdentityResponse(BaseModel):
     identity_file_number: str
     file_path: str
     message: str
+
+class DeleteEmployeeIdentityResponse(BaseModel):
+    identity_uuid: str
+    message: str

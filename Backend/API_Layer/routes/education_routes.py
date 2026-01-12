@@ -91,7 +91,7 @@ async def create_employee_education_document(
     year_of_passing: int = Form(...),
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db)):
-    try:
+    try:      
         print("ROUTE RECEIVED:", mapping_uuid, institution_name, file.filename)
 
         education_service = EducationDocService(db)
