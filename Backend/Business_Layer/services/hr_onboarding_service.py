@@ -1,13 +1,16 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.dao.hr_onboarding_dao import HrOnboardingDAO
 # from ...Business_Layer.utils import send_hr_onboarding_submitted_email,send_candidate_onboarding_submitted_email
-
+from ...DAL.dao.hr_onboarding_dao import HrOnboardingDAO
 from fastapi import HTTPException
 from Backend.DAL.utils.storage_utils import S3StorageService
+from Backend.DAL.dao.offerletter_dao import OfferLetterDAO
 import re
 class HrOnboardingService:
-    def __init__(self, db):
+    def __init__(self, db: AsyncSession):
+        self.db = db
         self.dao = HrOnboardingDAO(db)
+        self.offer_dao = OfferLetterDAO(db)
 
     async def get_full_onboarding_details(self, user_uuid: str, current_user_id: int):
         offer = await self.dao.get_offer_details_by_current_user_id(user_uuid, current_user_id)
@@ -43,17 +46,6 @@ class HrOnboardingService:
             "experience": len(experience) > 0
         }
     
-    from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import HTTPException
-
-from ...DAL.dao.hr_onboarding_dao import HrOnboardingDAO
-
-
-class HrOnboardingService:
-    def __init__(self, db: AsyncSession):
-        self.db = db
-        self.dao = HrOnboardingDAO(db)
-
     # =================================================
     # HR GET – FULL ONBOARDING DETAILS
     # =================================================
@@ -98,7 +90,7 @@ class HrOnboardingService:
     # =================================================
     # FINAL SUBMIT – STORE ALL DETAILS (CANDIDATE)
     # =================================================
-    async def final_submit_onboarding(self, payload):
+    async def final_submit_onboarding(self, payload, current_user_id: int):
         """
         This method is called by:
         POST /hr/onboarding/submit
@@ -144,6 +136,10 @@ class HrOnboardingService:
             # -------------------------
             for exp in payload.experience_details:
                 await self.dao.create_experience(exp.dict())
+
+            await self.offer_dao.update_offerletter_status(
+                user_uuid=payload.user_uuid, status="Submitted", current_user_id=current_user_id
+            )
 
     async def view_onboarding_documents(self, file_path: str):
         try:
