@@ -17,14 +17,22 @@ async def get_full_onboarding_details(user_uuid: str,request: Request, db: Async
         raise HTTPException(status_code=404, detail="User onboarding data not found")
 
     return data
+
 @router.post("/candidate/submit")
 async def submit_onboarding(
     payload: HrOnboardingSubmitRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     service = HrOnboardingService(db)
-    await service.final_submit_onboarding(payload)
+    
+    current_user_id = int(request.state.user.get("user_id"))  # Access user info from request state
+    print("current user id:", current_user_id)
+
+    await service.final_submit_onboarding(payload, current_user_id)
     return {"message": "Onboarding submitted successfully"}
+
+
 @router.get("/view_documents")
 async def view_onboarding_documents(file_path: str, db: AsyncSession = Depends(get_db)):
     try:
