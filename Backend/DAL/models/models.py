@@ -2,7 +2,7 @@ from typing import Any, Optional
 import datetime
 
 from sqlalchemy import BigInteger, CHAR, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, TIMESTAMP, Text, text
-from sqlalchemy.dialects.mysql import TINYINT, YEAR
+from sqlalchemy.dialects.mysql import ENUM, TINYINT, YEAR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 class Base(DeclarativeBase):
@@ -130,7 +130,7 @@ class OfferLetterDetails(Base):
     package: Mapped[str] = mapped_column(String(20), nullable=False)
     currency: Mapped[str] = mapped_column(String(10), nullable=False)
     created_by: Mapped[int] = mapped_column(Integer, nullable=False)
-    status: Mapped[Optional[str]] = mapped_column(Enum('Created', 'Offered', 'Accepted', 'Rejected'), server_default=text("'Created'"))
+    status: Mapped[Optional[str]] = mapped_column(ENUM('Created', 'Offered', 'Accepted', 'Rejected', 'Submitted'), server_default=text("'Created'"))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
     file_path: Mapped[Optional[str]] = mapped_column(String(255))
@@ -317,21 +317,10 @@ class EmployeeExperience(Base):
     employment_type: Mapped[Optional[str]] = mapped_column(Enum('Full-Time', 'Part-Time', 'Intern', 'Contract', 'Freelance'))
     end_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
     is_current: Mapped[Optional[int]] = mapped_column(TINYINT(1), server_default=text("'0'"))
-    exp_certificate_path: Mapped[Optional[str]] = mapped_column(
-        "exp_certificate_path", String(255)
-    )
-
-    internship_certificate_path: Mapped[Optional[str]] = mapped_column(
-        "internship_certificate_path", String(255)
-    )
-
-    payslip_path: Mapped[Optional[str]] = mapped_column(
-        "payslip_path", String(255)
-    )
-
-    contract_aggrement_path: Mapped[Optional[str]] = mapped_column(
-        "contract_aggrement_path", String(255)
-    )
+    exp_certificate_path: Mapped[Optional[str]] = mapped_column(String(255))
+    internship_certificate_path: Mapped[Optional[str]] = mapped_column(String(255))
+    payslip_path: Mapped[Optional[str]] = mapped_column(String(255))
+    contract_aggrement_path: Mapped[Optional[str]] = mapped_column(String(255))
     certificate_status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'pending', 'verified', 'rejected'), server_default=text("'pending'"))
     uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     verified_by: Mapped[Optional[str]] = mapped_column(CHAR(36))
@@ -474,7 +463,7 @@ class EmployeeIdentityDocument(Base):
     document_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     mapping_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
-    identity_file_number: Mapped[Optional[str]] = mapped_column(String(100))
+    identity_file_number: Mapped[Optional[str]] = mapped_column(String(255))
     file_path: Mapped[Optional[str]] = mapped_column(String(255))
     expiry_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
     status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'pending', 'verified', 'rejected'), server_default=text("'pending'"))
@@ -549,10 +538,8 @@ class OfferApprovalAction(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     request_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    action: Mapped[str] = mapped_column(Enum('Pending', 'APPROVED', 'REJECTED', 'ON_HOLD'), nullable=False, default='Pending')
+    action: Mapped[str] = mapped_column(Enum('Pending', 'APPROVED', 'REJECTED', 'ON_HOLD'), nullable=False, server_default=text("'Pending'"))
     comment: Mapped[Optional[str]] = mapped_column(Text)
     action_time: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
 
     request: Mapped['OfferApprovalRequest'] = relationship('OfferApprovalRequest', back_populates='offer_approval_action', lazy="selectin")
-
-
