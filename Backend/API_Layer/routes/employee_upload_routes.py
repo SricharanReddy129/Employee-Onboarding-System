@@ -7,7 +7,7 @@ from ..interfaces.employee_details_interfaces import CreateAddressRequest, Creat
 from ...Business_Layer.services.employee_upload_service import EmployeeUploadService
 router = APIRouter()
 
-@router.post("", response_model=PersonalDetailsResponse)
+@router.post("/personal-details", response_model=PersonalDetailsResponse)
 async def create_personal_details(request_data: PersonalDetailsRequest, db: AsyncSession = Depends(get_db)):
     try:
         employee_service = EmployeeUploadService(db)
@@ -37,7 +37,7 @@ async def create_address(request_data: CreateAddressRequest, db: AsyncSession = 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     # Employee Identity Document Routes #
-@router.post("/identity", response_model=EmployeeIdentityResponse)
+@router.post("/identity-documents", response_model=EmployeeIdentityResponse)
 async def create_employee_identity(
     mapping_uuid: str = Form(...),
     user_uuid: str = Form(...),

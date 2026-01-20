@@ -45,12 +45,12 @@ class AuditUtils:
                 "table": "education_document_type", 
                 "id_field": "education_document_uuid"
             },
-            "employee-details": {
+            "employee-upload": {
                 "table": "personal_details",
                 "id_field": "personal_uuid"
             },
             
-            "employee-details/address": {
+            "employee-upload/address": {
                 "table": "addresses",
                 "id_field": "address_uuid"
             },
