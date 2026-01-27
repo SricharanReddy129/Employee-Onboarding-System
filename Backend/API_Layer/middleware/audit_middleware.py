@@ -48,6 +48,9 @@ class AuditMiddleware(BaseHTTPMiddleware):
         if path.startswith("/offerletters"):
                 return await call_next(request)
         
+        if path.startswith("/hr"):
+                return await call_next(request)
+        
         # Skip audit for certain methods and endpoints
         # print("Path:", path, "Method:", method)
         # for p in self.open_endpoints:
