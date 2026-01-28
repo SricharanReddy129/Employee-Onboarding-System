@@ -2,6 +2,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.orm import aliased
+from sqlalchemy import update
+from datetime import datetime
 
 from ...DAL.models.models import (
     OfferLetterDetails,
@@ -377,3 +379,31 @@ class HrOnboardingDAO:
             return document is not None
         else:
             return False
+        
+
+        # =================================================
+    # HR VERIFY / REJECT PROFILE
+    # =================================================
+    async def update_hr_verification_status(
+        self,
+        user_uuid: str,
+        status: str,
+        verified_by: int
+    ) -> bool:
+        """
+        Update HR verification status for an employee
+        """
+
+        stmt = (
+            update(OfferLetterDetails)
+            .where(OfferLetterDetails.user_uuid == user_uuid)
+            .values(
+                hr_verification_status=status,
+                verified_by=verified_by,
+                verified_at=datetime.utcnow()
+            )
+        )
+
+        result = await self.db.execute(stmt)
+
+        return result.rowcount > 0
