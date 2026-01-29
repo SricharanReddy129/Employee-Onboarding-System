@@ -65,6 +65,7 @@ async def update_identity_type(uuid: str, request_data: IdentityCreateRequest, d
         await identity_service.update_identity_type(uuid, request_data)
         return IdentityResponse(
             identity_type_uuid = uuid,
+            identity_type_name = request_data.identity_type_name,
             message = "Identity Type Updated Successfully"
         )
     except HTTPException as he:

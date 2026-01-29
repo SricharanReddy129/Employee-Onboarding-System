@@ -11,6 +11,10 @@ class JWTMiddleware(BaseHTTPMiddleware):
         self.open_endpoints = ["/docs", "/openapi.json", "/redoc", "/offerresponse" ,"/masters/country", "/employee-upload", "/identity/country-mapping", "/experience/", "/otp/send","/otp/verifyOtp","education/employee-education-document","masters/education-level","/education/country-mapping","/education/employee-education-document","/offerletters/offer/","/token-verification/", "/docusign"]
         
     async def dispatch(self, request: Request, call_next):
+        # Allow preflight OPTIONS requests to pass through
+        if request.method == "OPTIONS":
+            return await call_next(request)
+        
         path = request.url.path
         #print(f"[JWTMiddleware] 🚀 Incoming request path: {path}")
 
