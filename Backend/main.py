@@ -73,3 +73,5 @@ app.include_router(offer_acceptance_request_routes.router, prefix="/offer-approv
 app.include_router(offer_approval_action_routes.router, prefix="/offer-approval", tags=["Offer Approval"])
 app.include_router(hr_onboarding_routes.router, prefix="/hr", tags=["HR Onboarding"])
 app.include_router(docusign_token_generation_route.router, prefix="/docusign", tags=["DocuSign Token Generation"])
+app.include_router(redis_cache_routes.router, prefix="/cache", tags=["Redis Cache"])
+app.include_router(hr_bulk_join_router.router, prefix="/hr", tags=["HR Bulk Join"])
