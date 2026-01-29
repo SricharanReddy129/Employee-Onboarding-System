@@ -68,3 +68,6 @@ class EmployeeUploadDAO:
         await self.db.refresh(employee_identity)
 
         return employee_identity
+    async def get_employee_identity_by_user_uuid_and_mapping_uuid(self, user_uuid, mapping_uuid):
+        result = await self.db.execute(select(EmployeeIdentityDocument).where(EmployeeIdentityDocument.user_uuid == user_uuid).where(EmployeeIdentityDocument.mapping_uuid == mapping_uuid))
+        return result.scalar_one_or_none()

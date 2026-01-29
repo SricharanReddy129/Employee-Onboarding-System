@@ -165,3 +165,4 @@ class IdentityDAO:
         
             result = await self.db.execute(stmt)
             return result.all() 
+    

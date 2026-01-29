@@ -108,5 +108,5 @@ class EmployeeIdentityResponse(BaseModel):
     message: str
 
 class DeleteEmployeeIdentityResponse(BaseModel):
-    identity_uuid: str
+    document_uuid: str
     message: str

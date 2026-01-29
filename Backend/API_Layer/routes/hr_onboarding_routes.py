@@ -9,14 +9,15 @@ from ...API_Layer.interfaces.candidate_submit_forms_interfaces import HrOnboardi
 router = APIRouter()
 
 @router.get("/hr/{user_uuid}")
-async def get_full_onboarding_details(user_uuid: str,request: Request, db: AsyncSession = Depends(get_db)):
+async def get_full_onboarding_details(user_uuid: str, request: Request, db: AsyncSession = Depends(get_db)):
     current_user_id = int(request.state.user.get("user_id"))
     service = HrOnboardingService(db)
     data = await service.get_full_onboarding_details(user_uuid, current_user_id)
     if not data:
         raise HTTPException(status_code=404, detail="User onboarding data not found")
-
     return data
+
+
 
 @router.post("/candidate/submit")
 async def submit_onboarding(
