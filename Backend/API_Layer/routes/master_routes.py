@@ -114,19 +114,27 @@ async def get_all_education_levels(
         raise HTTPException(status_code=500, detail=str(e))
     
 # get education details with uuid
+import time
+
 @router.get("/education-level/{education_uuid}", response_model=EducLevelDetails)
 async def get_education_level_by_uuid(
     education_uuid: str,
     db: AsyncSession = Depends(get_db)
 ):
-    try:
-        education_service = EducationService(db)
-        result = await education_service.get_education_level_by_uuid(education_uuid)
-        return result
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    t0 = time.time()
+    print("➡️ route start")
+
+    education_service = EducationService(db)
+    t1 = time.time()
+    print("service init:", round(t1 - t0, 3))
+
+    result = await education_service.get_education_level_by_uuid(education_uuid)
+    t2 = time.time()
+    print("service call:", round(t2 - t1, 3))
+
+    print("TOTAL ROUTE:", round(t2 - t0, 3))
+    return result
+
     
 # edit education details with uuid
 @router.put("/education-level/{education_uuid}", response_model=CreateEducLevelResponse)

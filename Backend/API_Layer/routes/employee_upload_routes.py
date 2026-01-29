@@ -68,3 +68,33 @@ async def create_employee_identity(
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.put("/identity-documents/{identity_uuid}", response_model=EmployeeIdentityResponse)
+async def update_employee_identity(
+    identity_uuid: str,
+    identity_file_number: str = Form(...),
+    expiry_date: Optional[date] = Form(None),
+    file: Optional[UploadFile] = File(None),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        employee_service = EmployeeUploadService(db)
+
+        result = await employee_service.update_employee_identity(
+            identity_uuid=identity_uuid,
+            identity_file_number=identity_file_number,
+            expiry_date=expiry_date,
+            file=file
+        )
+
+        return EmployeeIdentityResponse(
+            identity_uuid=result.document_uuid,
+            identity_file_number=result.identity_file_number,
+            file_path=result.file_path,
+            message="Employee Identity Document Updated Successfully"
+        )
+
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

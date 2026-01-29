@@ -26,9 +26,8 @@ class OfferLetterDAO:
             currency=request_data.currency,
         )
         self.db.add(new_offer)
-        await self.db.commit()
-        await self.db.refresh(new_offer)
         return new_offer
+    
 
     async def create_offer_no_commit(self, uuid: str, request_data: OfferCreateRequest, current_user_id: int) -> OfferLetterDetails:
         """
@@ -57,9 +56,9 @@ class OfferLetterDAO:
         Get a single offer by email.
         """
         result = await self.db.execute(
-            select(OfferLetterDetails).where(OfferLetterDetails.mail == mail)
+            select(1).where(OfferLetterDetails.mail == mail)
         )
-        return result.scalar_one_or_none()
+        return result.first()
 
     async def get_offers_by_emails(self, emails: list) -> list:
         """

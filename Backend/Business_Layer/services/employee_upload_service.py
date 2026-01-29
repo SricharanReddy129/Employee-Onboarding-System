@@ -1,4 +1,6 @@
-from fastapi import HTTPException
+from datetime import date
+from typing import Optional
+from fastapi import HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.dao.master_dao import CountryDAO
 from ...DAL.dao.offerletter_dao import OfferLetterDAO
@@ -70,9 +72,7 @@ class EmployeeUploadService:
            
 
             # checking identity already exists for employee
-            existing =  await self.dao.get_employee_identity_by_user_uuid_and_mapping_uuid(user_uuid, mapping_uuid)
-            if existing:
-                raise HTTPException(status_code=400, detail="Identity Document Already Exists for this Employee")   
+            
             blob_service = S3StorageService()
             folder = "identity_documents"
             file_path = await blob_service.upload_file(file, folder, original_filename=file.filename, employee_uuid=user_uuid)
@@ -82,5 +82,42 @@ class EmployeeUploadService:
         except HTTPException as he:
             raise he
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+         raise HTTPException(status_code=500, detail=str(e))
         
+
+    async def update_employee_identity(
+        self,
+        identity_uuid: str,
+        identity_file_number: str,
+        expiry_date: Optional[date],
+        file: Optional[UploadFile]
+    ):
+        try:
+            identity = await self.dao.get_employee_identity_by_uuid(identity_uuid)
+            if not identity:
+                raise HTTPException(status_code=404, detail="Identity Document Not Found")
+
+            file_path = identity.file_path
+            if file and file.filename:
+                blob_service = S3StorageService()
+                file_path = await blob_service.upload_file(
+                    file,
+                    "identity_documents",
+                    original_filename=file.filename,
+                    employee_uuid=identity.user_uuid
+                )
+
+            updated = await self.dao.update_employee_identity(
+                identity_uuid=identity_uuid,
+                identity_file_number=identity_file_number,
+                expiry_date=expiry_date,
+                file_path=file_path
+            )
+            return updated
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=str(e))
+
+                

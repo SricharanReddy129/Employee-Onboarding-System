@@ -54,6 +54,10 @@ class AuditUtils:
                 "table": "addresses",
                 "id_field": "address_uuid"
             },
+            "employee-upload/identity-documents": {
+                "table": "employee_identity_document",
+                "id_field": "document_uuid"
+            },
             "addresses": {
                 "table": "addresses",
                 "id_field": "address_uuid"
