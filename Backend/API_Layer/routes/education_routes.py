@@ -89,6 +89,7 @@ async def create_employee_education_document(
     institution_name: str = Form(...),
     specialization: str = Form(...),
     year_of_passing: int = Form(...),
+    percentage_cgpa: str = Form(...),
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db)):
     try:      
@@ -100,7 +101,8 @@ async def create_employee_education_document(
             "user_uuid": user_uuid,
             "institution_name": institution_name,
             "specialization": specialization,
-            "year_of_passing": year_of_passing
+            "year_of_passing": year_of_passing,
+            "percentage_cgpa": percentage_cgpa
         }
 
         result = await education_service.create_employee_education_document(request_data, file)
@@ -118,6 +120,7 @@ async def create_employee_education_document(
 @router.get("/employee-education-document", response_model=list[EmployeEduDocDetails])
 async def get_all_employee_education_documents(db: AsyncSession = Depends(get_db)):
     try:
+        print("entering routes")
         education_service = EducationDocService(db)
         result = await education_service.get_all_employee_education_documents()
         return result

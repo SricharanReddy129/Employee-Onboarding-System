@@ -257,6 +257,18 @@ def validate_phone_number(calling_code: str, phone_number: str, type: str) -> st
 
     return phone_number
 
+def validate_numeric_value(value: str):
+    try:
+        num = float(value)
+        if num < 0:
+            raise ValueError()
+        return num
+    except Exception:
+        raise HTTPException(
+            status_code=400,
+            detail="Percentage / CGPA must be a valid positive number"
+        )
+
 def validate_date_of_birth(date_of_birth: str):
     try:
         datetime.strptime(date_of_birth, "%Y-%m-%d")

@@ -437,6 +437,7 @@ class EmployeeEducationDocument(Base):
     institution_name: Mapped[Optional[str]] = mapped_column(String(150))
     specialization: Mapped[Optional[str]] = mapped_column(String(150))
     year_of_passing: Mapped[Optional[Any]] = mapped_column(YEAR)
+    percentage_cgpa: Mapped[Optional[str]] = mapped_column(String(10))
     file_path: Mapped[Optional[str]] = mapped_column(String(255))
     status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'verified', 'rejected'), server_default=text("'uploaded'"))
     uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
