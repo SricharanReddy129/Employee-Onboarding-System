@@ -1,4 +1,6 @@
-from fastapi import HTTPException
+from datetime import date
+from typing import Optional
+from fastapi import HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.dao.master_dao import CountryDAO
 from ...DAL.dao.offerletter_dao import OfferLetterDAO
@@ -83,4 +85,37 @@ class EmployeeUploadService:
             raise he
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-        
+
+    async def update_employee_identity(
+        self,
+        identity_uuid: str,
+        mapping_uuid: str,
+        user_uuid: str,
+        identity_file_number: str,
+        expiry_date: Optional[date],
+        file: Optional[UploadFile],
+    ):
+        # 1. Fetch existing record
+        existing = await self.repo.get_identity_by_uuid(identity_uuid)
+        if not existing:
+            raise HTTPException(status_code=404, detail="Identity not found")
+
+        # 2. If file is re-uploaded → replace it
+        file_path = existing.file_path
+        if file:
+            # delete old file (if required)
+            await self.file_manager.delete(existing.file_path)
+
+            # save new file
+            file_path = await self.file_manager.save(file)
+
+        # 3. Update DB
+        return await self.repo.update_identity(
+            identity_uuid=identity_uuid,
+            mapping_uuid=mapping_uuid,
+            user_uuid=user_uuid,
+            identity_file_number=identity_file_number,
+            expiry_date=expiry_date,
+            file_path=file_path,
+        )
+ 

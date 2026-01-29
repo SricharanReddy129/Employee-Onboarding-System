@@ -23,6 +23,9 @@ class IdentityDAO:
     async def get_identity_type_by_name(self, name):
         result = await self.db.execute(select(IdentityType).where(IdentityType.identity_type_name == name))
         return result.scalar_one_or_none()
+    async def get_identity_file_number_by_uuid(self, uuid):
+        result = await self.db.execute(select(IdentityType).where(IdentityType.identity_type_uuid == uuid))
+        return result.scalar_one_or_none()
     
     async def create_identity_type(self, request_data, uuid):
         identity_type = IdentityType(

@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 from typing import Optional
 from datetime import date
 from ...DAL.models.models import PersonalDetails, Addresses, EmployeeIdentityDocument
@@ -71,3 +71,29 @@ class EmployeeUploadDAO:
     async def get_employee_identity_by_user_uuid_and_mapping_uuid(self, user_uuid, mapping_uuid):
         result = await self.db.execute(select(EmployeeIdentityDocument).where(EmployeeIdentityDocument.user_uuid == user_uuid).where(EmployeeIdentityDocument.mapping_uuid == mapping_uuid))
         return result.scalar_one_or_none()
+
+    async def update_identity(
+        self,
+        identity_uuid: str,
+        mapping_uuid: str,
+        user_uuid: str,
+        identity_file_number: str,
+        expiry_date: Optional[date],
+        file_path: str,
+    ):
+        stmt = (
+            update(EmployeeIdentityDocument)
+            .where(EmployeeIdentityDocument.document_uuid == identity_uuid)
+            .values(
+                mapping_uuid=mapping_uuid,
+                user_uuid=user_uuid,
+                identity_file_number=identity_file_number,
+                expiry_date=expiry_date,
+                file_path=file_path,
+            )
+            .returning(EmployeeIdentityDocument)
+        )
+
+        result = await self.db.execute(stmt)
+        await self.db.commit()
+        return result.scalar_one()
