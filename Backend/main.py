@@ -15,6 +15,22 @@ from Backend.API_Layer.routes import hr_bulk_join_router
 # models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Employee Onboarding System API")
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173",
+                    "http://localhost:3000",
+                    "https://employeeonbordingforms.netlify.app",
+                    "https://nonprovidentially-xiphisternal-junior.ngrok-free.dev",
+                    "https://api.54.206.95.128.sslip.io"],
+    
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["Content-Disposition"],
+    max_age=3600,
+)
+
 # Add Audit Middleware globally
 app.add_middleware(AuditMiddleware)
 # Add JWT middleware globally
@@ -23,16 +39,6 @@ app.add_middleware(JWTMiddleware)
 # Add DB session middleware
 # app.add_middleware(DBSessionMiddleware)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000","https://employeeonbordingforms.netlify.app","https://nonprovidentially-xiphisternal-junior.ngrok-free.dev","https://api.54.206.95.128.sslip.io"],
-    
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["Content-Disposition"],
-    max_age=3600,
-)
 
 def custom_openapi():
     if app.openapi_schema:

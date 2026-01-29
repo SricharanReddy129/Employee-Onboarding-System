@@ -26,6 +26,11 @@ class AuditMiddleware(BaseHTTPMiddleware):
 
 
     async def dispatch(self, request: Request, call_next):
+
+        # Allow preflight OPTIONS requests to pass through
+        if request.method == "OPTIONS":
+            return await call_next(request)
+        
         print("Audit Middleware Entering...")
         path = request.url.path
         method = request.method
