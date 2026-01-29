@@ -4,7 +4,7 @@ from ...DAL.dao.education_dao import EducationDocDAO
 from ...DAL.dao.master_dao import CountryDAO, EducationDAO
 from ...DAL.dao.offerletter_dao import OfferLetterDAO
 from ...DAL.utils.storage_utils import S3StorageService
-from ..utils.validation_utils import validate_alphabets_only, validate_document_name
+from ..utils.validation_utils import validate_alphabets_only, validate_document_name, validate_numeric_value
 from ..utils.uuid_generator import generate_uuid7
 
 class EducationDocService:
@@ -99,6 +99,7 @@ class EducationDocService:
                 raise HTTPException(status_code=404, detail="Employee Not Found")
             validate_alphabets_only(request_data["institution_name"])
             validate_alphabets_only(request_data["specialization"])
+            validate_numeric_value(str(request_data["percentage_cgpa"]))
             uuid = generate_uuid7()
             blob_upload_service = S3StorageService()
             folder = "education_documents"
@@ -114,6 +115,7 @@ class EducationDocService:
     # get all employee educational documents #
     async def get_all_employee_education_documents(self):
         try:
+            print("entering service")
             result = await self.dao.get_all_employee_education_documents()
             return result
         except HTTPException as he:

@@ -1,5 +1,8 @@
+from typing import Optional
 from pydantic import BaseModel
 from enum import Enum
+
+# from pyparsing import Optional
 
 # Education Documents #
 class CreateEducDocRequest(BaseModel):
@@ -26,6 +29,8 @@ class EmployeEduDoc(BaseModel):
     institution_name: str 
     specialization: str
     year_of_passing: int
+    # percentage_cgpa: str
+    
 
 class DocumentStatus(str, Enum):
     uploaded = "uploaded"
@@ -39,6 +44,9 @@ class EmployeEduDocDetails(BaseModel):
     institution_name: str 
     specialization: str
     year_of_passing: int
+    percentage_cgpa: Optional[str] = None
+    
+
     file_path: str
     status: DocumentStatus
 

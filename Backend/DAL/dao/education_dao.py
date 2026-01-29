@@ -75,6 +75,7 @@ class EducationDocDAO:
             institution_name = request_data["institution_name"],
             specialization = request_data["specialization"],
             year_of_passing = request_data["year_of_passing"],
+            percentage_cgpa = request_data["percentage_cgpa"],
             file_path = file_path
         )
         self.db.add(new_edu_doc)
@@ -82,6 +83,7 @@ class EducationDocDAO:
         await self.db.refresh(new_edu_doc)
         return new_edu_doc
     async def get_all_employee_education_documents(self):
+        print("entering dao ")
         result = await self.db.execute(select(EmployeeEducationDocument))
         return result.scalars().all()
     async def get_employee_education_document_by_uuid(self, uuid):

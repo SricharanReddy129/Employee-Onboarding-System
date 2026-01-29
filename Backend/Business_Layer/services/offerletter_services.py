@@ -667,9 +667,14 @@ class OfferLetterService:
                                         {"tabLabel": "ET", "value": record.designation},
                                         {"tabLabel": "EP", "value": record.package},
                                         {"tabLabel": "EC", "value": record.country_code},
-                                        {"tabLabel": "EN", "value": record.contact_number},
+                                        {"tabLabel": "EN", "value": record.contact_number}
                                     ]
                                 }
+                            },
+                            {
+                                "roleName": "Manager",
+                                "name": "Ajay Kumar",
+                                "email": "ajaykumar1438742@gmail.com"
                             }
                         ],
                         "status": "sent"

@@ -6,7 +6,10 @@ from urllib.parse import unquote
 from ...DAL.utils.dependencies import get_db
 from ...Business_Layer.services.hr_onboarding_service import (HrOnboardingService)
 from ...API_Layer.interfaces.candidate_submit_forms_interfaces import HrOnboardingSubmitRequest
+from ...API_Layer.interfaces.hr_onboarding_interfaces import HRVerificationRequest
+
 router = APIRouter()
+
 
 @router.get("/hr/{user_uuid}")
 async def get_full_onboarding_details(user_uuid: str, request: Request, db: AsyncSession = Depends(get_db)):
@@ -47,3 +50,25 @@ async def view_onboarding_documents(file_path: str, db: AsyncSession = Depends(g
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
           
+@router.post("/verify-profile")
+async def verify_employee_profile(
+    payload: HRVerificationRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    HR verifies or rejects an employee profile
+    """
+    current_user_id = int(request.state.user.get("user_id"))
+
+    service = HrOnboardingService(db)
+
+    await service.update_verification_status(
+        user_uuid=payload.user_uuid,
+        status=payload.status,
+        current_user_id=current_user_id
+    )
+
+    return {
+        "message": "Verification status updated successfully"
+    }

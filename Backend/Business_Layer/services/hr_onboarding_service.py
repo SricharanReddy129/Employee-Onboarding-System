@@ -109,3 +109,26 @@ class HrOnboardingService:
             raise
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+
+    # =================================================
+    # HR VERIFY / REJECT PROFILE
+    # =================================================
+
+    async def update_verification_status(
+        self,
+        user_uuid: str,
+        status: str,
+        current_user_id: int
+    ):
+        """
+        status: VERIFIED | REJECTED
+        """
+
+        if status.upper() not in ["VERIFIED", "REJECTED"]:
+            raise HTTPException(status_code=400, detail="Invalid verification status")
+
+        updated = await self.offer_dao.update_offerletter_status(
+            user_uuid=user_uuid,new_status=status,current_user_id=current_user_id
+            )
+        if not updated:
+            raise HTTPException(status_code=404, detail="Offer letter not found for the given user UUID")
