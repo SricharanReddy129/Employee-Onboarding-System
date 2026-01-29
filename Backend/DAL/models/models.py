@@ -136,6 +136,7 @@ class OfferLetterDetails(Base):
     file_path: Mapped[Optional[str]] = mapped_column(String(255))
     pandadoc_draft_id: Mapped[Optional[str]] = mapped_column(String(255))
     offer_response_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
+    joining_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
 
     addresses: Mapped[list['Addresses']] = relationship('Addresses', back_populates='offer_letter_details', lazy="selectin")
     contacts: Mapped[list['Contacts']] = relationship('Contacts', back_populates='offer_letter_details', lazy="selectin")
@@ -544,3 +545,4 @@ class OfferApprovalAction(Base):
     action_time: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
 
     request: Mapped['OfferApprovalRequest'] = relationship('OfferApprovalRequest', back_populates='offer_approval_action', lazy="selectin")
+ 
