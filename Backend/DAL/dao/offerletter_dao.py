@@ -27,7 +27,6 @@ class OfferLetterDAO:
         )
         self.db.add(new_offer)
         return new_offer
-    
 
     async def create_offer_no_commit(self, uuid: str, request_data: OfferCreateRequest, current_user_id: int) -> OfferLetterDetails:
         """

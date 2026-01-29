@@ -44,6 +44,9 @@ class OfferLetterDetailsResponse(BaseModel):
     created_by: int
     status : str
 
+class Config:
+    from_attributes = True  # important
+
 class OfferPendingCandidate(BaseModel):
     user_uuid: str
     first_name: str
