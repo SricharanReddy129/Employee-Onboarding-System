@@ -1,9 +1,18 @@
-import http
 import smtplib
 from email.message import EmailMessage
 from ...config.env_loader import get_env_var 
 from datetime import datetime
- 
+
+# import os
+# from dotenv import load_dotenv
+# load_dotenv()
+
+# def get_env_var(var_name: str) -> str:
+#     value = os.getenv(var_name)
+#     if value is None:
+#         raise EnvironmentError(f"Environment variable '{var_name}' not found.")
+#     return value
+
 EMAIL_USER = get_env_var("EMAIL_USER")
 EMAIL_PASSWORD = get_env_var("EMAIL_PASSWORD")
 EMAIL_HOST = get_env_var("EMAIL_HOST")
@@ -212,3 +221,51 @@ Paves Technologies
     except Exception as e:
         print(f"❌ Failed to send HR onboarding email: {e}")
 
+def send_joining_email(
+    to_email: str,
+    name: str,
+    joining_date,
+    location: str,
+    reporting_time: str,
+    custom_message: str | None
+):
+    subject = "Joining Letter – Welcome Aboard"
+
+    html_body = f"""
+    <html>
+      <body>
+        <p>Hello {name},</p>
+
+        <p>Your joining details are as follows:</p>
+
+        <p>
+          <b>Joining Date:</b> {joining_date}<br/>
+          <b>Reporting Time:</b> {reporting_time}<br/>
+          <b>Location:</b> {location}
+        </p>
+
+        <p> <b>Additional:</b> {custom_message or ""}</p>
+
+        <br/>
+        <p>
+          Regards,<br/>
+          HR Team Paves Technologies
+        </p>
+      </body>
+    </html>
+    """
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = EMAIL_USER
+    msg["To"] = to_email
+    msg.set_content(html_body, subtype='html')
+
+    try:
+        with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as smtp:
+            smtp.starttls()
+            smtp.login(EMAIL_USER, EMAIL_PASSWORD)
+            smtp.send_message(msg)
+        print(f"✅ Joining email sent to {to_email}")
+    except Exception as e:
+        print(f"❌ Failed to send joining email: {e}")
