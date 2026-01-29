@@ -10,9 +10,6 @@ from .API_Layer.middleware.audit_middleware import AuditMiddleware
 from Backend.API_Layer.routes import token_verification_router
 from Backend.API_Layer.routes import offer_acceptance_request_routes
 from Backend.API_Layer.routes import offer_approval_action_routes
-from fastapi_cache import FastAPICache
-from fastapi_cache.backends.redis import RedisBackend
-import redis.asyncio as redis
 
 from Backend.API_Layer.routes import hr_bulk_join_router
 
@@ -86,6 +83,6 @@ app.include_router(hr_onboarding_routes.router, prefix="/hr", tags=["HR Onboardi
 app.include_router(docusign_token_generation_route.router, prefix="/docusign", tags=["DocuSign Token Generation"])
 app.include_router(redis_cache_routes.router, prefix="/cache", tags=["Redis Cache"])
 app.include_router(hr_bulk_join_router.router, prefix="/hr", tags=["HR Bulk Join"])
-app.include_router(redis_cache_routes.router, prefix="/cache", tags=["Redis Cache"])
+# app.include_router(redis_cache_routes.router, prefix="/cache", tags=["Redis Cache"])
 app.include_router(hr_bulk_join_router.router, prefix="/hr", tags=["HR Bulk Join"])
 
