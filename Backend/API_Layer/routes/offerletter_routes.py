@@ -1,5 +1,6 @@
 # Backend/API_Layer/routes/offerletter_routes.py
 
+from Backend.DAL.utils.database import get_read_db
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...API_Layer.interfaces.offerletter_interfaces import(
@@ -132,17 +133,13 @@ async def get_all_offers(
 @router.get("/user_id/details", response_model=list[OfferLetterDetailsResponse])
 async def get_offer_by_user_id(
     request: Request,
-    db: AsyncSession = Depends(get_db)):
+    db: AsyncSession = Depends(get_read_db)   # 👈 change here
+):
     current_user_id = int(request.state.user.get("user_id"))
-    try:
-        offer_service = OfferLetterService(db)
-        offer = await offer_service.get_offer_by_user_id(current_user_id)
-        return offer
+    offer_service = OfferLetterService(db)
+    return await offer_service.get_offer_by_user_id(current_user_id)
 
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+
     
 
 
