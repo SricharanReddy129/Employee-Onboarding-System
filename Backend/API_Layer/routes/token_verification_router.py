@@ -20,6 +20,7 @@ async def verify_token(
     result = await service.verify_token(requestdata)
 
     return result
+
 @router.get("/{raw_token}")
 async def get_user_uuid_by_token(
     raw_token: str,
@@ -28,13 +29,35 @@ async def get_user_uuid_by_token(
     service = OnboardingVerifyLinkService(db)
     user_uuid = await service.get_user_uuid_by_token(raw_token)
 
-    await db.execute(
-        text("""
-            INSERT INTO offer_letter_details (user_uuid)
-            VALUES (:user_uuid)
-            ON DUPLICATE KEY UPDATE user_uuid = user_uuid
-        """),
+    result = await db.execute(
+        text("SELECT 1 FROM offer_letter_details WHERE user_uuid = :user_uuid"),
         {"user_uuid": user_uuid}
     )
-    await db.commit()
+
+    if not result.first():
+        await db.execute(
+            text("INSERT INTO offer_letter_details (user_uuid) VALUES (:user_uuid)"),
+            {"user_uuid": user_uuid}
+        )
+        await db.commit()
+
     return user_uuid
+
+# @router.get("/{raw_token}")
+# async def get_user_uuid_by_token(
+#     raw_token: str,
+#     db: AsyncSession = Depends(get_db)
+# ):
+#     service = OnboardingVerifyLinkService(db)
+#     user_uuid = await service.get_user_uuid_by_token(raw_token)
+
+#     await db.execute(
+#         text("""
+#             INSERT INTO offer_letter_details (user_uuid)
+#             VALUES (:user_uuid)
+#             ON DUPLICATE KEY UPDATE user_uuid = user_uuid
+#         """),
+#         {"user_uuid": user_uuid}
+#     )
+#     await db.commit()
+#     return user_uuid
