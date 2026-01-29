@@ -4,6 +4,9 @@ from sqlalchemy.dialects.mysql import insert
 from sqlalchemy.orm import aliased
 from sqlalchemy import update
 from datetime import datetime
+import time
+import asyncio
+from ...DAL.utils.database import AsyncSessionLocal
 
 from ...DAL.models.models import (
     OfferLetterDetails,
@@ -21,7 +24,7 @@ from ...DAL.models.models import (
     OfferApprovalRequest,
     OfferApprovalAction,
 )
-
+from sqlalchemy.orm import noload
 
 class HrOnboardingDAO:
     def __init__(self, db: AsyncSession):
@@ -82,274 +85,288 @@ class HrOnboardingDAO:
         )
         await self.db.execute(stmt)
 
-
+# -------------------------------------------
+    # helper: run query in its own DB connection
+    # -------------------------------------------
+    async def _fetch(self, stmt):
+        async with AsyncSessionLocal() as s:
+            res = await s.execute(stmt)
+            return res
     # -------------------------------------------------
     # OFFER / BASIC USER DETAILS
     # -------------------------------------------------
-    async def get_offer_details_by_current_user_id(self, user_uuid: str, current_user_id: int):
-        stmt = select(OfferLetterDetails).where(
-            OfferLetterDetails.user_uuid == user_uuid
-        ).where(
-            OfferLetterDetails.created_by == current_user_id
-        )
-        res = await self.db.execute(stmt)
-        offer = res.scalar_one_or_none()
-
-        if not offer:
-            return None
-
-        return {
-            "user_uuid": offer.user_uuid,
-            "first_name": offer.first_name,
-            "last_name": offer.last_name,
-            "email": offer.mail,
-            "contact_number": f"+{offer.country_code} {offer.contact_number}",
-            "designation": offer.designation,
-            "offer_status": offer.status,
-            "created_at": offer.created_at,
-            "updated_at": offer.updated_at,
-        }
     
 
-    # -------------------------------------------------
-    # PERSONAL DETAILS
-    # -------------------------------------------------
-    async def get_personal_details(self, user_uuid: str):
-        NationalityCountry = aliased(Countries)
-        ResidenceCountry = aliased(Countries)
-        stmt = (
-            select(
-                PersonalDetails,
-                NationalityCountry,
-                ResidenceCountry
-            )
-            .join(
-                NationalityCountry,
-                PersonalDetails.nationality_country_uuid == NationalityCountry.country_uuid,
-                isouter=True
-            )
-            .join(
-                ResidenceCountry,
-                PersonalDetails.residence_country_uuid == ResidenceCountry.country_uuid,
-                isouter=True
-            )
-            .where(PersonalDetails.user_uuid == user_uuid)
-        )
+    async def get_full_onboarding_details(self, user_uuid: str, current_user_id: int):
 
-        res = await self.db.execute(stmt)
-        row = res.first()
+        TOTAL_START = time.time()
+
+        # ==================================================
+        # Q0: OFFER + PERSONAL
+        # ==================================================
+        t = time.time()
+        async with AsyncSessionLocal() as s:
+            res = await s.execute(
+                select(OfferLetterDetails, PersonalDetails)
+                .options(noload("*"))
+                .join(
+                    PersonalDetails,
+                    PersonalDetails.user_uuid == OfferLetterDetails.user_uuid,
+                    isouter=True
+                )
+                .where(
+                    OfferLetterDetails.user_uuid == user_uuid,
+                    OfferLetterDetails.created_by == current_user_id
+                )
+            )
+            row = res.first()
+
+        print("Q0 offer+personal:", round(time.time() - t, 3), "s")
 
         if not row:
             return None
 
-        personal, nationality, residence = row
-        
-        return {
-            "date_of_birth": personal.date_of_birth,
-            "gender": personal.gender,
-            "marital_status": personal.marital_status,
-            "blood_group": personal.blood_group,
-            "nationality": nationality.country_name if nationality else None,
-            "residence": residence.country_name if residence else None,
-            "nationality_country_uuid": personal.nationality_country_uuid,
-            "residence_country_uuid": personal.residence_country_uuid,
+        offer_row, personal_row = row
+
+        # ==================================================
+        # Q1–Q4: PARALLEL FETCH (SAFE)
+        # ==================================================
+        t = time.time()
+
+        async def fetch_addresses():
+            async with AsyncSessionLocal() as s:
+                r = await s.execute(
+                    select(Addresses)
+                    .options(noload("*"))
+                    .where(Addresses.user_uuid == user_uuid)
+                )
+                return r.scalars().all()
+
+        async def fetch_identity():
+            async with AsyncSessionLocal() as s:
+                r = await s.execute(
+                    select(EmployeeIdentityDocument)
+                    .options(noload("*"))
+                    .where(EmployeeIdentityDocument.user_uuid == user_uuid)
+                )
+                return r.scalars().all()
+
+        async def fetch_education():
+            async with AsyncSessionLocal() as s:
+                r = await s.execute(
+                    select(EmployeeEducationDocument)
+                    .options(noload("*"))
+                    .where(EmployeeEducationDocument.user_uuid == user_uuid)
+                )
+                return r.scalars().all()
+
+        async def fetch_experience():
+            async with AsyncSessionLocal() as s:
+                r = await s.execute(
+                    select(EmployeeExperience)
+                    .options(noload("*"))
+                    .where(EmployeeExperience.employee_uuid == user_uuid)
+                )
+                return r.scalars().all()
+
+        address_rows, identity_rows, education_rows, experience_rows = await asyncio.gather(
+            fetch_addresses(),
+            fetch_identity(),
+            fetch_education(),
+            fetch_experience()
+        )
+
+        print("Q1–Q4 parallel:", round(time.time() - t, 3), "s")
+
+        # ==================================================
+        # Q5: LOOKUPS
+        # ==================================================
+        t = time.time()
+        async with AsyncSessionLocal() as s:
+
+            # -------- countries --------
+            country_uuids = set()
+            if personal_row:
+                country_uuids.add(personal_row.nationality_country_uuid)
+                country_uuids.add(personal_row.residence_country_uuid)
+
+            for a in address_rows:
+                if a.country_uuid:
+                    country_uuids.add(a.country_uuid)
+
+            countries = {}
+            if country_uuids:
+                r = await s.execute(
+                    select(Countries)
+                    .options(noload("*"))
+                    .where(Countries.country_uuid.in_(country_uuids))
+                )
+                countries = {c.country_uuid: c.country_name for c in r.scalars().all()}
+
+            # -------- identity mapping --------
+            identity_map = {}
+            identity_ids = [i.mapping_uuid for i in identity_rows if i.mapping_uuid]
+
+            if identity_ids:
+                r = await s.execute(
+                    select(CountryIdentityMapping, IdentityType, Countries)
+                    .options(noload("*"))
+                    .join(
+                        IdentityType,
+                        IdentityType.identity_type_uuid == CountryIdentityMapping.identity_type_uuid
+                    )
+                    .join(
+                        Countries,
+                        Countries.country_uuid == CountryIdentityMapping.country_uuid
+                    )
+                    .where(CountryIdentityMapping.mapping_uuid.in_(identity_ids))
+                )
+                for m, it, c in r.all():
+                    identity_map[m.mapping_uuid] = {
+                        "identity_type": it.identity_type_name,
+                        "country": c.country_name
+                    }
+
+            # -------- education mapping --------
+            edu_map = {}
+            edu_ids = [e.mapping_uuid for e in education_rows if e.mapping_uuid]
+
+            if edu_ids:
+                r = await s.execute(
+                    select(
+                        CountryEducationDocumentMapping,
+                        EducationLevel,
+                        EducationDocumentType
+                    )
+                    .options(noload("*"))
+                    .join(
+                        EducationLevel,
+                        EducationLevel.education_uuid == CountryEducationDocumentMapping.education_uuid
+                    )
+                    .join(
+                        EducationDocumentType,
+                        EducationDocumentType.education_document_uuid
+                        == CountryEducationDocumentMapping.education_document_uuid
+                    )
+                    .where(CountryEducationDocumentMapping.mapping_uuid.in_(edu_ids))
+                )
+                for m, lvl, doc in r.all():
+                    edu_map[m.mapping_uuid] = {
+                        "education_level": lvl.education_name,
+                        "document_name": doc.document_name,
+                        "mandatory": bool(m.is_mandatory)
+                    }
+
+        print("Q5 lookups:", round(time.time() - t, 3), "s")
+
+        # ==================================================
+        # BUILD RESPONSE
+        # ==================================================
+        t = time.time()
+
+        offer = {
+            "user_uuid": offer_row.user_uuid,
+            "first_name": offer_row.first_name,
+            "last_name": offer_row.last_name,
+            "email": offer_row.mail,
+            "contact_number": f"+{offer_row.country_code} {offer_row.contact_number}",
+            "designation": offer_row.designation,
+            "offer_status": offer_row.status,
+            "created_at": offer_row.created_at,
+            "updated_at": offer_row.updated_at,
         }
-    
 
-    # -------------------------------------------------
-    # ADDRESS DETAILS
-    # -------------------------------------------------
-    async def get_addresses(self, user_uuid: str):
-        stmt = (
-            select(Addresses, Countries)
-            .join(
-                Countries,
-                Addresses.country_uuid == Countries.country_uuid
-            )
-            .where(Addresses.user_uuid == user_uuid)
-        )
-
-        res = await self.db.execute(stmt)
-        rows = res.all()
-
-        return [
-            {
-                "address_uuid": address.address_uuid,
-                "address_type": address.address_type,
-                "address_line1": address.address_line1,
-                "address_line2": address.address_line2,
-                "city": address.city,
-                "district_or_ward": address.district_or_ward,
-                "state_or_region": address.state_or_region,
-                "postal_code": address.postal_code,
-                "country": country.country_name,
-                "country_uuid": country.country_uuid,
+        personal = None
+        if personal_row:
+            personal = {
+                "date_of_birth": personal_row.date_of_birth,
+                "gender": personal_row.gender,
+                "marital_status": personal_row.marital_status,
+                "blood_group": personal_row.blood_group,
+                "nationality_country_uuid": personal_row.nationality_country_uuid,
+                "residence_country_uuid": personal_row.residence_country_uuid,
+                "nationality": countries.get(personal_row.nationality_country_uuid),
+                "residence": countries.get(personal_row.residence_country_uuid),
             }
-            for address, country in rows
+
+        addresses = [
+            {
+                "address_uuid": a.address_uuid,
+                "address_type": a.address_type,
+                "address_line1": a.address_line1,
+                "address_line2": a.address_line2,
+                "city": a.city,
+                "district_or_ward": a.district_or_ward,
+                "state_or_region": a.state_or_region,
+                "postal_code": a.postal_code,
+                "country_uuid": a.country_uuid,
+                "country": countries.get(a.country_uuid)
+            }
+            for a in address_rows
         ]
 
-    # -------------------------------------------------
-    # IDENTITY DOCUMENTS
-    # -------------------------------------------------
-    async def get_identity_documents(self, user_uuid: str):
-        stmt = (
-            select(
-                EmployeeIdentityDocument,
-                IdentityType,
-                Countries
-            )
-            .join(
-                CountryIdentityMapping,
-                EmployeeIdentityDocument.mapping_uuid
-                == CountryIdentityMapping.mapping_uuid
-            )
-            .join(
-                IdentityType,
-                CountryIdentityMapping.identity_type_uuid
-                == IdentityType.identity_type_uuid
-            )
-            .join(
-                Countries,
-                CountryIdentityMapping.country_uuid
-                == Countries.country_uuid
-            )
-            .where(EmployeeIdentityDocument.user_uuid == user_uuid)
-        )
-
-        res = await self.db.execute(stmt)
-
-        return [
+        identity_docs = [
             {
-                "document_uuid": doc.document_uuid,
-                "identity_type": identity.identity_type_name,
-                "country": country.country_name,
-                "file_path": doc.file_path,
-                "expiry_date": doc.expiry_date,
-                "status": doc.status,
-                "remarks": doc.remarks,
-                "uploaded_at": doc.uploaded_at,
-                "verified_at": doc.verified_at,
+                "document_uuid": d.document_uuid,
+                "identity_type": identity_map.get(d.mapping_uuid, {}).get("identity_type"),
+                "country": identity_map.get(d.mapping_uuid, {}).get("country"),
+                "file_path": d.file_path,
+                "expiry_date": d.expiry_date,
+                "status": d.status,
+                "remarks": d.remarks,
+                "uploaded_at": d.uploaded_at,
+                "verified_at": d.verified_at,
             }
-            for doc, identity, country in res.all()
+            for d in identity_rows
         ]
 
-    # -------------------------------------------------
-    # EDUCATION DOCUMENTS
-    # -------------------------------------------------
-    async def get_education_documents(self, user_uuid: str):
-        stmt = (
-            select(
-                EmployeeEducationDocument,
-                EducationLevel,
-                EducationDocumentType,
-                CountryEducationDocumentMapping
-            )
-            .join(
-                CountryEducationDocumentMapping,
-                EmployeeEducationDocument.mapping_uuid
-                == CountryEducationDocumentMapping.mapping_uuid
-            )
-            .join(
-                EducationLevel,
-                CountryEducationDocumentMapping.education_uuid
-                == EducationLevel.education_uuid
-            )
-            .join(
-                EducationDocumentType,
-                CountryEducationDocumentMapping.education_document_uuid
-                == EducationDocumentType.education_document_uuid
-            )
-            .where(EmployeeEducationDocument.user_uuid == user_uuid)
-        )
-
-        res = await self.db.execute(stmt)
-
-        return [
+        education_docs = [
             {
-                "document_uuid": emp.document_uuid,
-                "education_level": edu.education_name,
-                "document_name": doc.document_name,
-                "institution_name": emp.institution_name,
-                "specialization": emp.specialization,
-                "year_of_passing": emp.year_of_passing,
-                "mandatory": bool(mapping.is_mandatory),
-                "file_path": emp.file_path,
-                "status": emp.status,
-                "remarks": emp.remarks,
-                "uploaded_at": emp.uploaded_at,
-                "verified_at": emp.verified_at,
+                "document_uuid": d.document_uuid,
+                "education_level": edu_map.get(d.mapping_uuid, {}).get("education_level"),
+                "document_name": edu_map.get(d.mapping_uuid, {}).get("document_name"),
+                "mandatory": edu_map.get(d.mapping_uuid, {}).get("mandatory"),
+                "institution_name": d.institution_name,
+                "specialization": d.specialization,
+                "year_of_passing": d.year_of_passing,
+                "file_path": d.file_path,
+                "status": d.status,
+                "remarks": d.remarks,
+                "uploaded_at": d.uploaded_at,
+                "verified_at": d.verified_at,
             }
-            for emp, edu, doc, mapping in res.all()
+            for d in education_rows
         ]
 
-    # -------------------------------------------------
-    # EXPERIENCE DETAILS
-    # -------------------------------------------------
-    async def get_experience(self, user_uuid: str):
-        stmt = select(EmployeeExperience).where(
-            EmployeeExperience.employee_uuid == user_uuid
-        )
-
-        res = await self.db.execute(stmt)
-        experiences = res.scalars().all()
-
-        return [
+        experience = [
             {
-                "experience_uuid": exp.experience_uuid,
-                "company_name": exp.company_name,
-                "role_title": exp.role_title,
-                "employment_type": exp.employment_type,
-                "start_date": exp.start_date,
-                "end_date": exp.end_date,
-                "is_current": bool(exp.is_current),
-                "certificate_status": exp.certificate_status,
-                "remarks": exp.remarks,
-                "uploaded_at": exp.uploaded_at,
-                "verified_at": exp.verified_at,
+                "experience_uuid": e.experience_uuid,
+                "company_name": e.company_name,
+                "role_title": e.role_title,
+                "employment_type": e.employment_type,
+                "start_date": e.start_date,
+                "end_date": e.end_date,
+                "is_current": bool(e.is_current),
+                "certificate_status": e.certificate_status,
+                "remarks": e.remarks,
+                "uploaded_at": e.uploaded_at,
+                "verified_at": e.verified_at,
             }
-            for exp in experiences
+            for e in experience_rows
         ]
 
-    # -------------------------------------------------
-    # OFFER APPROVAL DETAILS
-    # -------------------------------------------------
-    async def get_approval_details(self, user_uuid: str):
-        stmt = (
-            select(
-                OfferApprovalRequest,
-                OfferApprovalAction
-            )
-            .join(
-                OfferApprovalAction,
-                OfferApprovalAction.request_id
-                == OfferApprovalRequest.id,
-                isouter=True
-            )
-            .where(OfferApprovalRequest.user_uuid == user_uuid)
-        )
-
-        res = await self.db.execute(stmt)
-        rows = res.all()
-
-        if not rows:
-            return None
-
-        request = rows[0][0]
+        print("BUILD:", round(time.time() - t, 3), "s")
+        print("TOTAL DAO:", round(time.time() - TOTAL_START, 3), "s")
 
         return {
-            "request_id": request.id,
-            "requested_by": request.request_by,
-            "action_taker_id": request.action_taker_id,
-            "request_time": request.request_time,
-            "actions": [
-                {
-                    "action": action.action,
-                    "comment": action.comment,
-                    "action_time": action.action_time,
-                }
-                for _, action in rows if action
-            ],
+            "offer": offer,
+            "personal_details": personal,
+            "addresses": addresses,
+            "identity_documents": identity_docs,
+            "education_documents": education_docs,
+            "experience": experience,
         }
+
     async def identity_and_education_document_exists(self, table_name, file_path):
         if table_name == "identity_documents":
             print("Checking identity document existence in DAO")

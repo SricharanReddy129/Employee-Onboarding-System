@@ -111,16 +111,18 @@ async def delete_address(address_uuid: str, db: AsyncSession = Depends(get_db)):
 
 
 
-@router.delete("/document/{identity_uuid}", response_model=DeleteEmployeeIdentityResponse)
-async def delete_employee_identity(identity_uuid: str, db: AsyncSession = Depends(get_db)):
+@router.delete("/identity/{document_uuid}", response_model=DeleteEmployeeIdentityResponse)
+async def delete_employee_identity(document_uuid: str, db: AsyncSession = Depends(get_db)):
     try:
         employee_service = EmployeeIdentityService(db)
-        await employee_service.delete_employee_identity(identity_uuid)
+        await employee_service.delete_employee_identity(document_uuid)
         return DeleteEmployeeIdentityResponse(
-            identity_uuid=identity_uuid,
+            document_uuid=document_uuid,
             message="Employee Identity Document Deleted Successfully"
         )
     except HTTPException as he:
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+    
