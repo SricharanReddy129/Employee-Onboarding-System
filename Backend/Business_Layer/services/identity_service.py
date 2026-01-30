@@ -1,5 +1,7 @@
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from Backend.API_Layer.interfaces.identity_interfaces import CountryIdentityDropdownResponse
 from ...DAL.dao.identity_dao import IdentityDAO
 from ...DAL.dao.master_dao import CountryDAO
 from ..utils.uuid_generator import generate_uuid7
@@ -171,15 +173,37 @@ class IdentityService:
             raise HTTPException(status_code=500, detail=str(e))
         
   
+    # async def get_identities_by_country(self, country_uuid: str):
+    #     try:
+    #         existing_country = await self.country_dao.get_country_by_uuid(country_uuid)
+    #         if not existing_country:
+    #             raise HTTPException(status_code=404, detail="Country Not Found")
+    #         result = await self.dao.get_identities_by_country_uuid(country_uuid)
+    #         return result
+    #     except HTTPException as he:
+    #         raise he
+    #     except Exception as e:
+    #         raise HTTPException(status_code=500, detail=str(e))
+        
     async def get_identities_by_country(self, country_uuid: str):
         try:
             existing_country = await self.country_dao.get_country_by_uuid(country_uuid)
             if not existing_country:
                 raise HTTPException(status_code=404, detail="Country Not Found")
-            result = await self.dao.get_identities_by_country_uuid(country_uuid)
-            return result
+
+            rows = await self.dao.get_identities_by_country_uuid(country_uuid)
+
+            return [
+            CountryIdentityDropdownResponse(
+                mapping_uuid=row.mapping_uuid,          
+                identity_type_uuid=row.identity_type_uuid,
+                identity_type_name=row.identity_type_name,
+                is_mandatory=row.is_mandatory,
+            )
+            for row in rows
+        ]
+
         except HTTPException as he:
             raise he
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-        
