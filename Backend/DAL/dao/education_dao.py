@@ -30,8 +30,15 @@ class EducationDocDAO:
         return new_edu_doc
     
     async def get_all_education_documents(self):
-        result = await self.db.execute(select(EducationDocumentType))
-        return result.scalars().all()
+        stmt = select(
+            EducationDocumentType.document_name,
+            EducationDocumentType.description,
+            EducationDocumentType.education_document_uuid
+
+        )
+        result = await self.db.execute(stmt)
+        return result.all()
+        
     async def get_education_document_by_uuid(self, uuid):
         result = await self.db.execute(select(EducationDocumentType).where(EducationDocumentType.education_document_uuid == uuid))
         return result.scalar_one_or_none()
@@ -82,6 +89,38 @@ class EducationDocDAO:
         await self.db.commit()
         await self.db.refresh(new_edu_doc)
         return new_edu_doc
+    
+    async def update_employee_education_document(self, document_uuid, request_data, file_path):
+        stmt = (
+            select(EmployeeEducationDocument)
+            .where(EmployeeEducationDocument.document_uuid == document_uuid)
+
+        )
+        result = await self.db.execute(stmt)        
+        edu_doc = result.scalar_one_or_none()
+        if edu_doc is None:
+            return None
+        edu_doc.mapping_uuid = request_data["mapping_uuid"]
+        edu_doc.institution_name = request_data["institution_name"]
+        edu_doc.specialization = request_data["specialization"]
+        edu_doc.year_of_passing = request_data["year_of_passing"]
+        edu_doc.percentage_cgpa = request_data["percentage_cgpa"]
+        if file_path is not None:
+            edu_doc.file_path = file_path
+        await self.db.commit()
+        await self.db.refresh(edu_doc)
+        return edu_doc
+    
+            
+
+    async def get_document_by_uuid(self, document_uuid):
+        result = await self.db.execute(
+            select(EmployeeEducationDocument).where(
+                EmployeeEducationDocument.document_uuid == document_uuid
+            )
+        )
+        return result.scalars().first()
+
     async def get_all_employee_education_documents(self):
         print("entering dao ")
         result = await self.db.execute(select(EmployeeEducationDocument))

@@ -115,7 +115,43 @@ async def create_employee_education_document(
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+@router.put("/employee-education-document/{document_uuid}", response_model=UploadFileResponse)
+async def update_employee_education_document(
+    document_uuid: str,
+    mapping_uuid: str = Form(...),
+    institution_name: str = Form(...),
+    specialization: str = Form(...),
+    year_of_passing: int = Form(...),
+    percentage_cgpa: str = Form(...),
+    file: UploadFile | None = File(None),   # 👈 optional
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        education_service = EducationDocService(db)
+
+        request_data = {
+            "mapping_uuid": mapping_uuid,
+            "institution_name": institution_name,
+            "specialization": specialization,
+            "year_of_passing": year_of_passing,
+            "percentage_cgpa": percentage_cgpa,
+        }
+
+        file_path = await education_service.update_employee_education_document(
+            document_uuid, request_data, file
+        )
+
+        return UploadFileResponse(
+            document_uuid=document_uuid,
+            file_path=file_path,
+            message="Employee Education Document Updated Successfully"
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # get all employee education documents
 @router.get("/employee-education-document", response_model=list[EmployeEduDocDetails])
 async def get_all_employee_education_documents(db: AsyncSession = Depends(get_db)):

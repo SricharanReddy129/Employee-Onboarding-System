@@ -111,7 +111,36 @@ class EducationDocService:
             raise he
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-        
+    async def update_employee_education_document(self, document_uuid, request_data, file):
+        # 1️⃣ check document exists
+        existing = await self.dao.get_document_by_uuid(document_uuid)
+        if not existing:
+            raise HTTPException(status_code=404, detail="Education document not found")
+
+        # 2️⃣ validate
+        validate_alphabets_only(request_data["institution_name"])
+        validate_alphabets_only(request_data["specialization"])
+        validate_numeric_value(str(request_data["percentage_cgpa"]))
+
+        # 3️⃣ upload file only if provided
+        file_path = existing.file_path
+        if file:
+            blob_upload_service = S3StorageService()
+            folder = "education_documents"
+            file_path = await blob_upload_service.upload_file(
+                file,
+                folder,
+                original_filename=file.filename,
+                employee_uuid=existing.user_uuid
+            )
+
+        # 4️⃣ update DB
+        await self.dao.update_employee_education_document(
+            document_uuid, request_data, file_path
+        )
+
+        return file_path
+    
     # get all employee educational documents #
     async def get_all_employee_education_documents(self):
         try:

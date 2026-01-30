@@ -93,8 +93,27 @@ class EducationDAO:
         return new_edu_level
 
     async def get_all_education_levels(self):
-        result = await self.db.execute(select(EducationLevel))
-        return result.scalars().all()
+        start = time.perf_counter()
+
+        stmt = select(
+            EducationLevel.education_uuid,
+            EducationLevel.education_name,
+            EducationLevel.description,
+            EducationLevel.is_active
+        )
+
+        t1 = time.perf_counter()
+        result = await self.db.execute(stmt)
+        print("⏱ DB execute:", time.perf_counter() - t1)
+
+        t2 = time.perf_counter()
+        rows = result.all()
+        print("⏱ Result processing:", time.perf_counter() - t2)
+
+        print("⏱ DAO total:", time.perf_counter() - start)
+
+        return [row._mapping for row in rows]
+
     
     async def get_education_level_by_uuid(self, uuid: str):
         t = time.time()

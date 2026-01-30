@@ -3,14 +3,38 @@ from http.client import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..models.models import IdentityType, CountryIdentityMapping, EmployeeIdentityDocument, OfferLetterDetails
 from sqlalchemy import select
-
+import time
 class IdentityDAO:
     def __init__(self, db: AsyncSession):
         self.db = db
     
+
+
+
+
     async def get_all_identity_types(self):
-        result = await self.db.execute(select(IdentityType))
-        return result.scalars().all()
+        start = time.perf_counter()
+
+        stmt = select(
+            IdentityType.identity_type_uuid,
+            IdentityType.identity_type_name,
+            IdentityType.description,
+            IdentityType.is_active
+        )
+
+        t1 = time.perf_counter()
+        result = await self.db.execute(stmt)
+        print("⏱ DB execute:", time.perf_counter() - t1)
+
+        t2 = time.perf_counter()
+        rows = result.all()
+        print("⏱ Result processing:", time.perf_counter() - t2)
+
+        print("⏱ DAO total:", time.perf_counter() - start)
+
+        return [row._mapping for row in rows]
+
+
     
     async def get_identity_type_by_uuid(self, uuid):
         result = await self.db.execute(select(IdentityType).where(IdentityType.identity_type_uuid == uuid))
