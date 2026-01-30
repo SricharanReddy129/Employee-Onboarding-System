@@ -140,13 +140,25 @@ async def delete_country_identity_mapping(uuid: str, db: AsyncSession = Depends(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/country-mapping/identities/{country_uuid}", response_model=list[CountryIdentityDropdownResponse])
-async def get_identities_by_country(country_uuid: str, db: AsyncSession = Depends(get_db)):
-    try:
-        identity_service = IdentityService(db)
-        result =await identity_service.get_identities_by_country(country_uuid)
-        return result
-    except HTTPException as he:
-        raise he
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# @router.get("/country-mapping/identities/{country_uuid}", response_model=list[CountryIdentityDropdownResponse])
+# async def get_identities_by_country(country_uuid: str, db: AsyncSession = Depends(get_db)):
+#     try:
+#         identity_service = IdentityService(db)
+#         result =await identity_service.get_identities_by_country(country_uuid)
+#         return result
+#     except HTTPException as he:
+#         raise he
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get(
+    "/country-mapping/identities/{country_uuid}",
+    response_model=list[CountryIdentityDropdownResponse]
+)
+async def get_identities_by_country(
+    country_uuid: str,
+    db: AsyncSession = Depends(get_db)
+):
+    identity_service = IdentityService(db)
+    return await identity_service.get_identities_by_country(country_uuid)
+
