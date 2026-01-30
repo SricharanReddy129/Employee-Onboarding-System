@@ -12,7 +12,7 @@ from Backend.API_Layer.routes import offer_acceptance_request_routes
 from Backend.API_Layer.routes import offer_approval_action_routes
 
 
-from fastapi_cache.backends.redis import RedisBackend
+# from fastapi_cache.backends.redis import RedisBackend
 import redis.asyncio as redis
 
 
