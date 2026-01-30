@@ -294,29 +294,20 @@ class OfferApprovalActionService:
             if not rows:
                 return []
 
-            # ✅ Convert RowMapping → dict
+            # Convert RowMapping → dict
             actions = [dict(row) for row in rows]
 
-            headers = {
-                "Authorization": token
+            # ✅ Fetch all admin users once (instead of N calls)
+            admin_users = await fetch_admin_users_reformed(token)
+
+            admin_map = {
+                u["user_id"]: u["name"]
+                for u in admin_users
             }
 
-            async with httpx.AsyncClient() as client:
-                for item in actions:
-                    requester_id = item["request_by"]
-
-                    resp = await client.get(
-                        f"{get_env_var('UMS_URL')}/admin/users/{requester_id}",
-                        headers=headers
-                    )
-
-                    if resp.status_code == 200:
-                        user = resp.json()
-                        item["requested_by_name"] = (
-                            user.get("first_name", "") + " " + user.get("last_name", "")
-                        ).strip()
-                    else:
-                        item["requested_by_name"] = None
+            # ✅ Map names in O(1)
+            for item in actions:
+                item["requested_by_name"] = admin_map.get(item["request_by"])
 
             return actions
 
