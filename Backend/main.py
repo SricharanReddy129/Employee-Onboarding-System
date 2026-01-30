@@ -12,10 +12,7 @@ from Backend.API_Layer.routes import offer_acceptance_request_routes
 from Backend.API_Layer.routes import offer_approval_action_routes
 from Backend.API_Layer.routes import hr_bulk_join_router
 
-<<<<<<< HEAD
-=======
-import redis.asyncio as redis
->>>>>>> 0f6cac6e2bb6d99d513b59b33061f0a68dd60e33
+# import redis.asyncio as redis
 
 # models.Base.metadata.create_all(bind=engine)
 
