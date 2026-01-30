@@ -151,14 +151,26 @@ async def delete_country_identity_mapping(uuid: str, db: AsyncSession = Depends(
 #     except Exception as e:
 #         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get(
-    "/country-mapping/identities/{country_uuid}",
-    response_model=list[CountryIdentityDropdownResponse]
-)
+# @router.get(
+#     "/country-mapping/identities/{country_uuid}",
+#     response_model=list[CountryIdentityDropdownResponse]
+# )
+# async def get_identities_by_country(
+#     country_uuid: str,
+#     db: AsyncSession = Depends(get_db)
+# ):
+#     identity_service = IdentityService(db)
+#     return await identity_service.get_identities_by_country(country_uuid)
+
+@router.get("/country-mapping/identities/{country_uuid}")
 async def get_identities_by_country(
     country_uuid: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
-    identity_service = IdentityService(db)
-    return await identity_service.get_identities_by_country(country_uuid)
+    service = IdentityService(db)
+    data = await service.get_identities_by_country(country_uuid)
 
+    # 🔥 DEBUG – DO NOT SKIP
+    print("RETURNING TO CLIENT:", data)
+
+    return [item.model_dump() for item in data]
