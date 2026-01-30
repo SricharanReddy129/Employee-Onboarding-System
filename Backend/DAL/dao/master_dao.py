@@ -1,9 +1,11 @@
 # Backend/DAL/dao/master_dao.py
+import uuid
+from Backend.DAL.utils.database import AsyncSessionLocal
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.models.models import Countries, EducationLevel, CountryEducationDocumentMapping, Contacts
 from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest, EducLevelDetails
-
+import time
 
 class CountryDAO:
     def __init__(self, db: AsyncSession):
@@ -27,7 +29,8 @@ class CountryDAO:
         return new_country
     async def get_country_by_uuid(self, country_uuid: str):
         result = await self.db.execute(
-            select(Countries).where(Countries.country_uuid == country_uuid)
+            select(Countries.country_uuid).where(Countries.country_uuid == country_uuid)
+
         )
 
         return result.scalar_one_or_none()
@@ -47,8 +50,28 @@ class CountryDAO:
 
         return country
     async def get_all_countries(self):
-        result = await self.db.execute(select(Countries))
-        return result.scalars().all()
+        stmt = (
+            select(
+                Countries.country_uuid,
+                Countries.calling_code,
+                Countries.country_name,
+                Countries.is_active
+            )
+            .where(Countries.is_active == True)   #  added filter
+            .order_by(Countries.country_name)
+        )
+
+        result = await self.db.execute(stmt)
+
+        return [
+            {
+                "country_uuid": r.country_uuid,
+                "calling_code": r.calling_code,
+                "country_name": r.country_name,
+                "is_active": r.is_active,
+            }
+            for r in result.all()
+        ]
 
 class EducationDAO:
     def __init__(self, db: AsyncSession):
@@ -71,12 +94,37 @@ class EducationDAO:
         return new_edu_level
 
     async def get_all_education_levels(self):
-        result = await self.db.execute(select(EducationLevel))
-        return result.scalars().all()
+        start = time.perf_counter()
+
+        stmt = select(
+            EducationLevel.education_uuid,
+            EducationLevel.education_name,
+            EducationLevel.description,
+            EducationLevel.is_active
+        )
+
+        t1 = time.perf_counter()
+        result = await self.db.execute(stmt)
+        print("⏱ DB execute:", time.perf_counter() - t1)
+
+        t2 = time.perf_counter()
+        rows = result.all()
+        print("⏱ Result processing:", time.perf_counter() - t2)
+
+        print("⏱ DAO total:", time.perf_counter() - start)
+
+        return [row._mapping for row in rows]
+
     
     async def get_education_level_by_uuid(self, uuid: str):
-        result = await self.db.execute(select(EducationLevel).where(EducationLevel.education_uuid == uuid))
-        return result.scalar_one_or_none()
+        t = time.time()
+        res = await self.db.execute(
+            select(EducationLevel).where(EducationLevel.education_uuid == uuid)
+        )
+        print("DB:", round(time.time() - t, 3))
+        return res.scalar_one_or_none()
+
+
     
     async def get_education_level_by_eduname_and_uuid(self, education_name: str, education_uuid: str):
         result = await self.db.execute(select(EducationLevel).where(EducationLevel.education_name == education_name).where(EducationLevel.education_uuid != education_uuid))

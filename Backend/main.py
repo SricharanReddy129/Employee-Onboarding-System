@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
-from Backend.API_Layer.routes import docusign_token_generation_route, employee_experience_routes, hr_onboarding_routes, offer_approval_action_routes, otp_routes, redis_cache_routes
+from Backend.API_Layer.routes import docusign_token_generation_route, employee_experience_routes, hr_bulk_join_router, hr_onboarding_routes, offer_approval_action_routes, otp_routes, redis_cache_routes
 from .API_Layer.routes import (master_routes, offerletter_routes, education_routes, offerresponse_routes, employee_details_routes,
                                identity_routes, employee_upload_routes)
 from .API_Layer.middleware.jwt_middleware import JWTMiddleware
@@ -18,10 +18,28 @@ import redis.asyncio as redis
 
 from Backend.API_Layer.routes import hr_bulk_join_router
 
+# import redis.asyncio as redis
+
 
 # models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Employee Onboarding System API")
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173",
+                    "http://localhost:3000",
+                    "https://employeeonbordingforms.netlify.app",
+                    "https://nonprovidentially-xiphisternal-junior.ngrok-free.dev",
+                    "https://api.54.206.95.128.sslip.io"],
+    
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["Content-Disposition"],
+    max_age=3600,
+)
+
 # Add Audit Middleware globally
 app.add_middleware(AuditMiddleware)
 # Add JWT middleware globally
@@ -30,16 +48,6 @@ app.add_middleware(JWTMiddleware)
 # Add DB session middleware
 # app.add_middleware(DBSessionMiddleware)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000","https://employeeonbordingforms.netlify.app","https://nonprovidentially-xiphisternal-junior.ngrok-free.dev","https://api.54.206.95.128.sslip.io"],
-    
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["Content-Disposition"],
-    max_age=3600,
-)
 
 def custom_openapi():
     if app.openapi_schema:

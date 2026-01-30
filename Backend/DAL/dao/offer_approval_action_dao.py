@@ -9,18 +9,45 @@ class OfferApprovalActionDAO:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_request_with_actions(self, user_uuid: str):
-        """
-        Fetch offer approval request with actions (if any)
-        """
-        stmt = (
-            select(OfferApprovalRequest)
+    async def get_request_with_latest_action(self, user_uuid: str):
+    # 1️⃣ Get request (light query)
+        stmt_req = (
+            select(
+                OfferApprovalRequest.id,
+                OfferApprovalRequest.user_uuid,
+                OfferApprovalRequest.action_taker_id,
+            )
             .where(OfferApprovalRequest.user_uuid == user_uuid)
-            .options(selectinload(OfferApprovalRequest.offer_approval_action))
+            .limit(1)
         )
 
-        result = await self.db.execute(stmt)
-        return result.scalars().first()
+        result = await self.db.execute(stmt_req)
+        req = result.first()
+
+        if not req:
+            return None
+
+        # 2️⃣ Get latest action (only 1 row)
+        stmt_action = (
+            select(
+                OfferApprovalAction.action,
+                OfferApprovalAction.comment
+            )
+            .where(OfferApprovalAction.request_id == req.id)  
+            .order_by(OfferApprovalAction.id.desc())
+            .limit(1)
+        )
+
+        result_action = await self.db.execute(stmt_action)
+        action = result_action.first()
+
+        return {
+            "user_uuid": req.user_uuid,
+            "action_taker_id": req.action_taker_id,
+            "action": action.action if action else None,
+            "comment": action.comment if action else None,
+        }
+
 
     async def get_all_requests_with_actions(self):
         stmt = (

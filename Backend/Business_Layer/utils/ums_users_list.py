@@ -1,3 +1,5 @@
+from time import time
+from urllib import response
 import httpx
 from fastapi import HTTPException
 from ...config.env_loader import get_env_var
@@ -5,52 +7,44 @@ from ...config.env_loader import get_env_var
 
 ADMIN_USERS_API = get_env_var("ADMIN_USERS_API")
 
+_admin_cache = {"data": None, "expires": 0}
+_admin_client: httpx.AsyncClient | None = None
 
-async def fetch_admin_users_reformed(
-    token: str,
-    page: int = 1,
-    limit: int = 500
-) -> list[dict]:
-    """
-    Fetch admin users and return reformatted response
-    [
-      {
-        user_id,
-        mail,
-        name
-      }
-    ]
-    """
-    headers = {
-        "Authorization": token  # token should already include "Bearer "
-    }
-    params = {
-        "page": page,
-        "limit": limit
-    }
 
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        response = await client.get(ADMIN_USERS_API, params=params, headers=headers)
+async def get_admin_http_client():
+    global _admin_client
+    if _admin_client is None:
+        _admin_client = httpx.AsyncClient(timeout=30.0)
+    return _admin_client
 
-    if response.status_code != 200:
-        raise HTTPException(
-            status_code=502,
-            detail="Failed to fetch users from Admin service"
+
+import time
+import httpx
+
+async def fetch_admin_users_reformed(token: str) -> list[dict]:
+    if _admin_cache["data"] and time.time() < _admin_cache["expires"]:
+        return _admin_cache["data"]
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        response = await client.get(
+            ADMIN_USERS_API,
+            headers={"Authorization": token},
+            params={"page": 1, "limit": 500}
         )
 
     data = response.json()
-
     users = data.get("users", [])
 
-    # 🔁 Reform response
-    reformatted = [
+    result = [
         {
-            "user_id": user["user_id"],
-            "mail": user["mail"],
-            "name": f"{user['first_name']} {user['last_name']}".strip()
+            "user_id": u["user_id"],
+            "mail": u["mail"],
+            "name": f"{u['first_name']} {u['last_name']}".strip()
         }
-        for user in users
-        if user.get("is_active") is True
+        for u in users if u.get("is_active")
     ]
 
-    return reformatted
+    _admin_cache["data"] = result
+    _admin_cache["expires"] = time.time() + 300  # 5 min
+
+    return result

@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.models.models import OfferLetterDetails
 from ...API_Layer.interfaces.offerletter_interfaces import OfferCreateRequest
-
+import time
 class OfferLetterDAO:
     def __init__(self, db: AsyncSession):
         self.db = db  # Store the session for transaction management
@@ -26,8 +26,6 @@ class OfferLetterDAO:
             currency=request_data.currency,
         )
         self.db.add(new_offer)
-        await self.db.commit()
-        await self.db.refresh(new_offer)
         return new_offer
 
     async def create_offer_no_commit(self, uuid: str, request_data: OfferCreateRequest, current_user_id: int) -> OfferLetterDetails:
@@ -57,9 +55,9 @@ class OfferLetterDAO:
         Get a single offer by email.
         """
         result = await self.db.execute(
-            select(OfferLetterDetails).where(OfferLetterDetails.mail == mail)
+            select(1).where(OfferLetterDetails.mail == mail)
         )
-        return result.scalar_one_or_none()
+        return result.first()
 
     async def get_offers_by_emails(self, emails: list) -> list:
         """
@@ -80,22 +78,76 @@ class OfferLetterDAO:
         """
         result = await self.db.execute(select(OfferLetterDetails))
         return result.scalars().all()
+
+    import time
+
+
     async def get_offer_by_user_id(self, user_id: int):
-        """
-        Get a single offer by user ID.
-        """
-        result = await self.db.execute(
-            select(OfferLetterDetails).where(OfferLetterDetails.created_by == user_id)
+        start = time.perf_counter()
+
+        stmt = (
+            select(
+                OfferLetterDetails.user_uuid,
+                OfferLetterDetails.first_name,
+                OfferLetterDetails.last_name,
+                OfferLetterDetails.mail,
+                OfferLetterDetails.country_code,
+                OfferLetterDetails.contact_number,
+                OfferLetterDetails.designation,
+                OfferLetterDetails.package,
+                OfferLetterDetails.currency,
+                OfferLetterDetails.created_by,
+                OfferLetterDetails.status,
+            )
+            .where(OfferLetterDetails.created_by == user_id)
         )
-        return result.scalars().all()
+
+        t1 = time.perf_counter()
+        result = await self.db.execute(stmt)
+        print("⏱ DB execute:", time.perf_counter() - t1)
+
+        t2 = time.perf_counter()
+        rows = result.all()
+        print("⏱ Result processing:", time.perf_counter() - t2)
+
+        print("⏱ DAO total:", time.perf_counter() - start)
+
+        return [row._mapping for row in rows]
+
+    
+
+
     async def get_offer_by_uuid(self, user_uuid: str):
-        """
-        Get a single offer by UUID.
-        """
-        result = await self.db.execute(
-            select(OfferLetterDetails).where(OfferLetterDetails.user_uuid == user_uuid)
+        start = time.perf_counter()
+
+        stmt = (
+            select(
+                OfferLetterDetails.user_uuid,
+                OfferLetterDetails.first_name,
+                OfferLetterDetails.last_name,
+                OfferLetterDetails.mail,
+                OfferLetterDetails.country_code,
+                OfferLetterDetails.contact_number,
+                OfferLetterDetails.designation,
+                OfferLetterDetails.package,
+                OfferLetterDetails.currency,
+                OfferLetterDetails.created_by,
+                OfferLetterDetails.status,
+            )
+            .where(OfferLetterDetails.user_uuid == user_uuid)
+            .limit(1)
         )
-        return result.scalars().first()
+
+        t1 = time.perf_counter()
+        result = await self.db.execute(stmt)
+        print("⏱ DB execute:", time.perf_counter() - t1)
+
+        row = result.first()
+        print("⏱ DAO total:", time.perf_counter() - start)
+
+        return row._mapping if row else None
+
+
     
     async def update_offer_by_uuid(self, user_uuid: str, request_data: OfferCreateRequest, current_user_id: int):
 

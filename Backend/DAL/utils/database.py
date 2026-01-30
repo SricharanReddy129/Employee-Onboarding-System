@@ -1,4 +1,5 @@
 # Backend/DAL/utils/database.py
+from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from contextvars import ContextVar
@@ -27,6 +28,7 @@ engine = create_async_engine(
     pool_pre_ping=True,
     echo=False,
 )
+
 
 # ✅ Use async_sessionmaker instead of sessionmaker
 AsyncSessionLocal = async_sessionmaker(
@@ -61,3 +63,7 @@ async def remove_db_session():
     if db:
         await db.close()
         _db_context.set(None)
+        
+async def get_read_db() -> AsyncGenerator[AsyncSession, None]:
+    async with AsyncSessionLocal() as session:
+        yield session   # ❌ no commit, no rollback

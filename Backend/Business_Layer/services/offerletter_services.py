@@ -58,6 +58,7 @@ class OfferLetterService:
             # --- CREATE OFFER ---
             uuid = generate_uuid7()
             new_offer = await self.dao.create_offer(uuid, request_data, current_user_id)
+            await self.db.commit()
             return new_offer.user_uuid
 
         except ValueError as ve:

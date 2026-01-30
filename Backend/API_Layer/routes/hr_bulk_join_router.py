@@ -10,13 +10,17 @@ router = APIRouter()
 async def bulk_join(
     payload: BulkJoinRequest,
     request: Request,
+   
     db: AsyncSession = Depends(get_db)
 ):
     try:
+        
         current_user_id = int(request.state.user.get("user_id"))
 
         service = HrBulkJoinService(db)
+          
         result = await service.process_bulk_join(payload, current_user_id)
+
 
         return result
 

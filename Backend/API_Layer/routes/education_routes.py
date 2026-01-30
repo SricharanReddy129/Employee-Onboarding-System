@@ -1,3 +1,5 @@
+import time
+from tracemalloc import start
 import uuid
 from Backend.API_Layer.interfaces.identity_interfaces import CountryIdentityDropdownResponse
 from Backend.Business_Layer.utils.uuid_generator import generate_uuid7
@@ -8,7 +10,7 @@ from ...DAL.utils.dependencies import get_db
 from ...DAL.utils.storage_utils import S3StorageService
 from ...API_Layer.interfaces.education_interfaces import (CountryEducationMappingResponse, CreateEducDocRequest, EducDocResponse, EmployeEduDoc,DeleteEmpEducResponse,
                                                           EducDocDetails, UploadFileResponse, EmployeEduDocDetails)
-
+start = time.perf_counter()
 router = APIRouter()
 
 @router.post("/create_education_document", response_model=EducDocResponse)
@@ -115,7 +117,43 @@ async def create_employee_education_document(
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+@router.put("/employee-education-document/{document_uuid}", response_model=UploadFileResponse)
+async def update_employee_education_document(
+    document_uuid: str,
+    mapping_uuid: str = Form(...),
+    institution_name: str = Form(...),
+    specialization: str = Form(...),
+    year_of_passing: int = Form(...),
+    percentage_cgpa: str = Form(...),
+    file: UploadFile | None = File(None),   # 👈 optional
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        education_service = EducationDocService(db)
+
+        request_data = {
+            "mapping_uuid": mapping_uuid,
+            "institution_name": institution_name,
+            "specialization": specialization,
+            "year_of_passing": year_of_passing,
+            "percentage_cgpa": percentage_cgpa,
+        }
+
+        file_path = await education_service.update_employee_education_document(
+            document_uuid, request_data, file
+        )
+
+        return UploadFileResponse(
+            document_uuid=document_uuid,
+            file_path=file_path,
+            message="Employee Education Document Updated Successfully"
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # get all employee education documents
 @router.get("/employee-education-document", response_model=list[EmployeEduDocDetails])
 async def get_all_employee_education_documents(db: AsyncSession = Depends(get_db)):
@@ -163,6 +201,8 @@ async def get_education_identity_mappings_by_country_uuid(country_uuid: str, db:
         print("In route")
         education_service = EducationDocService(db)
         result = await education_service.get_education_identity_mappings_by_country_uuid(country_uuid)
+        print("⏱ FULL REQUEST:", time.perf_counter() - start)
+
         return result
     except HTTPException as he:
         raise he

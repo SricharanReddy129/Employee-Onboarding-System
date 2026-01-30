@@ -2,17 +2,26 @@ from fastapi import Request, HTTPException, status
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 from ..utils.jwt_validator import validate_jwt
-
+import time
 
 class JWTMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
         # Add paths you want to skip
-        self.open_endpoints = ["/docs", "/openapi.json", "/redoc", "/offerresponse" ,"/masters/country", "/employee-upload", "/identity/country-mapping", "/experience/", "/otp/send","/otp/verifyOtp","education/employee-education-document","masters/education-level","/education/country-mapping","/education/employee-education-document","/offerletters/offer/","/token-verification/", "/docusign"]
+        self.open_endpoints = ["/docs", "/openapi.json", "/redoc", "/offerresponse" ,"/masters/country", "/employee-upload", "/identity/country-mapping", "/experience/", "/otp/send","/otp/verifyOtp","education/employee-education-document","masters/education-level","/education/country-mapping","/education/employee-education-document","/offerletters/offer/","/token-verification/", "/docusign", "/employee-upload/identity-documents", "/employee-details"]
         
     async def dispatch(self, request: Request, call_next):
+        # Allow preflight OPTIONS requests to pass through
+        if request.method == "OPTIONS":
+            return await call_next(request)
+        
         path = request.url.path
-        #print(f"[JWTMiddleware] 🚀 Incoming request path: {path}")
+        if path.startswith("/api"):
+            path = path[4:]  # Remove '/api' prefix
+        print(f"[JWTMiddleware] 🚀 Incoming request path: {path}")
+        start = time.perf_counter()
+        # middleware code
+        print("JWT middleware:", time.perf_counter() - start)
 
         # Skip validation for open endpoints
         if any(path.startswith(ep) for ep in self.open_endpoints):

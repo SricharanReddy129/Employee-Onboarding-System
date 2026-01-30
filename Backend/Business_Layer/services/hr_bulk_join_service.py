@@ -1,6 +1,8 @@
+
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.dao.hr_bulk_join_dao import HrBulkJoinDAO
+from Backend.Business_Layer.utils.email_utils import send_joining_email
 
 class HrBulkJoinService:
     def __init__(self, db: AsyncSession):
@@ -8,26 +10,37 @@ class HrBulkJoinService:
         self.dao = HrBulkJoinDAO(self.db)
 
     async def process_bulk_join(self, payload, current_user_id: int):
-        # 1. Basic validation
+
         if not payload.user_emails_list:
             raise HTTPException(status_code=400, detail="No users selected")
 
-        # 2. Count how many VERIFIED users exist
-        verified_count = await self.dao.count_verified_by_emails(
+        verified_users = await self.dao.get_verified_users_by_emails(
             payload.user_emails_list
         )
 
-        if verified_count == 0:
+        if not verified_users:
             raise HTTPException(
                 status_code=400,
-                detail="No VERIFIED candidates found for Bulk Join"
+                detail="No VERIFIED candidates found"
             )
 
-        # 3. Update ONLY VERIFIED users
+        # ✅ 1. STORE JOINING DATE 
         updated_rows = await self.dao.update_joining_date_for_verified(
             payload.user_emails_list,
             payload.joining_date
         )
+
+        # ✅ 2. SEND EMAIL FROM BACKEND 
+        for user in verified_users:
+            send_joining_email(
+                
+                to_email=user.mail,
+                name=user.first_name,
+                joining_date=payload.joining_date,
+                location=payload.location,
+                reporting_time=payload.reporting_time,
+                custom_message=payload.custom_message
+            )
 
         skipped = len(payload.user_emails_list) - updated_rows
 
