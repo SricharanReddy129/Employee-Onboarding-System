@@ -194,14 +194,14 @@ class IdentityService:
             rows = await self.dao.get_identities_by_country_uuid(country_uuid)
 
             return [
-            CountryIdentityDropdownResponse(
-                mapping_uuid=row.mapping_uuid,          
-                identity_type_uuid=row.identity_type_uuid,
-                identity_type_name=row.identity_type_name,
-                is_mandatory=row.is_mandatory,
-            )
-            for row in rows
-        ]
+                CountryIdentityDropdownResponse(
+                    mapping_uuid=row["mapping_uuid"],          # ✅ FIX
+                    identity_type_uuid=row["identity_type_uuid"],
+                    identity_type_name=row["identity_type_name"],
+                    is_mandatory=row["is_mandatory"],
+                )
+                for row in rows
+            ]
 
         except HTTPException as he:
             raise he
