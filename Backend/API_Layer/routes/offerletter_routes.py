@@ -130,14 +130,27 @@ async def get_all_offers(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+import time
+
 @router.get("/user_id/details", response_model=list[OfferLetterDetailsResponse])
 async def get_offer_by_user_id(
     request: Request,
-    db: AsyncSession = Depends(get_read_db)   # 👈 change here
+    db: AsyncSession = Depends(get_read_db)
 ):
+    start = time.perf_counter()
+
     current_user_id = int(request.state.user.get("user_id"))
     offer_service = OfferLetterService(db)
-    return await offer_service.get_offer_by_user_id(current_user_id)
+    result = await offer_service.get_offer_by_user_id(current_user_id)
+
+    print("⏱ FULL endpoint:", time.perf_counter() - start)
+    return result
+
+
+
+    
+
+
         
 # get offer by offer uuid
 @router.get("/offer/{user_uuid}", response_model=OfferLetterDetailsResponse)
@@ -145,13 +158,21 @@ async def get_offer_by_uuid(
     user_uuid: str,
     db: AsyncSession = Depends(get_db)
 ):
-    offer_service = OfferLetterService(db)
-    offer = await offer_service.get_offer_by_uuid(user_uuid)
+    """
+    Retrieves an offer letter by its UUID.
+    """
+    try:
+        offer_service = OfferLetterService(db)
+        offer = await offer_service.get_offer_by_uuid(user_uuid)
+        if not offer:
+            raise HTTPException(status_code=404, detail="Offer letter not found")
+        return offer
 
-    if not offer:
-        raise HTTPException(status_code=404, detail="Offer letter not found")
-
-    return offer
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
 
 
 @router.put("/{user_uuid}", response_model=OfferUpdateResponse)
