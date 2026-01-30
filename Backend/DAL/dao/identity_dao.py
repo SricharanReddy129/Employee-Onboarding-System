@@ -143,7 +143,8 @@ class IdentityDAO:
         )
 
         result = await self.db.execute(stmt)
-        return result.all()
+        return result.mappings().all()
+    
     async def get_employee_identity_documents_by_mapping_uuid(self, mapping_uuid):
             stmt = (
                 select(
