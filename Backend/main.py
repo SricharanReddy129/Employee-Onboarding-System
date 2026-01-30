@@ -13,7 +13,7 @@ from Backend.API_Layer.routes import offer_approval_action_routes
 
 
 # from fastapi_cache.backends.redis import RedisBackend
-import redis.asyncio as redis
+# import redis.asyncio as redis
 
 
 from Backend.API_Layer.routes import hr_bulk_join_router
