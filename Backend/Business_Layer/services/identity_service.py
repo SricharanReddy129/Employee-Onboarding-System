@@ -58,18 +58,9 @@ class IdentityService:
             raise HTTPException(status_code=500, detail=str(e))
         
     async def update_identity_type(self, uuid, request_data):
-        try:
-            existing = await self.dao.get_identity_type_by_uuid(uuid)
-            if not existing:
-                raise HTTPException(status_code=404, detail = "Identity Type Not Found")
-            existing = await self.dao.get_identity_type_by_name_and_status(request_data.identity_type_name, request_data.is_active)
-            if existing:
-                raise HTTPException(status_code=422, detail="Identity Type with this name already exists")
-            await self.dao.update_identity_type(uuid, request_data)
-        except HTTPException as he:
-            raise he
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+        await self.dao.update_identity_type(uuid, request_data)
+        
+
         
     # Country Identity Mapping Services
     async def create_country_identity_mapping(self, request_data):

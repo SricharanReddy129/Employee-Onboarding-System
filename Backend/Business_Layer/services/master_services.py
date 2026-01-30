@@ -46,23 +46,12 @@ class CountryService:
             raise HTTPException(status_code=500, detail=str(e))
         
     async def update_country(self, country_uuid: str, is_active: bool):
-        try:
-            existing = await self.dao.get_country_by_uuid(country_uuid)
-            if not existing:
-                raise HTTPException(status_code=404, detail="Country does not exist")
+        updated = await self.dao.update_country(country_uuid, is_active)
 
-            updated = await self.dao.update_country(country_uuid, is_active)
+        if not updated:
+            raise HTTPException(status_code=404, detail="Country does not exist")
 
-            # Normalize boolean for consistent logic
-            if is_active:
-                return "Successfully Activated"
-            else:
-                return "Successfully Deactivated"
-
-        except HTTPException:
-            raise
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+        return "Successfully Activated" if is_active else "Successfully Deactivated"
     async def get_all_countries(self):
         try:
             result = await self.dao.get_all_countries()

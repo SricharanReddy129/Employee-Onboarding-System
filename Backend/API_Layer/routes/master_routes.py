@@ -28,23 +28,17 @@ async def create_country(
         raise HTTPException(status_code=500, detail=str(e))
 
 # deactivate country by country uuid
-@router.put("/country/deactivateoractivate/{country_uuid}", response_model= CreateCountryResponse)
+from fastapi import Query
+
+@router.put("/country/deactivateoractivate/{country_uuid}", response_model=CreateCountryResponse)
 async def update_country(
     country_uuid: str,
-    is_active: bool,
+    is_active: bool = Query(...),   # 👈 IMPORTANT
     db: AsyncSession = Depends(get_db)
 ):
-    try:
-        country_service = CountryService(db)
-        country= await country_service.update_country(country_uuid, is_active)
-        return CreateCountryResponse(
-            message=country,
-            country_uuid=country_uuid
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    country_service = CountryService(db)
+    message = await country_service.update_country(country_uuid, is_active)
+    return CreateCountryResponse(message=message, country_uuid=country_uuid)
 
 # get country details by uuid
 @router.get("/country/{country_uuid}", response_model=CountryDetails)

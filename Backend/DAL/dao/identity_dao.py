@@ -2,7 +2,8 @@ import dbm
 from http.client import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..models.models import IdentityType, CountryIdentityMapping, EmployeeIdentityDocument, OfferLetterDetails
-from sqlalchemy import select
+from sqlalchemy import select, update, exists
+
 import time
 class IdentityDAO:
     def __init__(self, db: AsyncSession):
@@ -68,17 +69,38 @@ class IdentityDAO:
         await self.db.delete(identity_type)
         await self.db.commit()
         return identity_type
+    from sqlalchemy import update, select, exists
+
     async def update_identity_type(self, uuid, request_data):
-        result = await self.db.execute(select(IdentityType).where(IdentityType.identity_type_uuid == uuid))
-        identity_type = result.scalar_one_or_none()
-        identity_type.identity_type_name = request_data.identity_type_name
-        identity_type.description = request_data.description
-        identity_type.is_active = request_data.is_active
-        self.db.add(identity_type)
+        # 1️⃣ duplicate name check (FAST)
+        dup_stmt = (
+            select(exists().where(
+                IdentityType.identity_type_name == request_data.identity_type_name,
+                IdentityType.identity_type_uuid != uuid
+            ))
+        )
+        dup = await self.db.execute(dup_stmt)
+        if dup.scalar():
+            raise HTTPException(status_code=422, detail="Identity Type with this name already exists")
+
+        # 2️⃣ update in one DB call
+        stmt = (
+            update(IdentityType)
+            .where(IdentityType.identity_type_uuid == uuid)
+            .values(
+                identity_type_name=request_data.identity_type_name,
+                description=request_data.description,
+                is_active=request_data.is_active
+            )
+        )
+
+        result = await self.db.execute(stmt)
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Identity Type Not Found")
+
         await self.db.commit()
-        await self.db.refresh(identity_type)
-        return identity_type
-    
+        return True
+
     # Country Identity Mapping DAO Methods
     async def get_country_identity_mapping(self, country_uuid, identity_type_uuid):
         result = await self.db.execute(select(CountryIdentityMapping).where(CountryIdentityMapping.country_uuid == country_uuid).where(

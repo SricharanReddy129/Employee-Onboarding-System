@@ -29,8 +29,7 @@ class CountryDAO:
         return new_country
     async def get_country_by_uuid(self, country_uuid: str):
         result = await self.db.execute(
-            select(Countries.country_uuid).where(Countries.country_uuid == country_uuid)
-
+            select(Countries).where(Countries.country_uuid == country_uuid)
         )
 
         return result.scalar_one_or_none()
