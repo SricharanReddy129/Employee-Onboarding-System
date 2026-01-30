@@ -87,13 +87,28 @@ class OfferLetterDAO:
         )
         return result.scalars().all()
     async def get_offer_by_uuid(self, user_uuid: str):
-        """
-        Get a single offer by UUID.
-        """
-        result = await self.db.execute(
-            select(OfferLetterDetails).where(OfferLetterDetails.user_uuid == user_uuid)
+        stmt = (
+            select(
+                OfferLetterDetails.user_uuid,
+                OfferLetterDetails.first_name,
+                OfferLetterDetails.last_name,
+                OfferLetterDetails.mail,
+                OfferLetterDetails.country_code,
+                OfferLetterDetails.contact_number,
+                OfferLetterDetails.designation,
+                OfferLetterDetails.package,
+                OfferLetterDetails.currency,
+                OfferLetterDetails.created_by,
+                OfferLetterDetails.status,
+            )
+            .where(OfferLetterDetails.user_uuid == user_uuid)
+            .limit(1)
         )
-        return result.scalars().first()
+
+        result = await self.db.execute(stmt)
+        row = result.first()
+        return row._mapping if row else None
+
     
     async def update_offer_by_uuid(self, user_uuid: str, request_data: OfferCreateRequest, current_user_id: int):
 

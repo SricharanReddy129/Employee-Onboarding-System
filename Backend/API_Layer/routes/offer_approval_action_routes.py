@@ -12,10 +12,7 @@ from ...DAL.utils.dependencies import get_db
 from ...API_Layer.interfaces.offer_request_interfaces import OfferRequestResponse
 
 router = APIRouter()
-@router.get(
-    "/status/{user_uuid}",
-    response_model=OfferRequestResponse
-)
+@router.get("/status/{user_uuid}",response_model=OfferRequestResponse)
 async def get_offer_approval_status(
     user_uuid: str,
     request: Request,

@@ -25,15 +25,11 @@ class OfferApprovalActionService:
         self.dao = OfferApprovalActionDAO(db)
         self.offer_response_dao = OfferResponseDAO(db)
 
-    async def get_offer_status(self, user_uuid: str, auth_header: str) -> OfferRequestResponse:
-        """
-        Resolve offer approval status using business rules
-        """
+    async def get_offer_status(self, user_uuid: str, auth_header: str):
 
-        request = await self.dao.get_request_with_actions(user_uuid)
+        request = await self.dao.get_request_with_latest_action(user_uuid)
 
-
-        # ❌ No request exists
+        # ❌ No request
         if not request:
             return OfferRequestResponse(
                 user_uuid=user_uuid,
@@ -42,39 +38,34 @@ class OfferApprovalActionService:
                 status="No Request",
                 comments="No Request."
             )
-        
+
+        # 🔴 Call external API only when needed
         user_details = await fetch_admin_users_reformed(token=auth_header)
         action_taker = next(
-            (u for u in user_details if u["user_id"] == request.action_taker_id),
+            (u for u in user_details if u["user_id"] == request["action_taker_id"]),
             None
         )
 
         if not action_taker:
-            raise HTTPException(
-                status_code=400,
-                detail="Action taker not found in user list"
-            )
-        
-        # ✅ Request exists but no action yet
-        if not request.offer_approval_action:
+            raise HTTPException(status_code=400, detail="Action taker not found")
+
+        # No action yet
+        if not request["action"]:
             return OfferRequestResponse(
                 user_uuid=user_uuid,
-                action_taker_id=request.action_taker_id,
-                action_taker_name=action_taker['name'],  # demo
+                action_taker_id=request["action_taker_id"],
+                action_taker_name=action_taker["name"],
                 status="PENDING",
                 comments="Awaiting approval"
             )
 
-        # ✅ Request + action exists → take latest action
-        latest_action = request.offer_approval_action[-1]
-
-
+        # Latest action exists
         return OfferRequestResponse(
             user_uuid=user_uuid,
-            action_taker_id=request.action_taker_id,
-            action_taker_name=action_taker['name'],  # demo
-            status=latest_action.action,
-            comments=latest_action.comment or ""
+            action_taker_id=request["action_taker_id"],
+            action_taker_name=action_taker["name"],
+            status=request["action"],
+            comments=request["comment"] or ""
         )
 
     async def get_all_offer_statuses(self, auth_header: str) -> list[OfferRequestResponse]:

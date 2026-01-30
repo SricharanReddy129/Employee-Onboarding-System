@@ -138,11 +138,6 @@ async def get_offer_by_user_id(
     current_user_id = int(request.state.user.get("user_id"))
     offer_service = OfferLetterService(db)
     return await offer_service.get_offer_by_user_id(current_user_id)
-
-
-    
-
-
         
 # get offer by offer uuid
 @router.get("/offer/{user_uuid}", response_model=OfferLetterDetailsResponse)
@@ -150,21 +145,13 @@ async def get_offer_by_uuid(
     user_uuid: str,
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Retrieves an offer letter by its UUID.
-    """
-    try:
-        offer_service = OfferLetterService(db)
-        offer = await offer_service.get_offer_by_uuid(user_uuid)
-        if not offer:
-            raise HTTPException(status_code=404, detail="Offer letter not found")
-        return offer
+    offer_service = OfferLetterService(db)
+    offer = await offer_service.get_offer_by_uuid(user_uuid)
 
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer letter not found")
+
+    return offer
 
 
 @router.put("/{user_uuid}", response_model=OfferUpdateResponse)
