@@ -16,7 +16,9 @@ class JWTMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         
         path = request.url.path
-        #print(f"[JWTMiddleware] 🚀 Incoming request path: {path}")
+        if path.startswith("/api"):
+            path = path[4:]  # Remove '/api' prefix
+        print(f"[JWTMiddleware] 🚀 Incoming request path: {path}")
 
         # Skip validation for open endpoints
         if any(path.startswith(ep) for ep in self.open_endpoints):
