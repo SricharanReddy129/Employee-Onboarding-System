@@ -10,10 +10,12 @@ import json
 import uuid
 from typing import Optional
 import io
+import time
 
 class AuditMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
+        
 
         # Endpoints that should not be audited
         self.open_endpoints = [
@@ -32,6 +34,9 @@ class AuditMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         
         print("Audit Middleware Entering...")
+        start = time.perf_counter()
+        # middleware code
+        print("Audit middleware:", time.perf_counter() - start)
         path = request.url.path
         method = request.method
         
@@ -208,3 +213,4 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 headers=dict(response.headers),
                 media_type=response.media_type
             )
+        

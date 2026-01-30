@@ -6,7 +6,7 @@ from ...DAL.dao.offerletter_dao import OfferLetterDAO
 from ...DAL.utils.storage_utils import S3StorageService
 from ..utils.validation_utils import validate_alphabets_only, validate_document_name, validate_numeric_value
 from ..utils.uuid_generator import generate_uuid7
-
+import time
 class EducationDocService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -176,17 +176,21 @@ class EducationDocService:
             raise HTTPException(status_code=500, detail=str(e))
         
 
-    async def get_education_identity_mappings_by_country_uuid(self, country_uuid):
-        try:
-            print("In service")
-            existing = await self.countrydao.get_country_by_uuid(country_uuid)
-            if not existing:
-                raise HTTPException(status_code=404, detail="Country Not Found")
-            result = await self.dao.get_education_identity_mappings_by_country_uuid(country_uuid)
-            return result
-        except HTTPException as he:
-            raise he
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-        
     
+
+    async def get_education_identity_mappings_by_country_uuid(self, country_uuid):
+        t1 = time.perf_counter()
+        existing = await self.countrydao.get_country_by_uuid(country_uuid)
+        print("⏱ get_country_by_uuid:", time.perf_counter() - t1)
+
+        if not existing:
+            raise HTTPException(status_code=404, detail="Country Not Found")
+
+        t2 = time.perf_counter()
+        result = await self.dao.get_education_identity_mappings_by_country_uuid(country_uuid)
+        print("⏱ mapping DAO:", time.perf_counter() - t2)
+
+        return result
+
+            
+        

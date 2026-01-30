@@ -1,3 +1,5 @@
+import time
+from tracemalloc import start
 import uuid
 from Backend.API_Layer.interfaces.identity_interfaces import CountryIdentityDropdownResponse
 from Backend.Business_Layer.utils.uuid_generator import generate_uuid7
@@ -8,7 +10,7 @@ from ...DAL.utils.dependencies import get_db
 from ...DAL.utils.storage_utils import S3StorageService
 from ...API_Layer.interfaces.education_interfaces import (CountryEducationMappingResponse, CreateEducDocRequest, EducDocResponse, EmployeEduDoc,DeleteEmpEducResponse,
                                                           EducDocDetails, UploadFileResponse, EmployeEduDocDetails)
-
+start = time.perf_counter()
 router = APIRouter()
 
 @router.post("/create_education_document", response_model=EducDocResponse)
@@ -199,6 +201,8 @@ async def get_education_identity_mappings_by_country_uuid(country_uuid: str, db:
         print("In route")
         education_service = EducationDocService(db)
         result = await education_service.get_education_identity_mappings_by_country_uuid(country_uuid)
+        print("⏱ FULL REQUEST:", time.perf_counter() - start)
+
         return result
     except HTTPException as he:
         raise he

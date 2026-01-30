@@ -2,7 +2,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.models.models import EducationDocumentType, EducationLevel, EmployeeEducationDocument, CountryEducationDocumentMapping
-
+import time
 class EducationDocDAO:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -141,7 +141,11 @@ class EducationDocDAO:
     # Country Education Document Mapping DAO Methods
 
 
+   
+
     async def get_education_identity_mappings_by_country_uuid(self, country_uuid: str):
+        start = time.perf_counter()
+
         stmt = (
             select(
                 CountryEducationDocumentMapping.mapping_uuid,
@@ -162,15 +166,14 @@ class EducationDocDAO:
             .where(CountryEducationDocumentMapping.country_uuid == country_uuid)
         )
 
+        t1 = time.perf_counter()
         result = await self.db.execute(stmt)
+        print("⏱ DB execute:", time.perf_counter() - t1)
 
-        # return [
-        #     {
-        #         "mapping_uuid": row.mapping_uuid,
-        #         "education_name": row.education_name,
-        #         "document_name": row.document_name,
-        #         "is_mandatory": row.is_mandatory,
-        #     }
-        #     for row in result.all()
-        # ]
-        return result.all()
+        t2 = time.perf_counter()
+        rows = result.all()
+        print("⏱ Result processing:", time.perf_counter() - t2)
+
+        print("⏱ DAO total:", time.perf_counter() - start)
+
+        return [row._mapping for row in rows]
