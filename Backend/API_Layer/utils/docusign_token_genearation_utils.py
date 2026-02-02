@@ -39,6 +39,9 @@ def generate_docusign_access_token():
         },
         timeout=10
     )
- 
+
+    if response.status_code != 200:
+        raise HTTPException(status_code=response.status_code, detail="Failed to obtain DocuSign access token")
+    
     response.raise_for_status()
     return response.json()
