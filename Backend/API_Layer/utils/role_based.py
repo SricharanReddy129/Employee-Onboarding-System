@@ -7,7 +7,6 @@ def require_roles(*allowed_roles: str):
         print("allowed_roles:", allowed_roles)
         user_roles = user.get("roles", []) if user else []
         user_roles  = [role.upper() for role in user_roles]
-        allowed_roles = [role.upper() for role in allowed_roles]
 
         if not user:
             raise HTTPException(status_code=401, detail="Not authenticated")
