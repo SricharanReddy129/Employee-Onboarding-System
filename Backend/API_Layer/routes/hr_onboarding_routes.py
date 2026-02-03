@@ -25,12 +25,12 @@ async def get_full_onboarding_details(user_uuid: str, request: Request, db: Asyn
 
 @router.post("/candidate/submit")
 async def submit_onboarding(
-    user_uuid: str,
+    payload: HrOnboardingSubmitRequest,
     db: AsyncSession = Depends(get_db)
 ):
     service = HrOnboardingService(db)
 
-    await service.final_submit_onboarding(user_uuid)
+    await service.final_submit_onboarding(payload.user_uuid)
     return {"message": "Onboarding submitted successfully"}
 
 
