@@ -8,6 +8,8 @@ from Backend.API_Layer.interfaces.employee_experience_interfaces import (Experie
 from ...DAL.utils.dependencies import get_db
 from ...Business_Layer.services.employee_experience_service import EmployeeExperienceService
 from ...DAL.utils.storage_utils import get_storage_service  # If needed for presigned URL
+from ..utils.role_based import require_roles
+
 
 router = APIRouter()
 
@@ -15,7 +17,7 @@ router = APIRouter()
 # -------------------------------------------------------
 # CREATE EXPERIENCE
 # -------------------------------------------------------
-# @router.post("/")
+# @router.post("/", dependencies=[Depends(require_roles("HR", "ADMIN"))])
 @router.post("/", response_model=ExperienceCreateResponse)
 async def create_experience(
     employee_uuid: str = Form(...),
@@ -165,7 +167,7 @@ async def delete_experience(experience_uuid: str, db: AsyncSession = Depends(get
 # -------------------------------------------------------
 # GET PRESIGNED URL (DOWNLOAD EXPERIENCE CERTIFICATE)
 # -------------------------------------------------------
-# @router.get("/{experience_uuid}/certificate-url", response_model=ExperienceResponse)
+# @router.get("/{experience_uuid}/certificate-url", response_model=ExperienceResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 # async def get_certificate_presigned_url(
 #     experience_uuid: str,
 #     db: AsyncSession = Depends(get_db)
@@ -188,7 +190,7 @@ async def delete_experience(experience_uuid: str, db: AsyncSession = Depends(get
 # -------------------------------------------------------
 # DELETE CERTIFICATE ONLY
 # -------------------------------------------------------
-        # @router.delete("/certificate/{experience_uuid}")
+        # @router.delete("/certificate/{experience_uuid}", dependencies=[Depends(require_roles("HR", "ADMIN"))])
         # async def delete_certificate(experience_uuid: str, db: AsyncSession = Depends(get_db)):
         #     service = EmployeeExperienceService(db)
         #     storage = get_storage_service()

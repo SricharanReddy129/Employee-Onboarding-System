@@ -10,10 +10,11 @@ from ...DAL.utils.dependencies import get_db
 from ...DAL.utils.storage_utils import S3StorageService
 from ...API_Layer.interfaces.education_interfaces import (CountryEducationMappingResponse, CreateEducDocRequest, EducDocResponse, EmployeEduDoc,DeleteEmpEducResponse,
                                                           EducDocDetails, UploadFileResponse, EmployeEduDocDetails)
+from ..utils.role_based import require_roles
 start = time.perf_counter()
 router = APIRouter()
 
-@router.post("/create_education_document", response_model=EducDocResponse)
+@router.post("/create_education_document", response_model=EducDocResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def create_education_document(request_data: CreateEducDocRequest, db: AsyncSession = Depends(get_db)):
     try:
         education_service = EducationDocService(db)
@@ -27,7 +28,7 @@ async def create_education_document(request_data: CreateEducDocRequest, db: Asyn
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/education-document", response_model=list[EducDocDetails])
+@router.get("/education-document", response_model=list[EducDocDetails], dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def get_all_education_documents(db: AsyncSession = Depends(get_db)):
     try:
         education_service = EducationDocService(db)
@@ -38,7 +39,7 @@ async def get_all_education_documents(db: AsyncSession = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.get("/education-document/{uuid}", response_model = CreateEducDocRequest)
+@router.get("/education-document/{uuid}", response_model = CreateEducDocRequest, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def get_education_document_by_uuid(uuid: str, db: AsyncSession = Depends(get_db)):
     try:
         education_service = EducationDocService(db)
@@ -49,7 +50,7 @@ async def get_education_document_by_uuid(uuid: str, db: AsyncSession = Depends(g
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.put("/education-document/{uuid}", response_model = EducDocResponse)
+@router.put("/education-document/{uuid}", response_model = EducDocResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def update_education_document(uuid: str, request_data: CreateEducDocRequest, db: AsyncSession = Depends(get_db)):
     try:
         education_service = EducationDocService(db)
@@ -67,7 +68,7 @@ async def update_education_document(uuid: str, request_data: CreateEducDocReques
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.delete("/education-document/{uuid}", response_model = EducDocResponse)
+@router.delete("/education-document/{uuid}", response_model = EducDocResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def delete_education_document_by_uuid(uuid: str, db: AsyncSession = Depends(get_db)):
     try:
         education_service = EducationDocService(db)
@@ -84,7 +85,7 @@ async def delete_education_document_by_uuid(uuid: str, db: AsyncSession = Depend
 ## Employee Education Documents ##
     
 # creating employee eductaion documents and related details
-@router.post("/employee-education-document", response_model=UploadFileResponse)
+@router.post("/employee-education-document", response_model=UploadFileResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def create_employee_education_document(
     mapping_uuid: str = Form(...),
     user_uuid: str = Form(...),
@@ -117,7 +118,7 @@ async def create_employee_education_document(
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-@router.put("/employee-education-document/{document_uuid}", response_model=UploadFileResponse)
+@router.put("/employee-education-document/{document_uuid}", response_model=UploadFileResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def update_employee_education_document(
     document_uuid: str,
     mapping_uuid: str = Form(...),
@@ -155,7 +156,7 @@ async def update_employee_education_document(
         raise HTTPException(status_code=500, detail=str(e))
 
 # get all employee education documents
-@router.get("/employee-education-document", response_model=list[EmployeEduDocDetails])
+@router.get("/employee-education-document", response_model=list[EmployeEduDocDetails], dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def get_all_employee_education_documents(db: AsyncSession = Depends(get_db)):
     try:
         print("entering routes")
@@ -168,7 +169,7 @@ async def get_all_employee_education_documents(db: AsyncSession = Depends(get_db
         raise HTTPException(status_code=500, detail=str(e))
 
 # get employee education document by uuid
-@router.get("/employee-education-document/{document_uuid}", response_model=EmployeEduDocDetails)
+@router.get("/employee-education-document/{document_uuid}", response_model=EmployeEduDocDetails, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def get_employee_education_document_by_uuid(uuid: str, db: AsyncSession = Depends(get_db)):
     try:
         education_service = EducationDocService(db)
@@ -179,7 +180,7 @@ async def get_employee_education_document_by_uuid(uuid: str, db: AsyncSession = 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 # delete employee education document by uuid
-@router.delete("/employee-education-document/{uuid}", response_model=DeleteEmpEducResponse)
+@router.delete("/employee-education-document/{uuid}", response_model=DeleteEmpEducResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def delete_employee_education_document_by_uuid(uuid: str, db: AsyncSession = Depends(get_db)):
     try:
         education_service = EducationDocService(db)
@@ -195,7 +196,7 @@ async def delete_employee_education_document_by_uuid(uuid: str, db: AsyncSession
         raise HTTPException(status_code=500, detail=str(e))
     
 
-@router.get("/country-mapping/{country_uuid}",response_model=list[CountryEducationMappingResponse])
+@router.get("/country-mapping/{country_uuid}",response_model=list[CountryEducationMappingResponse], dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def get_education_identity_mappings_by_country_uuid(country_uuid: str, db: AsyncSession = Depends(get_db)):
     try:
         print("In route")

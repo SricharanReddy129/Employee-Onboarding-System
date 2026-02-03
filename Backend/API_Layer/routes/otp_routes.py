@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from Backend.API_Layer.interfaces.otp_interfaces import OtpRequestBody, OtpResponseStatus
 from Backend.Business_Layer.services.otp_service import OtpResponseService
 from ...DAL.utils.dependencies import get_db
+from ..utils.role_based import require_roles
 
 router = APIRouter()
 

@@ -6,10 +6,11 @@ from ...Business_Layer.services.offer_approval_service import OfferApprovalReque
 from ...API_Layer.interfaces.offer_request_interfaces import OfferRequestCreateResponse, OfferRequestUpdateResponse, OfferRequestDelete,OfferRequestListResponse,OfferRequestUpdateResponse2
 
 from ...DAL.utils.dependencies import get_db
+from ..utils.role_based import require_roles
 
 router = APIRouter()
 
-@router.post("/request")
+@router.post("/request", dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def create_offer_approval_requests(
     payload: list[OfferRequestListResponse],
     request: Request,
@@ -47,7 +48,7 @@ async def create_offer_approval_requests(
 
     return result
 
-@router.put("/request/update")
+@router.put("/request/update", dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def update_offer_approval_requests(
     payload: list[OfferRequestUpdateResponse2],
     request: Request,
@@ -65,7 +66,7 @@ async def update_offer_approval_requests(
         current_user_id=current_user_id
     )
 
-@router.delete("/request/delete")
+@router.delete("/request/delete", dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def delete_offer_approval_requests(
     payload: list[OfferRequestDelete],
     request: Request,

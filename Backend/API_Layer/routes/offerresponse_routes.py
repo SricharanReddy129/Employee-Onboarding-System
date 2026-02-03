@@ -12,10 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.utils.dependencies import get_db
 from ..utils.webhook_validation import validate_webhook_origin
 from ...config.env_loader import get_env_var
+from ..utils.role_based import require_roles
 
 router = APIRouter()
 
-@router.post("/offerletter-accepted", response_model=PandaDocWebhookResponse)
+@router.post("/offerletter-accepted", response_model=PandaDocWebhookResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def offerletter_accepted_webhook(
     request: Request,
     db: AsyncSession = Depends(get_db)
@@ -72,7 +73,7 @@ async def offerletter_accepted_webhook(
         return PandaDocWebhookResponse(status="error")
     
     
-@router.post("/offerletter-expired", response_model=PandaDocWebhookResponse)
+@router.post("/offerletter-expired", response_model=PandaDocWebhookResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def offerletter_expired_webhook(
     request: Request,
     db: AsyncSession = Depends(get_db),

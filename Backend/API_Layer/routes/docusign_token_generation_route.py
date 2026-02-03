@@ -4,9 +4,10 @@ from Backend.API_Layer.utils.docusign_token_genearation_utils import generate_do
 from Backend.Business_Layer.services.docusign_webhook_service import DocuSignWebhookService
 from Backend.DAL.utils.dependencies import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
-  
+from ..utils.role_based import require_roles
+
 router = APIRouter()
-@router.get("/docusign/token")
+@router.get("/docusign/token", dependencies=[Depends(require_roles("HR", "ADMIN"))])
 def get_docusign_token():
     """
     Generates a DocuSign JWT access token
@@ -23,7 +24,7 @@ def get_docusign_token():
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/webhooks/docusign")
+@router.post("/webhooks/docusign", dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def docusign_webhook(request: Request,
             db: AsyncSession = Depends(get_db)
             ):

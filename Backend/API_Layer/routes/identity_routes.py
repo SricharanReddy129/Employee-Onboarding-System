@@ -6,10 +6,11 @@ from ..interfaces.identity_interfaces import(CountryIdentityDropdownResponse, Id
                                              CountryIdentityMappingDetails, CountryIdentityMappingRequest, CountryIdentityMappingResponse,
                                              )
 from ...Business_Layer.services.identity_service import IdentityService
+from ..utils.role_based import require_roles
 
 router = APIRouter()
 
-@router.get("", response_model=list[IdentityDetails])
+@router.get("", response_model=list[IdentityDetails], dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def get_all_identity_types(db: AsyncSession = Depends(get_db)):
     try:
         service = IdentityService(db)
@@ -20,7 +21,7 @@ async def get_all_identity_types(db: AsyncSession = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.get("/{uuid}", response_model = IdentityDetails)
+@router.get("/{uuid}", response_model = IdentityDetails, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def get_identity_type_by_uuid(uuid: str, db: AsyncSession = Depends(get_db)):
     try:
         identity_service = IdentityService(db)
@@ -31,7 +32,7 @@ async def get_identity_type_by_uuid(uuid: str, db: AsyncSession = Depends(get_db
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.post("", response_model = IdentityResponse)
+@router.post("", response_model = IdentityResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def create_identity_type(request_data: IdentityCreateRequest, db: AsyncSession = Depends(get_db)):
     try:
         identity_service = IdentityService(db)
@@ -45,7 +46,7 @@ async def create_identity_type(request_data: IdentityCreateRequest, db: AsyncSes
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.delete("/{uuid}", response_model = IdentityResponse)
+@router.delete("/{uuid}", response_model = IdentityResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def delete_identity_type(uuid: str, db: AsyncSession = Depends(get_db)):
     try:
         identity_service = IdentityService(db)
@@ -59,7 +60,7 @@ async def delete_identity_type(uuid: str, db: AsyncSession = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.put("/{uuid}", response_model = IdentityResponse)
+@router.put("/{uuid}", response_model = IdentityResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def update_identity_type(uuid: str, request_data: IdentityCreateRequest, db: AsyncSession = Depends(get_db)):
     try:
         identity_service = IdentityService(db)
@@ -76,7 +77,7 @@ async def update_identity_type(uuid: str, request_data: IdentityCreateRequest, d
     
 ### Country Identity Mapping Routes ###
 
-@router.post("/country-mapping", response_model = CountryIdentityMappingResponse)
+@router.post("/country-mapping", response_model = CountryIdentityMappingResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def create_country_identity_mapping(request_data: CountryIdentityMappingRequest, db: AsyncSession = Depends(get_db)):
     try:
         identity_service = IdentityService(db)
@@ -90,7 +91,7 @@ async def create_country_identity_mapping(request_data: CountryIdentityMappingRe
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.get("/country-mapping/", response_model = list[CountryIdentityMappingDetails])
+@router.get("/country-mapping/", response_model = list[CountryIdentityMappingDetails], dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def get_all_country_identity_mappings(db: AsyncSession = Depends(get_db)):
     try:
         start = time.perf_counter()
@@ -103,7 +104,7 @@ async def get_all_country_identity_mappings(db: AsyncSession = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.get("/country-mapping/{uuid}", response_model = CountryIdentityMappingDetails)
+@router.get("/country-mapping/{uuid}", response_model = CountryIdentityMappingDetails, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def get_country_identity_mapping_by_uuid(uuid: str, db: AsyncSession = Depends(get_db)):
     try:
         identity_service = IdentityService(db)
@@ -114,7 +115,7 @@ async def get_country_identity_mapping_by_uuid(uuid: str, db: AsyncSession = Dep
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.put("/country-mapping/{uuid}", response_model= CountryIdentityMappingResponse)
+@router.put("/country-mapping/{uuid}", response_model= CountryIdentityMappingResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def update_country_identity_mapping(uuid: str, request_data: CountryIdentityMappingRequest, db: AsyncSession = Depends(get_db)):
     try:
         identity_service = IdentityService(db)
@@ -131,7 +132,7 @@ async def update_country_identity_mapping(uuid: str, request_data: CountryIdenti
 @router.delete(
     "/country-mapping/{uuid}",
     response_model=CountryIdentityMappingResponse
-)
+, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def delete_country_identity_mapping(
     uuid: str,
     db: AsyncSession = Depends(get_db)
@@ -146,7 +147,7 @@ async def delete_country_identity_mapping(
 
 
 
-@router.get("/country-mapping/identities/{country_uuid}", response_model=list[CountryIdentityDropdownResponse])
+@router.get("/country-mapping/identities/{country_uuid}", response_model=list[CountryIdentityDropdownResponse], dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def get_identities_by_country(country_uuid: str, db: AsyncSession = Depends(get_db),):
     try:
         identity_service = IdentityService(db)

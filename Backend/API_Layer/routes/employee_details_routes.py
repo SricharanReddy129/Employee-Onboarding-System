@@ -8,6 +8,8 @@ from ..interfaces.employee_details_interfaces import (DeleteEmployeeIdentityResp
                                                       AddressDetails, EmployeeIdentityResponse)
 from ...Business_Layer.services.employee_details_service import EmployeeDetailsService, AddressService, EmployeeIdentityService
 from datetime import date
+from ..utils.role_based import require_roles
+
 router = APIRouter()
 
 
@@ -61,7 +63,7 @@ async def delete_personal_details(personal_uuid: str, db: AsyncSession = Depends
     
 
     
-@router.get("/address/", response_model = list[AddressDetails])
+@router.get("/address/", response_model = list[AddressDetails], )
 async def get_all_addresses(db: AsyncSession = Depends(get_db)):
     try:
         address_service = AddressService(db)
@@ -71,7 +73,7 @@ async def get_all_addresses(db: AsyncSession = Depends(get_db)):
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-@router.get("/address/{address_uuid}", response_model = AddressDetails)
+@router.get("/address/{address_uuid}", response_model = AddressDetails, )
 async def get_address_by_address_uuid(address_uuid: str, db: AsyncSession = Depends(get_db)):
     try:
         address_service = AddressService(db)
@@ -81,7 +83,7 @@ async def get_address_by_address_uuid(address_uuid: str, db: AsyncSession = Depe
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-@router.put("/address/{address_uuid}", response_model = CreateAddressResponse)
+@router.put("/address/{address_uuid}", response_model = CreateAddressResponse, )
 async def update_address(address_uuid: str, request_data: CreateAddressRequest, db: AsyncSession = Depends(get_db)):
     try:
         address_service = AddressService(db)
@@ -94,7 +96,7 @@ async def update_address(address_uuid: str, request_data: CreateAddressRequest, 
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-@router.delete("/address/{address_uuid}", response_model=CreateAddressResponse)
+@router.delete("/address/{address_uuid}", response_model=CreateAddressResponse, )
 async def delete_address(address_uuid: str, db: AsyncSession = Depends(get_db)):
     try:
         address_service = AddressService(db)
@@ -111,7 +113,7 @@ async def delete_address(address_uuid: str, db: AsyncSession = Depends(get_db)):
 
 
 
-@router.delete("/identity/{document_uuid}", response_model=DeleteEmployeeIdentityResponse)
+@router.delete("/identity/{document_uuid}", response_model=DeleteEmployeeIdentityResponse, )
 async def delete_employee_identity(document_uuid: str, db: AsyncSession = Depends(get_db)):
     try:
         employee_service = EmployeeIdentityService(db)

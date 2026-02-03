@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.utils.dependencies import get_db
 from ..interfaces.employee_details_interfaces import CreateAddressRequest, CreateAddressResponse, EmployeeIdentityResponse, PersonalDetailsRequest, PersonalDetailsResponse, PersonalDetails
 from ...Business_Layer.services.employee_upload_service import EmployeeUploadService
+from ..utils.role_based import require_roles
+
 router = APIRouter()
 
 @router.post("/personal-details", response_model=PersonalDetailsResponse)

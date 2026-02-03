@@ -43,7 +43,7 @@ async def get_user_uuid_by_token(
 
     return user_uuid
 
-# @router.get("/{raw_token}")
+# @router.get("/{raw_token}", dependencies=[Depends(require_roles("HR", "ADMIN"))])
 # async def get_user_uuid_by_token(
 #     raw_token: str,
 #     db: AsyncSession = Depends(get_db)

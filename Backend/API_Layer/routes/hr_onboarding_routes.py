@@ -7,11 +7,12 @@ from ...DAL.utils.dependencies import get_db
 from ...Business_Layer.services.hr_onboarding_service import (HrOnboardingService)
 from ...API_Layer.interfaces.candidate_submit_forms_interfaces import HrOnboardingSubmitRequest
 from ...API_Layer.interfaces.hr_onboarding_interfaces import HRVerificationRequest
+from ..utils.role_based import require_roles
 
 router = APIRouter()
 
 
-@router.get("/hr/{user_uuid}")
+@router.get("/hr/{user_uuid}", dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def get_full_onboarding_details(user_uuid: str, request: Request, db: AsyncSession = Depends(get_db)):
     current_user_id = int(request.state.user.get("user_id"))
     service = HrOnboardingService(db)
@@ -22,7 +23,7 @@ async def get_full_onboarding_details(user_uuid: str, request: Request, db: Asyn
 
 
 
-@router.post("/candidate/submit")
+@router.post("/candidate/submit", dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def submit_onboarding(
     payload: HrOnboardingSubmitRequest,
     request: Request,
@@ -37,7 +38,7 @@ async def submit_onboarding(
     return {"message": "Onboarding submitted successfully"}
 
 
-@router.get("/view_documents")
+@router.get("/view_documents", dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def view_onboarding_documents(file_path: str, db: AsyncSession = Depends(get_db)):
     try:
         file_path = unquote(file_path)
@@ -50,7 +51,7 @@ async def view_onboarding_documents(file_path: str, db: AsyncSession = Depends(g
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
           
-@router.post("/verify-profile")
+@router.post("/verify-profile", dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def verify_employee_profile(
     payload: HRVerificationRequest,
     request: Request,

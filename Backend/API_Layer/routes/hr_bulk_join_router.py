@@ -3,10 +3,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.utils.dependencies import get_db
 from  ...API_Layer.interfaces.bulk_join_request_interfaces import BulkJoinRequest
 from ...Business_Layer.services.hr_bulk_join_service import HrBulkJoinService
+from ..utils.role_based import require_roles
 
 router = APIRouter()
 
-@router.post("/offerletters/bulk-join")
+@router.post("/offerletters/bulk-join", dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def bulk_join(
     payload: BulkJoinRequest,
     request: Request,

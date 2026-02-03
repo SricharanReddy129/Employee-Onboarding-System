@@ -19,11 +19,12 @@ import pandas as pd
 from io import BytesIO
 from ...config import env_loader
 import requests
+from ..utils.role_based import require_roles
 
 router = APIRouter()
 
 # ✅ Create single offer letter
-@router.post("/create", response_model=OfferCreateResponse)
+@router.post("/create", response_model=OfferCreateResponse, dependencies=[Depends(require_roles("HR", "Admin"))])
 async def create_offer_letter(
     request_data: OfferCreateRequest,
     request: Request,
@@ -52,7 +53,8 @@ async def create_offer_letter(
         raise HTTPException(status_code=500, detail=str(e))
 
 # ✅ Bulk create offer letters
-@router.post("/bulk_create", response_model=BulkOfferCreateResponse)
+@router.post("/bulk_create", response_model=BulkOfferCreateResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
+
 async def create_bulk_offer_letters(
     request: Request,
     file: UploadFile = File(...),
@@ -113,7 +115,7 @@ async def create_bulk_offer_letters(
 
 
 # ✅ Get all offers
-@router.get("/", response_model=list[OfferLetterDetailsResponse])
+@router.get("/", response_model=list[OfferLetterDetailsResponse], dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def get_all_offers(
     db: AsyncSession = Depends(get_db)
 ):
@@ -132,7 +134,8 @@ async def get_all_offers(
 
 import time
 
-@router.get("/user_id/details", response_model=list[OfferLetterDetailsResponse])
+@router.get("/user_id/details", response_model=list[OfferLetterDetailsResponse], dependencies=[Depends(require_roles("HR", "ADMIN"))])
+
 async def get_offer_by_user_id(
     request: Request,
     db: AsyncSession = Depends(get_read_db)
@@ -153,7 +156,8 @@ async def get_offer_by_user_id(
 
         
 # get offer by offer uuid
-@router.get("/offer/{user_uuid}", response_model=OfferLetterDetailsResponse)
+@router.get("/offer/{user_uuid}", response_model=OfferLetterDetailsResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
+
 async def get_offer_by_uuid(
     user_uuid: str,
     db: AsyncSession = Depends(get_db)
@@ -175,7 +179,8 @@ async def get_offer_by_uuid(
     
 
 
-@router.put("/{user_uuid}", response_model=OfferUpdateResponse)
+@router.put("/{user_uuid}", response_model=OfferUpdateResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
+
 async def update_offer_by_uuid(
     user_uuid: str,
     request_data: OfferCreateRequest,
@@ -201,7 +206,8 @@ async def update_offer_by_uuid(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/created", response_model=list[OfferLetterDetailsResponse])
+@router.get("/created", response_model=list[OfferLetterDetailsResponse], dependencies=[Depends(require_roles("HR", "ADMIN"))])
+
 async def get_created_offerletters(
     request: Request,
     db: AsyncSession = Depends(get_db)
@@ -217,7 +223,8 @@ async def get_created_offerletters(
     return result
 
 
-@router.post("/bulk-send")
+@router.post("/bulk-send", dependencies=[Depends(require_roles("HR", "ADMIN"))])
+
 async def bulk_send_offer_letters(
     request_data: BulkSendOfferLettersRequest,
     request: Request,
