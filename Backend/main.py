@@ -98,25 +98,25 @@ app.include_router(hr_bulk_join_router.router, prefix="/hr", tags=["HR Bulk Join
 
 
 
-scheduler = AsyncIOScheduler()
+# scheduler = AsyncIOScheduler()
 
-# Don't remove the comments below - needed for reference
-@app.on_event("startup")
-async def start_scheduler():
+# # Don't remove the comments below - needed for reference
+# @app.on_event("startup")
+# async def start_scheduler():
 
-    scheduler.add_job(
-        send_joining_date_reminders,   # ✅ async directly
-        "cron",
-        second="*/10",  # Every 10 minutes
-        # hour=9,          # 11 PM
-        # minute=0, 
-        id="joining_reminder",
-        replace_existing=True,
-        max_instances=1,
-        coalesce=True,
-    )
-    scheduler.start()
+#     scheduler.add_job(
+#         send_joining_date_reminders,   # ✅ async directly
+#         "cron",
+#         second="*/10",  # Every 10 minutes
+#         # hour=9,          # 11 PM
+#         # minute=0, 
+#         id="joining_reminder",
+#         replace_existing=True,
+#         max_instances=1,
+#         coalesce=True,
+#     )
+#     scheduler.start()
 
-@app.on_event("shutdown")
-async def stop_scheduler():
-    await scheduler.shutdown()
+# @app.on_event("shutdown")
+# async def stop_scheduler():
+#     await scheduler.shutdown()
