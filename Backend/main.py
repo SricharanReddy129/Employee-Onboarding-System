@@ -1,5 +1,7 @@
+# from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from Backend.API_Layer.routes import docusign_token_generation_route, employee_experience_routes, hr_bulk_join_router, hr_onboarding_routes, offer_approval_action_routes, otp_routes, redis_cache_routes
 from .API_Layer.routes import (master_routes, offerletter_routes, education_routes, offerresponse_routes, employee_details_routes,
@@ -10,6 +12,7 @@ from .API_Layer.middleware.audit_middleware import AuditMiddleware
 from Backend.API_Layer.routes import token_verification_router
 from Backend.API_Layer.routes import offer_acceptance_request_routes
 from Backend.API_Layer.routes import offer_approval_action_routes
+from Backend.corn_jobs.joining_reminder import send_joining_date_reminders
 
 
 # from fastapi_cache.backends.redis import RedisBackend
@@ -91,3 +94,26 @@ app.include_router(docusign_token_generation_route.router, prefix="/docusign", t
 app.include_router(redis_cache_routes.router, prefix="/cache", tags=["Redis Cache"])
 app.include_router(hr_bulk_join_router.router, prefix="/hr", tags=["HR Bulk Join"])
 
+
+scheduler = AsyncIOScheduler()
+
+# Don't remove the comments below - needed for reference
+# @app.on_event("startup")
+# async def start_scheduler():
+
+#     scheduler.add_job(
+#         send_joining_date_reminders,   # ✅ async directly
+#         "cron",
+#         second="*/10",  # Every 10 minutes
+#         # hour=9,          # 11 PM
+#         # minute=0, 
+#         id="joining_reminder",
+#         replace_existing=True,
+#         max_instances=1,
+#         coalesce=True,
+#     )
+#     scheduler.start()
+
+# @app.on_event("shutdown")
+# async def stop_scheduler():
+#     await scheduler.shutdown()

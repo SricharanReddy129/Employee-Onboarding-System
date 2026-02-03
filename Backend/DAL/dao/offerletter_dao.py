@@ -1,4 +1,5 @@
 # Backend/DAL/dao/offerletter_dao.py
+import datetime
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.models.models import OfferLetterDetails
@@ -256,3 +257,19 @@ class OfferLetterDAO:
 
         # 2. Return the value
         return draft_id
+    
+    async def get_upcoming_joinings(self):
+
+        today = datetime.date.today()
+        three_days_later = today + datetime.timedelta(days=3)
+    
+        stmt = (
+            select(OfferLetterDetails)
+            .where(
+                OfferLetterDetails.joining_date == three_days_later
+            )
+        )
+
+        result = await self.db.execute(stmt)
+
+        return result.scalars().all()
