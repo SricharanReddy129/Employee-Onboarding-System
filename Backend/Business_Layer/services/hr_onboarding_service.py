@@ -28,21 +28,21 @@ class HrOnboardingService:
             if await self.offer_dao.get_offer_by_uuid(user_uuid) is None:
                 raise HTTPException(status_code=404, detail="Offer Letter Not Found")
             
-            personal_details = await self.dao.get_personal_details_by_uuid(user_uuid)
-            if personal_details is None:
-                raise HTTPException(status_code=404, detail="Personal Details Not Found for this user")
-            address_details = await self.dao.get_address_details_by_uuid(user_uuid)
-            if address_details is None:
-                raise HTTPException(status_code=404, detail="Address Details Not Found for this user")
-            identity_details = await self.dao.get_identity_details_by_uuid(user_uuid)
-            if identity_details is None:
-                raise HTTPException(status_code=404, detail="Identity Details Not Found for this user")
-            education_details = await self.dao.get_education_details_by_uuid(user_uuid)
-            if education_details is None:
-                raise HTTPException(status_code=404, detail="Education Details Not Found for this user")
-            experience_details = await self.dao.get_experience_details_by_uuid(user_uuid)
-            if experience_details is None:
-                raise HTTPException(status_code=404, detail="Experience Details Not Found for this user") 
+            # personal_details = await self.dao.get_personal_details_by_uuid(user_uuid)
+            # if personal_details is None:
+            #     raise HTTPException(status_code=404, detail="Personal Details Not Found for this user")
+            # address_details = await self.dao.get_address_details_by_uuid(user_uuid)
+            # if address_details is None:
+            #     raise HTTPException(status_code=404, detail="Address Details Not Found for this user")
+            # identity_details = await self.dao.get_identity_details_by_uuid(user_uuid)
+            # if identity_details is None:
+            #     raise HTTPException(status_code=404, detail="Identity Details Not Found for this user")
+            # education_details = await self.dao.get_education_details_by_uuid(user_uuid)
+            # if education_details is None:
+            #     raise HTTPException(status_code=404, detail="Education Details Not Found for this user")
+            # experience_details = await self.dao.get_experience_details_by_uuid(user_uuid)
+            # if experience_details is None:
+            #     raise HTTPException(status_code=404, detail="Experience Details Not Found for this user") 
             
             await self.dao.final_submit_onboarding(user_uuid)
             return {"message": "Onboarding submitted successfully"}
