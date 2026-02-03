@@ -156,7 +156,7 @@ async def get_offer_by_user_id(
 
         
 # get offer by offer uuid
-@router.get("/offer/{user_uuid}", response_model=OfferLetterDetailsResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
+@router.get("/offer/{user_uuid}", response_model=OfferLetterDetailsResponse)
 
 async def get_offer_by_uuid(
     user_uuid: str,
