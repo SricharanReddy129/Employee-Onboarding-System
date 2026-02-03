@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..utils.role_based import require_roles
 
 router = APIRouter()
-@router.get("/docusign/token", dependencies=[Depends(require_roles("HR", "ADMIN"))])
+@router.get("/docusign/token")
 def get_docusign_token():
     """
     Generates a DocuSign JWT access token
@@ -24,7 +24,7 @@ def get_docusign_token():
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.post("/webhooks/docusign", dependencies=[Depends(require_roles("HR", "ADMIN"))])
+@router.post("/webhooks/docusign")
 async def docusign_webhook(request: Request,
             db: AsyncSession = Depends(get_db)
             ):
