@@ -23,56 +23,32 @@ class HrOnboardingService:
     # =================================================
     # FINAL SUBMIT – STORE ALL DETAILS (CANDIDATE)
     # =================================================
-    async def final_submit_onboarding(self, payload, current_user_id: int):
-        """
-        This method is called by:
-        POST /hr/onboarding/submit
-
-        - Stores ALL onboarding details
-        - Uses ONE DB transaction
-        - Rolls back if ANY step fails
-        """
-
-        async with self.db.begin():  # 🔥 ONE TRANSACTION
-
-            # -------------------------
-            # 1️⃣ PERSONAL DETAILS
-            # -------------------------
-            await self.dao.create_personal_details(
-                payload.personal_details.dict()
-            )
-
-            # -------------------------
-            # 2️⃣ ADDRESSES
-            # -------------------------
-            for address in payload.addresses:
-                await self.dao.create_address(address.dict())
-
-            # -------------------------
-            # 3️⃣ IDENTITY DOCUMENTS
-            # -------------------------
-            for doc in payload.identity_documents:
-                await self.dao.create_identity_document(
-                    user_uuid=payload.user_uuid,
-                    mapping_uuid=doc.mapping_uuid,
-                    file_path=doc.file_path,
-                )
-
-            # -------------------------
-            # 4️⃣ EDUCATION DOCUMENTS
-            # -------------------------
-            for edu in payload.education_details:
-                await self.dao.create_education_document(edu.dict())
-
-            # -------------------------
-            # 5️⃣ EXPERIENCE DETAILS
-            # -------------------------
-            for exp in payload.experience_details:
-                await self.dao.create_experience(exp.dict())
-
-            await self.offer_dao.update_offerletter_status(
-                user_uuid=payload.user_uuid, status="Submitted", current_user_id=current_user_id
-            )
+    async def final_submit_onboarding(self, user_uuid):
+        try:
+            if await self.offer_dao.get_offer_by_uuid(user_uuid) is None:
+                raise HTTPException(status_code=404, detail="Offer Letter Not Found")
+            
+            personal_details = await self.dao.get_personal_details_by_uuid(user_uuid)
+            if personal_details is None:
+                raise HTTPException(status_code=404, detail="Personal Details Not Found for this user")
+            address_details = await self.dao.get_address_details_by_uuid(user_uuid)
+            if address_details is None:
+                raise HTTPException(status_code=404, detail="Address Details Not Found for this user")
+            identity_details = await self.dao.get_identity_details_by_uuid(user_uuid)
+            if identity_details is None:
+                raise HTTPException(status_code=404, detail="Identity Details Not Found for this user")
+            education_details = await self.dao.get_education_details_by_uuid(user_uuid)
+            if education_details is None:
+                raise HTTPException(status_code=404, detail="Education Details Not Found for this user")
+            experience_details = await self.dao.get_experience_details_by_uuid(user_uuid)
+            if experience_details is None:
+                raise HTTPException(status_code=404, detail="Experience Details Not Found for this user") 
+            
+            await self.dao.final_submit_onboarding(user_uuid)
+            return {"message": "Onboarding submitted successfully"}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+        
 
     async def view_onboarding_documents(self, file_path: str):
         try:
