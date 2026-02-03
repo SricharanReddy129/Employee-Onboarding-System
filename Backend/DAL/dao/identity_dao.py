@@ -1,8 +1,9 @@
 import dbm
 from http.client import HTTPException
+from tracemalloc import start
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..models.models import IdentityType, CountryIdentityMapping, EmployeeIdentityDocument, OfferLetterDetails
-from sqlalchemy import select, update, exists
+from sqlalchemy import select, update, exists, delete
 
 import time
 class IdentityDAO:
@@ -14,7 +15,6 @@ class IdentityDAO:
 
 
     async def get_all_identity_types(self):
-        start = time.perf_counter()
 
         stmt = select(
             IdentityType.identity_type_uuid,
@@ -22,24 +22,22 @@ class IdentityDAO:
             IdentityType.description,
             IdentityType.is_active
         )
-
-        t1 = time.perf_counter()
         result = await self.db.execute(stmt)
-        print("⏱ DB execute:", time.perf_counter() - t1)
-
-        t2 = time.perf_counter()
         rows = result.all()
-        print("⏱ Result processing:", time.perf_counter() - t2)
-
-        print("⏱ DAO total:", time.perf_counter() - start)
-
         return [row._mapping for row in rows]
 
 
     
     async def get_identity_type_by_uuid(self, uuid):
-        result = await self.db.execute(select(IdentityType).where(IdentityType.identity_type_uuid == uuid))
-        return result.scalar_one_or_none()
+        start = time.perf_counter()
+        result = await self.db.scalar(
+            select(IdentityType.identity_type_uuid)
+            .where(IdentityType.identity_type_uuid == uuid)
+            .limit(1)
+        )
+        print("⏱ DAO get_identity_type_by_uuid:", time.perf_counter() - start)
+        return result
+
     
     async def get_identity_type_by_name_and_status(self, name, is_active):
         result = await self.db.execute(select(IdentityType).where(IdentityType.identity_type_name == name).where(IdentityType.is_active == is_active))
@@ -103,29 +101,57 @@ class IdentityDAO:
 
     # Country Identity Mapping DAO Methods
     async def get_country_identity_mapping(self, country_uuid, identity_type_uuid):
-        result = await self.db.execute(select(CountryIdentityMapping).where(CountryIdentityMapping.country_uuid == country_uuid).where(
-            CountryIdentityMapping.identity_type_uuid == identity_type_uuid
-        ))
-        return result.scalar_one_or_none()
+        return await self.db.scalar(
+            select(CountryIdentityMapping.mapping_uuid)
+            .where(
+                CountryIdentityMapping.country_uuid == country_uuid,
+                CountryIdentityMapping.identity_type_uuid == identity_type_uuid
+            )
+            .limit(1)
+        )
+
+
     
     async def create_country_identity_mapping(self, request_data, uuid):
+        start = time.perf_counter()
         country_identity_mapping = CountryIdentityMapping(
             mapping_uuid = uuid,
             country_uuid = request_data.country_uuid,
             identity_type_uuid = request_data.identity_type_uuid,
             is_mandatory = request_data.is_mandatory
         )
+        print("DAO CREATE MAPPING OBJECT TIME:", time.perf_counter() - start)
         self.db.add(country_identity_mapping)
         await self.db.commit()
-        await self.db.refresh(country_identity_mapping)
+        
         return country_identity_mapping
+
     async def get_country_identity_mapping_by_uuid(self, uuid):
-        result = await self.db.execute(select(CountryIdentityMapping).where(CountryIdentityMapping.mapping_uuid == uuid))
-        return result.scalar_one_or_none()
+        start = time.perf_counter()
+
+        mapping = await self.db.scalar(
+            select(CountryIdentityMapping)
+            .where(CountryIdentityMapping.mapping_uuid == uuid)
+            .limit(1)
+        )
+
+        print("DAO GET MAPPING BY UUID TIME:", time.perf_counter() - start)
+        return mapping
+
     
     async def get_all_country_identity_mappings(self):
-        result = await self.db.execute(select(CountryIdentityMapping))
-        return result.scalars().all()
+        start = time.perf_counter()
+        stmt = select(
+            CountryIdentityMapping.mapping_uuid,
+            CountryIdentityMapping.country_uuid,
+            CountryIdentityMapping.identity_type_uuid,
+            CountryIdentityMapping.is_mandatory
+        )
+
+        result = await self.db.execute(stmt)
+        rows =  result.mappings().all()
+        print("TOTAL DAO TIME:", time.perf_counter() - start)
+        return rows
     
     async def update_country_identity_mapping(self, uuid, request_data):
         result = await self.db.execute(
@@ -160,14 +186,16 @@ class IdentityDAO:
 
     
     async def delete_country_identity_mapping(self, uuid):
-        print("uuid", uuid)
-        result = await self.db.execute(select(CountryIdentityMapping).where(CountryIdentityMapping.mapping_uuid == uuid))
-        print("result", result)
-        mapping = result.scalar_one_or_none()
-        await self.db.delete(mapping)
+        stmt = (
+            delete(CountryIdentityMapping)
+            .where(CountryIdentityMapping.mapping_uuid == uuid)
+        )
+
+        result = await self.db.execute(stmt)
         await self.db.commit()
-        print("hello")
-        return mapping
+
+        return result.rowcount > 0
+
     
     async def get_identities_by_country_uuid(self, country_uuid: str):
         stmt = (
@@ -184,7 +212,7 @@ class IdentityDAO:
             )
             .where(
                 CountryIdentityMapping.country_uuid == country_uuid,
-                CountryIdentityMapping.is_mandatory == True
+                CountryIdentityMapping.is_mandatory.is_(True)
             )
         )
 
@@ -192,27 +220,30 @@ class IdentityDAO:
         return result.mappings().all()
     
     async def get_employee_identity_documents_by_mapping_uuid(self, mapping_uuid):
-            stmt = (
-                select(
-                    OfferLetterDetails.first_name,
-                    OfferLetterDetails.last_name,
-                    EmployeeIdentityDocument.mapping_uuid,
-                    EmployeeIdentityDocument.user_uuid,
-                    EmployeeIdentityDocument.document_uuid
-                )
-                .select_from(CountryIdentityMapping)
-                .join(
-                    EmployeeIdentityDocument,
-                    EmployeeIdentityDocument.mapping_uuid == CountryIdentityMapping.mapping_uuid
-                )
-                .join(
-                    OfferLetterDetails,
-                    OfferLetterDetails.user_uuid == EmployeeIdentityDocument.user_uuid
-                )
-                .where(
-                    CountryIdentityMapping.mapping_uuid == mapping_uuid)
-                )
+        stmt = (
+            select(
+                OfferLetterDetails.first_name,
+                OfferLetterDetails.last_name,
+                EmployeeIdentityDocument.mapping_uuid,
+                EmployeeIdentityDocument.user_uuid,
+                EmployeeIdentityDocument.document_uuid
+            )
+            .select_from(CountryIdentityMapping)
+            .join(
+                EmployeeIdentityDocument,
+                EmployeeIdentityDocument.mapping_uuid == CountryIdentityMapping.mapping_uuid
+            )
+            .join(
+                OfferLetterDetails,
+                OfferLetterDetails.user_uuid == EmployeeIdentityDocument.user_uuid
+            )
+            .where(
+                CountryIdentityMapping.mapping_uuid == mapping_uuid
+            )
+            .limit(1)
+        )
+
+        result = await self.db.execute(stmt)
+        return result.all()
+
         
-            result = await self.db.execute(stmt)
-            return result.all() 
-    

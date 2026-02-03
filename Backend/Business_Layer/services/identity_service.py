@@ -5,7 +5,7 @@ from Backend.API_Layer.interfaces.identity_interfaces import CountryIdentityDrop
 from ...DAL.dao.identity_dao import IdentityDAO
 from ...DAL.dao.master_dao import CountryDAO
 from ..utils.uuid_generator import generate_uuid7
-
+import time
 class IdentityService:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -65,9 +65,7 @@ class IdentityService:
     # Country Identity Mapping Services
     async def create_country_identity_mapping(self, request_data):
         try:
-            existing = await self.country_dao.get_country_by_uuid(request_data.country_uuid)
-            if not existing:
-                raise HTTPException(status_code=404, detail="Country Not Found")
+           
             existing = await self.dao.get_identity_type_by_uuid(request_data.identity_type_uuid)
             if not existing:
                 raise HTTPException(status_code=404, detail="Identity Type Not Found")
@@ -133,36 +131,36 @@ class IdentityService:
 
             
     async def delete_country_identity_mapping(self, uuid):
-        try:
-            existing = await self.dao.get_country_identity_mapping_by_uuid(uuid)
-            if not existing:
-                raise HTTPException(status_code=404, detail = "Country Identity mapping not found")
-            employee_existing = await self.dao.get_employee_identity_documents_by_mapping_uuid(uuid)
 
-            if employee_existing:
-                raise HTTPException(
-                    status_code=422,
-                    detail={
-                        "message": "Cannot delete mapping as it is associated with employee identity documents",
-                        "employees": [
-                            {
-                                "user_uuid": row.user_uuid,
-                                "mapping_uuid": row.mapping_uuid,
-                                "first_name": row.first_name,
-                                "last_name": row.last_name,
-                                "document_uuid": row.document_uuid
-                            }
-                            for row in employee_existing
-                        ]
-                    }
-                )
+        employee_existing = await self.dao.get_employee_identity_documents_by_mapping_uuid(uuid)
 
-            await self.dao.delete_country_identity_mapping(uuid)
-        except HTTPException as he:
-            raise he
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-        
+        if employee_existing:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "message": "Cannot delete mapping as it is associated with employee identity documents",
+                    "employees": [
+                        {
+                            "user_uuid": row.user_uuid,
+                            "mapping_uuid": row.mapping_uuid,
+                            "first_name": row.first_name,
+                            "last_name": row.last_name,
+                            "document_uuid": row.document_uuid
+                        }
+                        for row in employee_existing
+                    ]
+                }
+            )
+
+        deleted = await self.dao.delete_country_identity_mapping(uuid)
+
+        if not deleted:
+            raise HTTPException(
+                status_code=404,
+                detail="Country Identity mapping not found"
+            )
+
+
   
     # async def get_identities_by_country(self, country_uuid: str):
     #     try:
@@ -177,24 +175,12 @@ class IdentityService:
     #         raise HTTPException(status_code=500, detail=str(e))
         
     async def get_identities_by_country(self, country_uuid: str):
-        try:
-            existing_country = await self.country_dao.get_country_by_uuid(country_uuid)
-            if not existing_country:
-                raise HTTPException(status_code=404, detail="Country Not Found")
+        rows = await self.dao.get_identities_by_country_uuid(country_uuid)
 
-            rows = await self.dao.get_identities_by_country_uuid(country_uuid)
+        if not rows:
+            raise HTTPException(
+                status_code=404,
+                detail="Country not found or no identities configured"
+            )
 
-            return [
-                CountryIdentityDropdownResponse(
-                    mapping_uuid=row["mapping_uuid"],          # ✅ FIX
-                    identity_type_uuid=row["identity_type_uuid"],
-                    identity_type_name=row["identity_type_name"],
-                    is_mandatory=row["is_mandatory"],
-                )
-                for row in rows
-            ]
-
-        except HTTPException as he:
-            raise he
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+        return rows
