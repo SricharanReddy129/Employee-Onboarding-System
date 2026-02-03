@@ -19,17 +19,17 @@ class IdentityDocumentSubmit(BaseModel):
 class HrOnboardingSubmitRequest(BaseModel):
     user_uuid: str
 
-    # Personal
-    personal_details: PersonalDetailsRequest
+    # # Personal
+    # personal_details: PersonalDetailsRequest
 
-    # Address (current + permanent)
-    addresses: List[CreateAddressRequest]
+    # # Address (current + permanent)
+    # addresses: List[CreateAddressRequest]
 
-    # Education
-    education_details: List[EmployeEduDocDetails]
+    # # Education
+    # education_details: List[EmployeEduDocDetails]
 
-    # Experience
-    experience_details: List[ExperienceCreateRequest]
+    # # Experience
+    # experience_details: List[ExperienceCreateRequest]
 
-    # Identity proofs
-    identity_documents: List[IdentityDocumentSubmit]
+    # # Identity proofs
+    # identity_documents: List[IdentityDocumentSubmit]

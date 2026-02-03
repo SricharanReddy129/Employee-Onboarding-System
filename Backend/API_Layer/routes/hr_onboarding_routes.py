@@ -12,7 +12,7 @@ from ..utils.role_based import require_roles
 router = APIRouter()
 
 
-@router.get("/hr/{user_uuid}", dependencies=[Depends(require_roles("HR", "ADMIN"))])
+@router.get("/hr/{user_uuid}")
 async def get_full_onboarding_details(user_uuid: str, request: Request, db: AsyncSession = Depends(get_db)):
     current_user_id = int(request.state.user.get("user_id"))
     service = HrOnboardingService(db)
@@ -23,18 +23,14 @@ async def get_full_onboarding_details(user_uuid: str, request: Request, db: Asyn
 
 
 
-@router.post("/candidate/submit", dependencies=[Depends(require_roles("HR", "ADMIN"))])
+@router.post("/candidate/submit")
 async def submit_onboarding(
     payload: HrOnboardingSubmitRequest,
-    request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     service = HrOnboardingService(db)
-    
-    current_user_id = int(request.state.user.get("user_id"))  # Access user info from request state
-    print("current user id:", current_user_id)
 
-    await service.final_submit_onboarding(payload, current_user_id)
+    await service.final_submit_onboarding(payload.user_uuid)
     return {"message": "Onboarding submitted successfully"}
 
 

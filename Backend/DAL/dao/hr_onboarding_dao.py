@@ -398,7 +398,7 @@ class HrOnboardingDAO:
             return False
         
 
-        # =================================================
+    # =================================================
     # HR VERIFY / REJECT PROFILE
     # =================================================
     async def update_hr_verification_status(
@@ -424,3 +424,42 @@ class HrOnboardingDAO:
         result = await self.db.execute(stmt)
 
         return result.rowcount > 0
+    
+    async def final_submit_onboarding(self, user_uuid):
+        stmt = (
+            update(OfferLetterDetails)
+            .where(OfferLetterDetails.user_uuid == user_uuid)
+            .values(
+                status="Submitted"
+            )
+        )
+
+        result = await self.db.execute(stmt)
+        await self.db.commit()
+
+        return result.rowcount > 0
+    
+    async def get_personal_details_by_uuid(self, user_uuid):
+        stmt = select(PersonalDetails.user_uuid).where(PersonalDetails.user_uuid == user_uuid)
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+    
+    async def get_address_details_by_uuid(self, user_uuid):
+        stmt = select(Addresses.user_uuid).where(Addresses.user_uuid == user_uuid)
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+    
+    async def get_identity_details_by_uuid(self, user_uuid):
+        stmt = select(EmployeeIdentityDocument.user_uuid).where(EmployeeIdentityDocument.user_uuid == user_uuid)
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+    
+    async def get_education_details_by_uuid(self, user_uuid):
+        stmt = select(EmployeeEducationDocument.user_uuid).where(EmployeeEducationDocument.user_uuid == user_uuid)
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
+    
+    async def get_experience_details_by_uuid(self, user_uuid):
+        stmt = select(EmployeeExperience.employee_uuid).where(EmployeeExperience.employee_uuid == user_uuid)
+        result = await self.db.execute(stmt)
+        return result.scalars().first()
