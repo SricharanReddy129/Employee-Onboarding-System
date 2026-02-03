@@ -8,8 +8,16 @@ from Backend.DAL.dao.offerletter_dao import OfferLetterDAO
 import re
 import asyncio
 import time
+from datetime import datetime
+from Backend.Business_Layer.utils.email_utils import send_hr_onboarding_submitted_email,send_candidate_onboarding_submitted_email
+
 # from fastapi_cache.decorator import cache
+
+
 class HrOnboardingService:
+
+    HR_EMAIL = "lokeswari353@gmail.com"
+    VERIFY_DOCUMENTS_URL = "https://paves-employee-onboarding-frontend.vercel.app/verify-documents"
     def __init__(self, db: AsyncSession):
         self.db = db
         self.dao = HrOnboardingDAO(db)
@@ -23,6 +31,8 @@ class HrOnboardingService:
     # =================================================
     # FINAL SUBMIT – STORE ALL DETAILS (CANDIDATE)
     # =================================================
+
+
     async def final_submit_onboarding(self, user_uuid):
         try:
             if await self.offer_dao.get_offer_by_uuid(user_uuid) is None:
@@ -45,6 +55,26 @@ class HrOnboardingService:
                 raise HTTPException(status_code=404, detail="Experience Details Not Found for this user") 
             
             await self.dao.final_submit_onboarding(user_uuid)
+
+                    # ✅ EMAIL TRIGGER (ONLY ADDITION)
+            offer = await self.offer_dao.get_offer_by_uuid(user_uuid)
+            candidate_name = f"{offer.first_name} {offer.last_name}"
+
+                # Candidate email
+            send_candidate_onboarding_submitted_email(
+                to_email=offer.mail,
+                candidate_name=candidate_name
+            )
+
+                # HR email
+            send_hr_onboarding_submitted_email(
+                    hr_email=self.HR_EMAIL,
+                    candidate_name=candidate_name,
+                    candidate_uuid=user_uuid,
+                    submitted_at=datetime.utcnow(),
+                    verify_documents_url=f"{self.VERIFY_URL}/{user_uuid}"
+            )
+
             return {"message": "Onboarding submitted successfully"}
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
