@@ -85,7 +85,7 @@ async def delete_education_document_by_uuid(uuid: str, db: AsyncSession = Depend
 ## Employee Education Documents ##
     
 # creating employee eductaion documents and related details
-@router.post("/employee-education-document", response_model=UploadFileResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
+@router.post("/employee-education-document", response_model=UploadFileResponse)
 async def create_employee_education_document(
     mapping_uuid: str = Form(...),
     user_uuid: str = Form(...),
@@ -118,7 +118,7 @@ async def create_employee_education_document(
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-@router.put("/employee-education-document/{document_uuid}", response_model=UploadFileResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
+@router.put("/employee-education-document/{document_uuid}", response_model=UploadFileResponse)
 async def update_employee_education_document(
     document_uuid: str,
     mapping_uuid: str = Form(...),
