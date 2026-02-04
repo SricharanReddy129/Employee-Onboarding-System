@@ -63,7 +63,7 @@ class HrOnboardingService:
             send_candidate_onboarding_submitted_email(
                 to_email=offer.mail,
                 candidate_name=candidate_name
-            )
+            ) 
 
                 # HR email
             send_hr_onboarding_submitted_email(

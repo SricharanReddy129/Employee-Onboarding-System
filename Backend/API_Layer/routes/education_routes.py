@@ -156,7 +156,7 @@ async def update_employee_education_document(
         raise HTTPException(status_code=500, detail=str(e))
 
 # get all employee education documents
-@router.get("/employee-education-document", response_model=list[EmployeEduDocDetails], dependencies=[Depends(require_roles("HR", "ADMIN"))])
+@router.get("/employee-education-document", response_model=list[EmployeEduDocDetails])
 async def get_all_employee_education_documents(db: AsyncSession = Depends(get_db)):
     try:
         print("entering routes")
