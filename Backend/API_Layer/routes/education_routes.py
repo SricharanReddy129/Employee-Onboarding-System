@@ -196,7 +196,7 @@ async def delete_employee_education_document_by_uuid(uuid: str, db: AsyncSession
         raise HTTPException(status_code=500, detail=str(e))
     
 
-@router.get("/country-mapping/{country_uuid}",response_model=list[CountryEducationMappingResponse], dependencies=[Depends(require_roles("HR", "ADMIN"))])
+@router.get("/country-mapping/{country_uuid}",response_model=list[CountryEducationMappingResponse])
 async def get_education_identity_mappings_by_country_uuid(country_uuid: str, db: AsyncSession = Depends(get_db)):
     try:
         print("In route")
