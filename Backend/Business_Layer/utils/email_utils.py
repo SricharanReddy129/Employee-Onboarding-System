@@ -1,17 +1,17 @@
 import smtplib
 from email.message import EmailMessage
-from ...config.env_loader import get_env_var 
+# from ...config.env_loader import get_env_var 
 from datetime import datetime
 
-# import os
-# from dotenv import load_dotenv
-# load_dotenv()
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
-# def get_env_var(var_name: str) -> str:
-#     value = os.getenv(var_name)
-#     if value is None:
-#         raise EnvironmentError(f"Environment variable '{var_name}' not found.")
-#     return value
+def get_env_var(var_name: str) -> str:
+    value = os.getenv(var_name)
+    if value is None:
+        raise EnvironmentError(f"Environment variable '{var_name}' not found.")
+    return value
 
 EMAIL_USER = get_env_var("EMAIL_USER")
 EMAIL_PASSWORD = get_env_var("EMAIL_PASSWORD")
@@ -174,9 +174,8 @@ Paves Technologies
 def send_hr_onboarding_submitted_email(
     hr_email: str,
     candidate_name: str,
-    candidate_uuid: str,
+    candidate_email: str,
     submitted_at: datetime,
-    verify_documents_url: str,
     subject: str = "Candidate Onboarding Submitted"
 ):
     """
@@ -193,13 +192,8 @@ A candidate has completed the onboarding submission.
 Candidate Details:
 -------------------
 Candidate Name : {candidate_name}
-Candidate UUID : {candidate_uuid}
+Candidate Email : {candidate_email}
 Submitted At   : {submitted_time}
-
-Verify Documents:
------------------
-{verify_documents_url}
-
 
 Regards,  
 Employee Onboarding System  

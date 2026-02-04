@@ -17,7 +17,6 @@ from Backend.Business_Layer.utils.email_utils import send_hr_onboarding_submitte
 class HrOnboardingService:
 
     HR_EMAIL = "lokeswari353@gmail.com"
-    VERIFY_DOCUMENTS_URL = "https://paves-employee-onboarding-frontend.vercel.app/verify-documents"
     def __init__(self, db: AsyncSession):
         self.db = db
         self.dao = HrOnboardingDAO(db)
@@ -70,9 +69,8 @@ class HrOnboardingService:
             send_hr_onboarding_submitted_email(
                     hr_email=self.HR_EMAIL,
                     candidate_name=candidate_name,
-                    candidate_uuid=user_uuid,
-                    submitted_at=datetime.utcnow(),
-                    verify_documents_url=f"{self.VERIFY_URL}/{user_uuid}"
+                    candidate_email=offer.mail,
+                    submitted_at=datetime.utcnow()
             )
 
             return {"message": "Onboarding submitted successfully"}
