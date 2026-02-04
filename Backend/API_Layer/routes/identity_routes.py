@@ -147,7 +147,7 @@ async def delete_country_identity_mapping(
 
 
 
-@router.get("/country-mapping/identities/{country_uuid}", response_model=list[CountryIdentityDropdownResponse], dependencies=[Depends(require_roles("HR", "ADMIN"))])
+@router.get("/country-mapping/identities/{country_uuid}", response_model=list[CountryIdentityDropdownResponse])
 async def get_identities_by_country(country_uuid: str, db: AsyncSession = Depends(get_db),):
     try:
         identity_service = IdentityService(db)
