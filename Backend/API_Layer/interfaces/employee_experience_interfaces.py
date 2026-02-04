@@ -68,6 +68,7 @@ class ExperienceCreateRequest(BaseModel):
     employment_type: EmploymentType
     is_current: Optional[int] = Field(0, ge=0, le=1)
     remarks: Optional[str] = Field(None, max_length=255)
+   
 
     # -------- VALIDATORS --------
 

@@ -9,10 +9,6 @@ import time
 class IdentityDAO:
     def __init__(self, db: AsyncSession):
         self.db = db
-    
-
-
-
 
     async def get_all_identity_types(self):
 
