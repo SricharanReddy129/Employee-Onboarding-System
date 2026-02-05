@@ -26,22 +26,23 @@ def get_oidc_metadata():
 
 def get_public_key_from_jwks(jwks_uri: str, kid: str):
     """Fetch public key from JWKS URI using key ID (kid)."""
-    #print(f"[JWTValidator] 🔑 Fetching JWKS from: {jwks_uri}")
+    print(f"[JWTValidator] 🔑 Fetching JWKS from: {jwks_uri}")
     try:
         resp = requests.get(jwks_uri, timeout=30)
         resp.raise_for_status()
         jwks = resp.json()
-        #print(f"[JWTValidator] ✅ Successfully fetched JWKS (keys count: {len(jwks.get('keys', []))})")
+        print(f"[JWTValidator] ✅ Successfully fetched JWKS (keys count: {len(jwks.get('keys', []))})")
     except requests.RequestException as e:
-        #print(f"[JWTValidator] ❌ Failed to fetch JWKS: {e}")
+        print(f"[JWTValidator] ❌ Failed to fetch JWKS: {e}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"Failed to fetch JWKS: {str(e)}"
         )
-
+    print(f"[JWTValidator] 🔍 Searching for key with kid: {kid}")
     for key in jwks.get("keys", []):
         if key.get("kid") == kid:
-            #print(f"[JWTValidator] 🔍 Matching 'kid' found: {kid}")
+            print(f"[JWTValidator] 🔍 Matching 'kid' found: {kid}")
+            print('kid', kid)
             return RSAAlgorithm.from_jwk(key)
     
     #print(f"[JWTValidator] ❌ No matching key found for kid: {kid}")

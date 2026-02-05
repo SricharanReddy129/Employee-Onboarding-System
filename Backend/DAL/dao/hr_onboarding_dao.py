@@ -29,6 +29,35 @@ from sqlalchemy.orm import noload
 class HrOnboardingDAO:
     def __init__(self, db: AsyncSession):
         self.db = db
+    def build_experience_documents(e):
+        documents = []
+
+        if e.exp_certificate_path:
+            documents.append({
+                "doc_type": "exp_certificate",
+                "file_path": e.exp_certificate_path
+            })
+
+        if e.payslip_path:
+            documents.append({
+                "doc_type": "payslip",
+                "file_path": e.payslip_path
+            })
+
+        if e.internship_certificate_path:
+            documents.append({
+                "doc_type": "internship_certificate",
+                "file_path": e.internship_certificate_path
+            })
+
+        if e.contract_aggrement_path:
+            documents.append({
+                "doc_type": "contract_aggrement",
+                "file_path": e.contract_aggrement_path
+            })
+
+        return documents
+
 
 
         
@@ -99,7 +128,7 @@ class HrOnboardingDAO:
     # OFFER / BASIC USER DETAILS
     # -------------------------------------------------
     
-
+    
     async def get_full_onboarding_details(self, user_uuid: str, current_user_id: int):
 
         TOTAL_START = time.time()
@@ -354,9 +383,13 @@ class HrOnboardingDAO:
                 "remarks": e.remarks,
                 "uploaded_at": e.uploaded_at,
                 "verified_at": e.verified_at,
+
+        # ✅ ADD THIS LINE
+                "documents": HrOnboardingDAO.build_experience_documents(e),
             }
             for e in experience_rows
         ]
+
 
         print("BUILD:", round(time.time() - t, 3), "s")
         print("TOTAL DAO:", round(time.time() - TOTAL_START, 3), "s")
