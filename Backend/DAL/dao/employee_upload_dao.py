@@ -106,4 +106,11 @@ class EmployeeUploadDAO:
         await self.db.commit()
         await self.db.refresh(identity)
 
-        return identity
+        return 
+    
+    async def get_address_by_uuid(self, address_uuid: str):
+     result = await self.db.execute(
+        select(Addresses).where(Addresses.address_uuid == address_uuid)
+     )
+     return result.scalar_one_or_none()
+
