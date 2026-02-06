@@ -37,7 +37,29 @@ async def create_address(request_data: CreateAddressRequest, db: AsyncSession = 
     except HTTPException as he:
         raise he
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))    
+
+
+
+@router.put("/address/{address_uuid}", response_model = CreateAddressResponse)   
+async def update_address(address_uuid: str, request_data: CreateAddressRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        address_service = EmployeeUploadService(db)
+        result = await address_service.update_address(address_uuid, request_data)
+        if result is None:
+            raise HTTPException(status_code=404, detail="Address not found")
+        return CreateAddressResponse(
+            address_uuid = result.address_uuid,
+            message = "Address Updated Successfully"
+        )
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))        
+
+
+    
+      
     # Employee Identity Document Routes #
 @router.post("/identity-documents", response_model=EmployeeIdentityResponse)
 async def create_employee_identity(

@@ -28,6 +28,8 @@ class EmployeeUploadDAO:
         print(user_uuid, address_type)
         result = await self.db.execute(select(Addresses).where(Addresses.user_uuid == user_uuid).where(Addresses.address_type == address_type))
         return result.scalar_one_or_none()
+    
+
     async def create_address(self, request_data, uuid):
         permanent_address = Addresses(
             address_uuid = uuid,
@@ -108,9 +110,35 @@ class EmployeeUploadDAO:
 
         return 
     
-    async def get_address_by_uuid(self, address_uuid: str):
-     result = await self.db.execute(
-        select(Addresses).where(Addresses.address_uuid == address_uuid)
-     )
-     return result.scalar_one_or_none()
+    # async def get_address_by_uuid(self, address_uuid: str):
+    #  result = await self.db.execute(
+    #     select(Addresses).where(Addresses.address_uuid == address_uuid)
+    #  )
+    #  return result.scalar_one_or_none()
+    
+    async def get_address_by_address_uuid(self, address_uuid: str):
+        result = await self.db.execute(
+            select(Addresses).where(Addresses.address_uuid == address_uuid)
+        )
+        return result.scalar_one_or_none()
+    
+    async def update_address(self, uuid, request_data):
+        result = await self.db.execute(
+            select(Addresses).where(Addresses.address_uuid == uuid)
+        )
+        existing = result.scalar_one_or_none()
+        if not existing:
+            return None
+        
+        existing.address_line1 = request_data.address_line1
+        existing.address_line2 = request_data.address_line2
+        existing.city = request_data.city
+        existing.district_or_ward = request_data.district_or_ward
+        existing.state_or_region = request_data.state_or_region
+        existing.country_uuid = request_data.country_uuid
+        existing.postal_code = request_data.postal_code
+        await self.db.commit()
+        await self.db.refresh(existing)
+        return existing
+    
 
