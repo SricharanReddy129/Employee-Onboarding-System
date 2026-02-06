@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 
 
-from Backend.API_Layer.interfaces.employee_experience_interfaces import  ExperienceCreateRequest, ExperienceCreateResponse
+from Backend.API_Layer.interfaces.employee_experience_interfaces import  ExperienceCreateRequest, ExperienceCreateResponse, ExperienceUpdate 
 from Backend.Business_Layer.utils.experience_document_rules import EMPLOYMENT_DOCUMENT_RULES
 
 from ...DAL.dao.employee_experience_dao import EmployeeExperienceDAO
@@ -103,26 +103,15 @@ class EmployeeExperienceService:
             raise HTTPException(status_code=404, detail="No Experience Found for this Employee")
         return result
 
-    # ------------------ UPDATE EXPERIENCE ------------------
-    async def update_experience(self, experience_uuid: str, request_data):
+   # ------------------ UPDATE EXPERIENCE ------------------
+    async def update_experience(self, experience_uuid: str, update_data: ExperienceUpdate):
         existing = await self.dao.get_experience_by_uuid(experience_uuid)
         if not existing:
-            raise HTTPException(status_code=404, detail="Experience Record Not Found")
+            raise HTTPException(status_code=404, detail="Experience Not Found")
 
-        user_exists = await self.offerdao.get_offer_by_uuid(existing.employee_uuid)
-        if not user_exists:
-            raise HTTPException(status_code=404, detail="Employee Not Found")
+        updated_record = await self.dao.update_experience(experience_uuid, update_data)
 
-        start_date = request_data.start_date
-        end_date = request_data.end_date
-        if start_date and end_date and end_date < start_date:
-            raise HTTPException(
-                status_code=400,
-                detail="end_date cannot be earlier than start_date"
-            )
-
-        return await self.dao.update_experience(experience_uuid, request_data)
-
+        return updated_record
     # ------------------ DELETE EXPERIENCE ------------------
     async def delete_experience(self, experience_uuid: str):
         existing = await self.dao.get_experience_by_uuid(experience_uuid)

@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date
 from typing import List
 from Backend.API_Layer.interfaces.employee_experience_interfaces import (ExperienceCreateRequest, ExperienceResponse, 
-                                                                         ExperienceCreateResponse, EmploymentType)
+                                                                         ExperienceCreateResponse, EmploymentType, ExperienceUpdate)
 
 from ...DAL.utils.dependencies import get_db
 from ...Business_Layer.services.employee_experience_service import EmployeeExperienceService
@@ -98,15 +98,12 @@ async def get_experience_by_employee_uuid(employee_uuid: str, db: AsyncSession =
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-# -------------------------------------------------------
-# UPDATE EXPERIENCE
-# -------------------------------------------------------
+# update experience details by experience uuid and also update certificates
 @router.put("/{experience_uuid}", response_model=ExperienceCreateResponse)
-async def update_experience(experience_uuid: str, request_data: ExperienceCreateRequest, db: AsyncSession = Depends(get_db)):
-    try:    
+async def update_experience(experience_uuid: str, update_data: ExperienceUpdate, db: AsyncSession = Depends(get_db)):
+    try:
         service = EmployeeExperienceService(db)
-        result = await service.update_experience(experience_uuid, request_data)
+        result = await service.update_experience(experience_uuid, update_data)
         return ExperienceCreateResponse(
             experience_uuid=result.experience_uuid,
             message="Experience record updated successfully"
@@ -114,8 +111,7 @@ async def update_experience(experience_uuid: str, request_data: ExperienceCreate
     except HTTPException as he:
         raise he
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
-    
+        raise HTTPException(status_code=500, detail=str(e))
 
 #------------------------------------------------------
 # UPDATE CERTIFICATES

@@ -120,23 +120,20 @@ class ExperienceResponse(BaseModel):
     experience_uuid: str
     employee_uuid: str
     company_name: str
+    role_title: str | None
+    employment_type: str
     start_date: date
-    end_date: Optional[date]
-    role_title: Optional[str]
-    employment_type:Optional[str]
-    is_current: Optional[int]
-    # exp_certificate_path: Optional[str]
-    # certificate_status: Optional[str]
-    # uploaded_at: Optional[datetime]
-    verified_by: Optional[str]
-    verified_at: Optional[datetime]
-    remarks: Optional[str]
-    # documents:list[ExperienceDocumentResponse]
-    created_at: Optional[datetime]
-    updated_at: Optional[datetime]
+    end_date: date | None
+    is_current: int
+    remarks: str | None
 
+    exp_certificate_path: str | None
+    payslip_path: str | None
+    internship_certificate_path: str | None
+    contract_aggrement_path: str | None
 
-
+    certificate_status: str
+    uploaded_at: datetime
 
 class GenericMessageResponse(BaseModel):
     experience_uuid: str
@@ -146,3 +143,14 @@ class GenericMessageResponse(BaseModel):
 class ExperienceCreateResponse(BaseModel):
     experience_uuid: str
     message: str
+
+class ExperienceUpdate(BaseModel):
+    company_name: str
+    role_title: str | None
+    employment_type: EmploymentType
+    start_date: date
+    end_date: date | None
+    is_current: int
+    remarks: str | None
+    
+
