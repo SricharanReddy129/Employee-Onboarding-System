@@ -89,18 +89,19 @@ class EmployeeUploadDAO:
         self,
         identity_uuid: str,
         mapping_uuid: str,
-        user_uuid: str,
         identity_file_number: str,
+        user_uuid: str,
         expiry_date: Optional[date],
         file_path: str
     ):
         result = await self.db.execute(
             select(EmployeeIdentityDocument).where(
                 EmployeeIdentityDocument.document_uuid == identity_uuid
-            )
+        )
         )
 
         identity = result.scalar_one_or_none()
+
         if not identity:
             return None
 
@@ -114,7 +115,11 @@ class EmployeeUploadDAO:
         await self.db.commit()
         await self.db.refresh(identity)
 
-        return 
+        return identity   # ⚠️ MUST RETURN
+
+   
+
+     
     
     # async def get_address_by_uuid(self, address_uuid: str):
     #  result = await self.db.execute(

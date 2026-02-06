@@ -146,21 +146,14 @@ class EmployeeUploadService:
         file: Optional[UploadFile],
     ):
         existing = await self.dao.get_employee_identity_by_uuid(identity_uuid)
+
         if not existing:
-            raise HTTPException(status_code=404, detail="Identity not found")
+            raise HTTPException(status_code=404, detail="Document not found")
 
         file_path = existing.file_path
 
         if file:
             blob_service = S3StorageService()
-
-            # optional delete old file
-            if existing.file_path:
-                try:
-                    await blob_service.delete_file(existing.file_path)
-                except:
-                    pass
-
             file_path = await blob_service.upload_file(
                 file,
                 "identity_documents",
@@ -168,16 +161,11 @@ class EmployeeUploadService:
                 employee_uuid=user_uuid
             )
 
-        updated = await self.dao.update_employee_identity(
-            identity_uuid=identity_uuid,
-            mapping_uuid=mapping_uuid,
-            user_uuid=user_uuid,
-            identity_file_number=identity_file_number,
-            expiry_date=expiry_date,
-            file_path=file_path,
+        return await self.dao.update_employee_identity(
+            identity_uuid,
+            mapping_uuid,
+            identity_file_number,
+            user_uuid,
+            expiry_date,
+            file_path
         )
-
-        if not updated:
-            raise HTTPException(status_code=404, detail="Update failed")
-
-        return updated

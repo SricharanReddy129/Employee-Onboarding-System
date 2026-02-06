@@ -93,7 +93,41 @@ async def create_employee_identity(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.put("/identity-documents/{identity_uuid}", response_model=EmployeeIdentityResponse)
+# @router.put("/identity-documents/{identity_uuid}", response_model=EmployeeIdentityResponse)
+# async def update_employee_identity(
+#     identity_uuid: str,
+#     mapping_uuid: str = Form(...),
+#     user_uuid: str = Form(...),
+#     identity_file_number: str = Form(...),
+#     expiry_date: Optional[date] = Form(None),
+#     file: Optional[UploadFile] = File(None),
+#     db: AsyncSession = Depends(get_db),
+# ):
+#     try:
+#         employee_service = EmployeeUploadService(db)
+
+#         result = await employee_service.update_employee_identity(
+#             identity_uuid=identity_uuid,
+#             mapping_uuid=mapping_uuid,
+#             user_uuid=user_uuid,
+#             identity_file_number=identity_file_number,
+#             expiry_date=expiry_date,
+#             file=file
+#         )
+
+#         return EmployeeIdentityResponse(
+#             identity_uuid=result.document_uuid,
+#             identity_file_number=result.identity_file_number,
+#             file_path=result.file_path,
+#             message="Employee Identity Document Updated Successfully"
+#         )
+
+#     except HTTPException as he:
+#         raise he
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
+@router.put("/identity-documents/{identity_uuid}")
 async def update_employee_identity(
     identity_uuid: str,
     mapping_uuid: str = Form(...),
@@ -103,29 +137,25 @@ async def update_employee_identity(
     file: Optional[UploadFile] = File(None),
     db: AsyncSession = Depends(get_db),
 ):
-    try:
-        employee_service = EmployeeUploadService(db)
+    service = EmployeeUploadService(db)
 
-        result = await employee_service.update_employee_identity(
-            identity_uuid=identity_uuid,
-            mapping_uuid=mapping_uuid,
-            user_uuid=user_uuid,
-            identity_file_number=identity_file_number,
-            expiry_date=expiry_date,
-            file=file
-        )
+    result = await service.update_employee_identity(
+        identity_uuid=identity_uuid,
+        mapping_uuid=mapping_uuid,
+        user_uuid=user_uuid,
+        identity_file_number=identity_file_number,
+        expiry_date=expiry_date,
+        file=file,
+    )
 
-        return EmployeeIdentityResponse(
-            identity_uuid=result.document_uuid,
-            identity_file_number=result.identity_file_number,
-            file_path=result.file_path,
-            message="Employee Identity Document Updated Successfully"
-        )
+    if not result:
+        raise HTTPException(status_code=404, detail="Update failed")
 
-    except HTTPException as he:
-        raise he
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return {
+        "identity_uuid": result.document_uuid,
+        "file_path": result.file_path,
+    }
+
     
 
 
