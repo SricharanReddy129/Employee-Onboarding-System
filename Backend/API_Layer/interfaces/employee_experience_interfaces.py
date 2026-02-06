@@ -151,6 +151,14 @@ class ExperienceUpdate(BaseModel):
     start_date: date
     end_date: date | None
     is_current: int
+    exp_certificate_path: str | None = None
+    internship_certificate_path: str | None = None
+    payslip_path: str | None = None
+    contract_aggrement_path: str | None = None
+
+    certificate_status: str | None = None
+    verified_by: str | None = None
+    verified_at: datetime | None = None
     remarks: str | None
     
 

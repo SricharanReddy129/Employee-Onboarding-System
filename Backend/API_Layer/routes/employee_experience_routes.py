@@ -100,18 +100,37 @@ async def get_experience_by_employee_uuid(employee_uuid: str, db: AsyncSession =
         raise HTTPException(status_code=500, detail=str(e))
 # update experience details by experience uuid and also update certificates
 @router.put("/{experience_uuid}", response_model=ExperienceCreateResponse)
-async def update_experience(experience_uuid: str, update_data: ExperienceUpdate, db: AsyncSession = Depends(get_db)):
-    try:
-        service = EmployeeExperienceService(db)
-        result = await service.update_experience(experience_uuid, update_data)
-        return ExperienceCreateResponse(
-            experience_uuid=result.experience_uuid,
-            message="Experience record updated successfully"
-        )
-    except HTTPException as he:
-        raise he
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+async def update_experience(
+    experience_uuid: str,
+
+    company_name: str = Form(...),
+    role_title: str | None = Form(None),
+    employment_type: EmploymentType = Form(...),
+    start_date: date = Form(...),
+    end_date: date | None = Form(None),
+    is_current: int = Form(0),
+    remarks: str | None = Form(None),
+
+    doc_types: List[str] = Form([]),
+    files: List[UploadFile] | None = File(None),
+
+    db: AsyncSession = Depends(get_db),
+):
+    service = EmployeeExperienceService(db)
+
+    return await service.update_experience_with_files(
+        experience_uuid,
+        company_name,
+        role_title,
+        employment_type,
+        start_date,
+        end_date,
+        is_current,
+        remarks,
+        doc_types,
+        files,
+    )
+
 
 #------------------------------------------------------
 # UPDATE CERTIFICATES

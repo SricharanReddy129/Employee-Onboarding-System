@@ -1,9 +1,9 @@
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime
+from datetime import date, datetime
 
 
-from Backend.API_Layer.interfaces.employee_experience_interfaces import  ExperienceCreateRequest, ExperienceCreateResponse, ExperienceUpdate 
+from Backend.API_Layer.interfaces.employee_experience_interfaces import  EmploymentType, ExperienceCreateRequest, ExperienceCreateResponse, ExperienceUpdate 
 from Backend.Business_Layer.utils.experience_document_rules import EMPLOYMENT_DOCUMENT_RULES
 
 from ...DAL.dao.employee_experience_dao import EmployeeExperienceDAO
@@ -104,14 +104,72 @@ class EmployeeExperienceService:
         return result
 
    # ------------------ UPDATE EXPERIENCE ------------------
-    async def update_experience(self, experience_uuid: str, update_data: ExperienceUpdate):
-        existing = await self.dao.get_experience_by_uuid(experience_uuid)
-        if not existing:
-            raise HTTPException(status_code=404, detail="Experience Not Found")
+    async def update_experience_with_files(
+        self,
+        experience_uuid: str,
+        company_name: str,
+        role_title: str | None,
+        employment_type: EmploymentType,
+        start_date: date,
+        end_date: date | None,
+        is_current: int,
+        remarks: str | None,
+        doc_types: list[str],
+        files: list[UploadFile] | None,
+    ):
+        experience = await self.dao.get_experience_by_uuid(experience_uuid)
 
-        updated_record = await self.dao.update_experience(experience_uuid, update_data)
+        if not experience:
+            raise HTTPException(status_code=404, detail="Experience not found")
 
-        return updated_record
+        # 🔹 Validate docs based on employment type
+        rules = EMPLOYMENT_DOCUMENT_RULES[employment_type.value]
+
+        if doc_types and len(doc_types) == 1 and "," in doc_types[0]:
+            doc_types = [d.strip() for d in doc_types[0].split(",")]
+
+        if files and len(doc_types) != len(files):
+            raise HTTPException(400, "Each document must match a file")
+
+        # 🔹 Preserve old paths
+        paths = {
+            "exp_certificate_path": experience.exp_certificate_path,
+            "payslip_path": experience.payslip_path,
+            "internship_certificate_path": experience.internship_certificate_path,
+            "contract_aggrement_path": experience.contract_aggrement_path,
+        }
+
+        # 🔹 Upload new files if provided
+        if files and doc_types:
+            for file, doc_type in zip(files, doc_types):
+
+                if doc_type not in paths:
+                    raise HTTPException(400, f"Invalid doc type: {doc_type}")
+
+                folder = f"experience_documents/{doc_type}"
+
+                file_path = await self.storage.upload_file(
+                    file,
+                    folder,
+                    original_filename=file.filename,
+                    employee_uuid=experience.employee_uuid,
+                )
+
+                paths[doc_type] = file_path
+
+        # 🔹 Update DB fields
+        return await self.dao.update_experience_full(
+            experience,
+            company_name,
+            role_title,
+            employment_type,
+            start_date,
+            end_date,
+            is_current,
+            remarks,
+            paths,
+        )
+
     # ------------------ DELETE EXPERIENCE ------------------
     async def delete_experience(self, experience_uuid: str):
         existing = await self.dao.get_experience_by_uuid(experience_uuid)

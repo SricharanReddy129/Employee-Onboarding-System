@@ -78,21 +78,42 @@ class EmployeeExperienceDAO:
 
     # ----------------------------------------------------
     # UPDATE
-    async def update_experience(self, experience_uuid: str, update_data):
-        experience = await self.get_experience_by_uuid(experience_uuid)
-        if not experience:
-            return None
-        experience.company_name = update_data.company_name
-        experience.role_title = update_data.role_title
-        experience.employment_type = update_data.employment_type.value
-        experience.start_date = update_data.start_date
-        experience.end_date = update_data.end_date
-        experience.is_current = update_data.is_current
-        experience.remarks = update_data.remarks
+    async def update_experience_full(
+        self,
+        experience,
+        company_name,
+        role_title,
+        employment_type,
+        start_date,
+        end_date,
+        is_current,
+        remarks,
+        paths,
+    ):
+        experience.company_name = company_name
+        experience.role_title = role_title
+        experience.employment_type = employment_type.value
+        experience.start_date = start_date
+        experience.end_date = end_date
+        experience.is_current = is_current
+        experience.remarks = remarks
+
+        # 🔹 Updated file paths
+        experience.exp_certificate_path = paths["exp_certificate_path"]
+        experience.payslip_path = paths["payslip_path"]
+        experience.internship_certificate_path = paths["internship_certificate_path"]
+        experience.contract_aggrement_path = paths["contract_aggrement_path"]
+
         experience.updated_at = datetime.utcnow()
+
         await self.db.commit()
         await self.db.refresh(experience)
-        return experience
+
+        return {
+            "experience_uuid": experience.experience_uuid,
+            "message": "Experience updated successfully",
+        }
+
     
         # ----------------------------------------------------
     # DELETE
