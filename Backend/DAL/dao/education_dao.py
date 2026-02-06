@@ -127,7 +127,7 @@ class EducationDocDAO:
                 EmployeeEducationDocument.document_uuid == document_uuid
             )
         )
-        return result.scalars().all()
+        return result.scalars().first()
 
     async def get_all_employee_education_documents(self):
         print("entering dao ")
