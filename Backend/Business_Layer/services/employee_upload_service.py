@@ -63,7 +63,7 @@ class EmployeeUploadService:
     async def update_address(self, address_uuid: str, request_data):
      try:
         # find existing row
-        existing = await self.dao.get_address_by_uuid(address_uuid)
+        existing = await self.dao.get_address_by_user_uuid_and_address_type(address_uuid)
         if not existing:
             raise HTTPException(status_code=404, detail="Address not found")
 
