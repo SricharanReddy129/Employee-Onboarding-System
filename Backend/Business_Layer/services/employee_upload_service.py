@@ -58,6 +58,43 @@ class EmployeeUploadService:
             raise he
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+        
+
+    async def update_address(self, address_uuid: str, request_data):
+     try:
+        # find existing row
+        existing = await self.dao.get_address_by_uuid(address_uuid)
+        if not existing:
+            raise HTTPException(status_code=404, detail="Address not found")
+
+        # validate country
+        country_existing = await self.countrydao.get_country_by_uuid(request_data.country_uuid)
+        if not country_existing:
+            raise HTTPException(status_code=404, detail="Country not found")
+
+        # validate postal code
+        calling_code = country_existing.calling_code
+        validate_postal_code(calling_code, request_data.postal_code)
+
+        # update fields
+        existing.address_line1 = request_data.address_line1
+        existing.address_line2 = request_data.address_line2
+        existing.city = request_data.city
+        existing.district_or_ward = request_data.district_or_ward
+        existing.state_or_region = request_data.state_or_region
+        existing.country_uuid = request_data.country_uuid
+        existing.postal_code = request_data.postal_code
+
+        await self.db.commit()
+        await self.db.refresh(existing)
+
+        return existing
+
+     except HTTPException as he:
+        raise he
+     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     async def create_employee_identity(self, mapping_uuid, user_uuid,identity_file_number, expiry_date, file):
         try:
             existing = await self.identitydao.get_country_identity_mapping_by_uuid(mapping_uuid)
