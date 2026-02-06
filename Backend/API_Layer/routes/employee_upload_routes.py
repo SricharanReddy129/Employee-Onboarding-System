@@ -100,3 +100,9 @@ async def update_employee_identity(
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.put("/address/{address_uuid}")
+async def update_address(address_uuid: str, request_data: CreateAddressRequest, db: AsyncSession = Depends(get_db)):
+    service = EmployeeUploadService(db)
+    return await service.update_address(address_uuid, request_data)
+

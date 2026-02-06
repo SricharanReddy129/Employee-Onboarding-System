@@ -1,6 +1,6 @@
 # Backend/DAL/dao/offerletter_dao.py
 import datetime
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.models.models import OfferLetterDetails
 from ...API_Layer.interfaces.offerletter_interfaces import OfferCreateRequest
@@ -77,7 +77,13 @@ class OfferLetterDAO:
         """
         Get all offers.
         """
-        result = await self.db.execute(select(OfferLetterDetails))
+        result = await self.db.execute(select(OfferLetterDetails.user_uuid,
+                                              OfferLetterDetails.first_name,
+                                              OfferLetterDetails.last_name,
+                                              OfferLetterDetails.mail,
+                                              OfferLetterDetails.country_code,
+                                              OfferLetterDetails.contact_number,
+                                              ))
         return result.scalars().all()
 
     import time
@@ -143,40 +149,71 @@ class OfferLetterDAO:
         result = await self.db.execute(stmt)
         print("⏱ DB execute:", time.perf_counter() - t1)
 
-        row = result.first()
+        row = result.mappings().first()
         print("⏱ DAO total:", time.perf_counter() - start)
 
-        return row._mapping if row else None
+        return row
 
 
     
-    async def update_offer_by_uuid(self, user_uuid: str, request_data: OfferCreateRequest, current_user_id: int):
+    # async def update_offer_by_uuid(self, user_uuid: str, request_data: OfferCreateRequest, current_user_id: int):
 
-        # 1. Fetch record
-        result = await self.db.execute(
-            select(OfferLetterDetails).where(OfferLetterDetails.user_uuid == user_uuid)
+    #     # 1. Fetch record
+    #     result = await self.db.execute(
+    #         select(OfferLetterDetails).where(OfferLetterDetails.user_uuid == user_uuid)
+    #     )
+    #     offer = result.scalar_one_or_none()
+
+    #     if not offer:
+    #         return None
+
+    #     # 2. Update fields
+    #     offer.first_name = request_data.first_name
+    #     offer.last_name = request_data.last_name
+    #     offer.mail = request_data.mail
+    #     offer.country_code = request_data.country_code
+    #     offer.contact_number = request_data.contact_number
+    #     offer.designation = request_data.designation
+    #     offer.package = request_data.package
+    #     offer.currency = request_data.currency
+    #     offer.updated_by = current_user_id
+
+    #     # 3. Commit
+    #     await self.db.commit()
+    #     return offer
+
+    async def update_offer_by_uuid(
+        self,
+        user_uuid: str,
+        request_data: OfferCreateRequest,
+        current_user_id: int,
+    ):
+
+     stmt = (
+        update(OfferLetterDetails)
+        .where(OfferLetterDetails.user_uuid == user_uuid)
+        .values(
+            first_name=request_data.first_name,
+            last_name=request_data.last_name,
+            mail=request_data.mail,
+            country_code=request_data.country_code,
+            contact_number=request_data.contact_number,
+            designation=request_data.designation,
+            package=request_data.package,
+            currency=request_data.currency,
+            updated_by=current_user_id,
         )
-        offer = result.scalar_one_or_none()
+    )
 
-        if not offer:
-            return None
+     result = await self.db.execute(stmt)
 
-        # 2. Update fields
-        offer.first_name = request_data.first_name
-        offer.last_name = request_data.last_name
-        offer.mail = request_data.mail
-        offer.country_code = request_data.country_code
-        offer.contact_number = request_data.contact_number
-        offer.designation = request_data.designation
-        offer.package = request_data.package
-        offer.currency = request_data.currency
-        offer.updated_by = current_user_id
+    # If no rows updated → record does not exist
+     if result.rowcount == 0:
+        return None
+     await self.db.commit()
 
-        # 3. Commit
-        await self.db.commit()
-        await self.db.refresh(offer)
+     return True
 
-        return offer
     
     async def fetch_created_offerletters(self, created_by: int):
         """
@@ -216,8 +253,6 @@ class OfferLetterDAO:
 
         # 3. Commit
         await self.db.commit()
-        await self.db.refresh(offer)
-
         return offer
     
     async def update_pandadoc_draft_id(self, user_uuid: str, draft_id: str):
@@ -239,8 +274,6 @@ class OfferLetterDAO:
 
         # 3. Commit
         await self.db.commit()
-        await self.db.refresh(offer)
-
         return offer
 
     async def get_pandadoc_draft_id(self, user_uuid: str):

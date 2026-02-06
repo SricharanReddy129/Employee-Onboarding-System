@@ -7,11 +7,19 @@ class EducationDocDAO:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_document_by_name(self, document_name: str, uuid: str):
+    async def get_document_by_name_and_uuid(self, document_name: str, uuid: str):
         result = await self.db.execute(
             select(EducationDocumentType).where(
                 EducationDocumentType.document_name == document_name,
                 EducationDocumentType.document_uuid != uuid
+            )
+        )
+        return result.scalar_one_or_none()
+    
+    async def get_document_by_name(self, document_name: str):
+        result = await self.db.execute(
+            select(EducationDocumentType).where(
+                EducationDocumentType.document_name == document_name
             )
         )
         return result.scalar_one_or_none()

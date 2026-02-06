@@ -55,7 +55,7 @@ class EducationDocService:
             if request_data.document_name:
                 document_name = validate_document_name(request_data.document_name)
 
-                existing = await self.dao.get_document_by_name(document_name, uuid)
+                existing = await self.dao.get_document_by_name_and_uuid(document_name, uuid)
                 if existing:
                     raise HTTPException(
                         status_code=409,

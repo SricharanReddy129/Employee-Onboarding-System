@@ -25,6 +25,7 @@ class EmployeeUploadDAO:
         await self.db.refresh(personal_details)
         return personal_details
     async def get_address_by_user_uuid_and_address_type(self, user_uuid, address_type):
+        print(user_uuid, address_type)
         result = await self.db.execute(select(Addresses).where(Addresses.user_uuid == user_uuid).where(Addresses.address_type == address_type))
         return result.scalar_one_or_none()
     async def create_address(self, request_data, uuid):
@@ -105,4 +106,11 @@ class EmployeeUploadDAO:
         await self.db.commit()
         await self.db.refresh(identity)
 
-        return identity
+        return 
+    
+    async def get_address_by_uuid(self, address_uuid: str):
+     result = await self.db.execute(
+        select(Addresses).where(Addresses.address_uuid == address_uuid)
+     )
+     return result.scalar_one_or_none()
+
