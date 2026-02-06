@@ -108,9 +108,9 @@ async def create_employee_education_document(
             "percentage_cgpa": percentage_cgpa
         }
 
-        result = await education_service.create_employee_education_document(request_data, file)
+        result,uuid = await education_service.create_employee_education_document(request_data, file)
         return UploadFileResponse(
-            document_uuid = generate_uuid7(),
+            document_uuid = uuid,
             file_path = result,
             message = "Employee Education Document Created Successfully"
         )
@@ -118,6 +118,7 @@ async def create_employee_education_document(
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
 @router.put("/employee-education-document/{document_uuid}", response_model=UploadFileResponse)
 async def update_employee_education_document(
     document_uuid: str,

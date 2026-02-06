@@ -106,7 +106,7 @@ class EducationDocService:
             print("User uuid", request_data["user_uuid"])
             file_path = await blob_upload_service.upload_file(file, folder, original_filename=file.filename, employee_uuid=request_data["user_uuid"])
             result = await self.dao.create_employee_education_document(request_data, uuid, file_path)
-            return file_path
+            return file_path,uuid
         except HTTPException as he:
             raise he
         except Exception as e:
