@@ -83,32 +83,43 @@ class EmployeeUploadDAO:
             )
         )
         return result.scalar_one_or_none()
+    
+
     async def update_employee_identity(
         self,
         identity_uuid: str,
+        mapping_uuid: str,
         identity_file_number: str,
+        user_uuid: str,
         expiry_date: Optional[date],
         file_path: str
     ):
         result = await self.db.execute(
             select(EmployeeIdentityDocument).where(
                 EmployeeIdentityDocument.document_uuid == identity_uuid
-            )
+        )
         )
 
         identity = result.scalar_one_or_none()
+
         if not identity:
             return None
 
+        identity.mapping_uuid = mapping_uuid
+        identity.user_uuid = user_uuid
         identity.identity_file_number = identity_file_number
         identity.expiry_date = expiry_date
         identity.file_path = file_path
-        identity.status = "pending"  
+        identity.status = "pending"
 
         await self.db.commit()
         await self.db.refresh(identity)
 
-        return 
+        return identity   # ⚠️ MUST RETURN
+
+   
+
+     
     
     # async def get_address_by_uuid(self, address_uuid: str):
     #  result = await self.db.execute(
