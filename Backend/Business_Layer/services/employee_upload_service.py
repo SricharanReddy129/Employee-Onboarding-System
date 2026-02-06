@@ -156,22 +156,30 @@ class EmployeeUploadService:
         expiry_date: Optional[date],
         file: Optional[UploadFile],
     ):
-        # 1. Fetch existing record
-        existing = await self.repo.get_identity_by_uuid(identity_uuid)
+        existing = await self.dao.get_employee_identity_by_uuid(identity_uuid)
         if not existing:
             raise HTTPException(status_code=404, detail="Identity not found")
 
-        # 2. If file is re-uploaded → replace it
         file_path = existing.file_path
+
         if file:
-            # delete old file (if required)
-            await self.file_manager.delete(existing.file_path)
+            blob_service = S3StorageService()
 
-            # save new file
-            file_path = await self.file_manager.save(file)
+            # optional delete old file
+            if existing.file_path:
+                try:
+                    await blob_service.delete_file(existing.file_path)
+                except:
+                    pass
 
-        # 3. Update DB
-        return await self.repo.update_identity(
+            file_path = await blob_service.upload_file(
+                file,
+                "identity_documents",
+                original_filename=file.filename,
+                employee_uuid=user_uuid
+            )
+
+        updated = await self.dao.update_employee_identity(
             identity_uuid=identity_uuid,
             mapping_uuid=mapping_uuid,
             user_uuid=user_uuid,
@@ -179,4 +187,8 @@ class EmployeeUploadService:
             expiry_date=expiry_date,
             file_path=file_path,
         )
- 
+
+        if not updated:
+            raise HTTPException(status_code=404, detail="Update failed")
+
+        return updated

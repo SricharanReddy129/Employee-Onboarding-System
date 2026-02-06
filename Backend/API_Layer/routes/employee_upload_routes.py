@@ -74,6 +74,8 @@ async def create_employee_identity(
 @router.put("/identity-documents/{identity_uuid}", response_model=EmployeeIdentityResponse)
 async def update_employee_identity(
     identity_uuid: str,
+    mapping_uuid: str ,
+    user_uuid: str ,
     identity_file_number: str = Form(...),
     expiry_date: Optional[date] = Form(None),
     file: Optional[UploadFile] = File(None),
@@ -84,6 +86,8 @@ async def update_employee_identity(
 
         result = await employee_service.update_employee_identity(
             identity_uuid=identity_uuid,
+            mapping_uuid=mapping_uuid,
+            user_uuid=user_uuid,
             identity_file_number=identity_file_number,
             expiry_date=expiry_date,
             file=file
