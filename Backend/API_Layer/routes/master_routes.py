@@ -223,19 +223,32 @@ async def get_all_education_country_mapping(
 
 ## CONTACTS ROUTES BEGINS ##
 # Create contect details
-@router.post("/contacts", response_model= CreateContactResponse)
-async def create_contact(request_data: CreateContactRequest, db: AsyncSession = Depends(get_db)):
-    try:
-        contact_service = ContactService(db)
-        result = await contact_service.create_contact(request_data)
-        return CreateContactResponse(
-            contact_uuid = result.contact_uuid,
-            message = "Contact Created Successfully"
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# @router.post("/contacts", response_model= CreateContactResponse)
+# async def create_contact(request_data: CreateContactRequest, db: AsyncSession = Depends(get_db)):
+#     try:
+#         contact_service = ContactService(db)
+#         result = await contact_service.create_contact(request_data)
+#         return CreateContactResponse(
+#             contact_uuid = result.contact_uuid,
+#             message = "Contact Created Successfully"
+#         )
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+@router.post("/contacts", response_model=CreateContactResponse)
+async def create_contact(
+    request_data: CreateContactRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    contact_service = ContactService(db)
+    result = await contact_service.create_contact(request_data)
+
+    return CreateContactResponse(
+        contact_uuid=result.contact_uuid,
+        message="Contact Created Successfully",
+    )
+
     
 # get all contacts details
 @router.get("/contacts", response_model= list[ContactDetails])

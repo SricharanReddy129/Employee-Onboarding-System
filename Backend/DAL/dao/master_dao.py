@@ -5,7 +5,7 @@ from Backend.DAL.utils.database import AsyncSessionLocal
 from sqlalchemy import select , exists
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.models.models import Countries, EducationLevel, CountryEducationDocumentMapping, Contacts
-from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest, EducLevelDetails
+from ...API_Layer.interfaces.master_interfaces import CreateContactRequest, CreateEducLevelRequest, EducLevelDetails
 import time
 
 class CountryDAO:
@@ -199,37 +199,62 @@ class EducationDAO:
         result = await self.db.execute(select(CountryEducationDocumentMapping))
         return result.scalars().all()
 
+# class ContactDAO:
+#     def __init__(self, db: AsyncSession):
+#         self.db = db  # Store the session for transaction management
+
+#     async def create_contact(self, request_data, uuid):
+#         new_contact = Contacts(
+#             contact_uuid = uuid,
+#             user_uuid = request_data.user_uuid,
+#             country_uuid = request_data.country_uuid,
+#             contact_number = request_data.contact_number,
+#             emergency_contact = request_data.emergency_contact
+#         )
+#         self.db.add(new_contact)
+#         await self.db.commit()
+#         await self.db.refresh(new_contact)
+#         return new_contact
+#     async def get_contact_by_user_uuid_and_country_uuid(self, user_uuid, country_uuid):
+#         result = await self.db.execute(select(Contacts).where(Contacts.user_uuid == user_uuid).where(Contacts.country_uuid == country_uuid))
+#         return result.scalar_one_or_none()
+#     async def get_all_contacts(self):
+#         result = await self.db.execute(select(Contacts))
+#         return result.scalars().all()
+#     async def get_contact_by_uuid(self, uuid):
+#         result = await self.db.execute(select(Contacts).where(Contacts.contact_uuid == uuid))
+#         return result.scalar_one_or_none()
+#     async def delete_contact(self, uuid):
+#         result = await self.db.execute(select(Contacts).where(Contacts.contact_uuid == uuid))
+#         contact = result.scalar_one_or_none()
+#         if contact is None:
+#             return None
+#         await self.db.delete(contact)
+#         await self.db.commit()
+#         return contact
+        
 class ContactDAO:
     def __init__(self, db: AsyncSession):
-        self.db = db  # Store the session for transaction management
+        self.db = db
 
-    async def create_contact(self, request_data, uuid):
-        new_contact = Contacts(
-            contact_uuid = uuid,
-            user_uuid = request_data.user_uuid,
-            country_uuid = request_data.country_uuid,
-            contact_number = request_data.contact_number,
-            emergency_contact = request_data.emergency_contact
+    async def create_contact(self, request_data: CreateContactRequest, uuid: str):
+        contact = Contacts(
+            contact_uuid=uuid,
+            user_uuid=request_data.user_uuid,
+            country_uuid=request_data.country_uuid,
+            contact_number=request_data.contact_number,
+            emergency_contact=request_data.emergency_contact,
         )
-        self.db.add(new_contact)
+
+        self.db.add(contact)
         await self.db.commit()
-        await self.db.refresh(new_contact)
-        return new_contact
-    async def get_contact_by_user_uuid_and_country_uuid(self, user_uuid, country_uuid):
-        result = await self.db.execute(select(Contacts).where(Contacts.user_uuid == user_uuid).where(Contacts.country_uuid == country_uuid))
-        return result.scalar_one_or_none()
-    async def get_all_contacts(self):
-        result = await self.db.execute(select(Contacts))
-        return result.scalars().all()
-    async def get_contact_by_uuid(self, uuid):
-        result = await self.db.execute(select(Contacts).where(Contacts.contact_uuid == uuid))
-        return result.scalar_one_or_none()
-    async def delete_contact(self, uuid):
-        result = await self.db.execute(select(Contacts).where(Contacts.contact_uuid == uuid))
-        contact = result.scalar_one_or_none()
-        if contact is None:
-            return None
-        await self.db.delete(contact)
-        await self.db.commit()
+        await self.db.refresh(contact)
         return contact
-        
+
+    async def get_contact_by_user_uuid_and_country_uuid(self, user_uuid, country_uuid):
+        result = await self.db.execute(
+            select(Contacts)
+            .where(Contacts.user_uuid == user_uuid)
+            .where(Contacts.country_uuid == country_uuid)
+        )
+        return result.scalar_one_or_none()
