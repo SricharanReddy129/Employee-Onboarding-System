@@ -60,3 +60,10 @@ class ContactDetails(BaseModel):
     country_uuid: str
     contact_number: str
     emergency_contact: str
+
+class UpdateContactRequest(BaseModel):
+    contact_type: str
+    contact_value: str
+    emergency_contact: str
+    is_active: bool
+
