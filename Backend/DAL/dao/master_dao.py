@@ -1,7 +1,8 @@
 # Backend/DAL/dao/master_dao.py
+
 import uuid
 from Backend.DAL.utils.database import AsyncSessionLocal
-from sqlalchemy import select
+from sqlalchemy import select , exists
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.models.models import Countries, EducationLevel, CountryEducationDocumentMapping, Contacts
 from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest, EducLevelDetails
@@ -27,12 +28,11 @@ class CountryDAO:
         await self.db.commit()
         await self.db.refresh(new_country)
         return new_country
-    async def get_country_by_uuid(self, country_uuid: str):
+    async def get_country_by_uuid(self, country_uuid: str) -> bool:
         result = await self.db.execute(
-            select(Countries).where(Countries.country_uuid == country_uuid)
+            select(exists().where(Countries.country_uuid == country_uuid))
         )
-
-        return result.scalar_one_or_none()
+        return result.scalar()
     async def update_country(self, country_uuid: str, is_active: bool):
         result = await self.db.execute(
             select(Countries).where(Countries.country_uuid == country_uuid)

@@ -10,19 +10,24 @@ from ..utils.role_based import require_roles
 router = APIRouter()
 
 @router.post("/personal-details", response_model=PersonalDetailsResponse)
-async def create_personal_details(request_data: PersonalDetailsRequest, db: AsyncSession = Depends(get_db)):
+async def create_personal_details(
+    request_data: PersonalDetailsRequest,
+    db: AsyncSession = Depends(get_db)
+):
     try:
         employee_service = EmployeeUploadService(db)
         result = await employee_service.create_personal_details(request_data)
+
         return PersonalDetailsResponse(
-            personal_uuid = result.personal_uuid,
-            message = "Personal Details Created Successfully"
+            personal_uuid=result.personal_uuid,
+            message="Personal Details Created Successfully"
         )
-    except HTTPException as he:
-        raise he
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
+        import traceback
+        traceback.print_exc()   # 👈 prints full error in terminal
+        raise HTTPException(status_code=500, detail=str(e))  # 👈 show real error
+ 
     ## Addresses Routes ##
 
 @router.post("/address", response_model = CreateAddressResponse)

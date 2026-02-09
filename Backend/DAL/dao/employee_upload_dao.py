@@ -22,8 +22,9 @@ class EmployeeUploadDAO:
         )
         self.db.add(personal_details)
         await self.db.commit()
-        await self.db.refresh(personal_details)
+        # await self.db.refresh(personal_details)
         return personal_details
+    
     async def get_address_by_user_uuid_and_address_type(self, user_uuid, address_type):
         print(user_uuid, address_type)
         result = await self.db.execute(select(Addresses).where(Addresses.user_uuid == user_uuid).where(Addresses.address_type == address_type))
