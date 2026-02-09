@@ -19,19 +19,24 @@ EMAIL_HOST = get_env_var("EMAIL_HOST")
 EMAIL_PORT = int(get_env_var("EMAIL_PORT"))
 # FRONTEND_URL = get_env_var("FRONTEND_URL")
  
-def send_email(to_email: str, subject: str, content: str):
+def send_email(to_email: str, subject: str, content: str, cc_emails: list[str] | None = None):
     msg = EmailMessage()
     msg['Subject'] = subject
     msg['From'] = EMAIL_USER
     msg['To'] = to_email
+    recipients = [to_email]
+    if cc_emails:
+        msg['Cc'] = ", ".join(cc_emails)
+        recipients += cc_emails
     msg.set_content(content)
+
 
     try:
         with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as smtp:
             smtp.starttls()
             smtp.login(EMAIL_USER, EMAIL_PASSWORD)
-            smtp.send_message(msg)
-        print(f"✅ Email sent to {to_email}")
+            smtp.send_message(msg,to_addrs=recipients)
+        print(f"✅ Email sent to {recipients}")
     except Exception as e:
         print(f"❌ Failed to send email to {to_email}: {e}")
 
@@ -39,7 +44,8 @@ def send_offer_accepted_email(
     to_email: str,
     name: str,
     subject: str = "Offer Accepted – Next Steps"
-    ,onboarding_url: str = ""
+    ,onboarding_url: str = "",
+    cc_emails: list[str] | None = None
     ):
         """
         Sends a professional offer acceptance email to the candidate.
@@ -73,14 +79,18 @@ def send_offer_accepted_email(
         msg['Subject'] = subject
         msg['From'] = EMAIL_USER
         msg['To'] = to_email
+        recipients = [to_email]
+        if cc_emails:
+            msg['Cc'] = ", ".join(cc_emails)
+            recipients += cc_emails
         msg.set_content(content)
 
         try:
             with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as smtp:
                 smtp.starttls()
                 smtp.login(EMAIL_USER, EMAIL_PASSWORD)
-                smtp.send_message(msg)
-            print(f"✅ Email sent to {to_email}")
+                smtp.send_message(msg, to_addrs=recipients)
+            print(f"✅ Email sent to {recipients}")
             return "Email sent successfully"
         except Exception as e:
             print(f"❌ Failed to send email to {to_email}: {e}")
@@ -263,3 +273,23 @@ def send_joining_email(
         print(f"✅ Joining email sent to {to_email}")
     except Exception as e:
         print(f"❌ Failed to send joining email: {e}")
+        
+    # helper function to add cc to mails 
+def send_smtp_email(msg: EmailMessage, to_emails: list[str], cc_emails: list[str] | None = None):
+    recipients = to_emails.copy()
+
+    if cc_emails:
+        msg["Cc"] = ", ".join(cc_emails)
+        recipients.extend(cc_emails)
+
+    try:
+        with smtplib.SMTP(EMAIL_HOST, EMAIL_PORT) as smtp:
+            smtp.starttls()
+            smtp.login(EMAIL_USER, EMAIL_PASSWORD)
+            smtp.send_message(msg, to_addrs=recipients)
+
+        print(f"✅ Email sent to {recipients}")
+
+    except Exception as e:
+        print(f"❌ Failed to send email: {e}")
+
