@@ -335,12 +335,16 @@ class OfferApprovalActionService:
                     detail="Approval request not found"
                 )
 
-            # ❌ Cannot reassign if action already taken
+           # ❌ Cannot reassign if ANY action is APPROVED
             if request.offer_approval_action:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Cannot reassign after approval action is taken"
-                )
+
+                for action in request.offer_approval_action:
+                    if action.action and action.action.upper() == "APPROVED":
+                        raise HTTPException(
+                            status_code=400,
+                            detail="Cannot reassign because offer is already APPROVED"
+                        )
+
 
             # 🚫 Same approver check
             if request.action_taker_id == payload.new_approver_id:
