@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import select, update, exists
 from typing import Optional
 from datetime import date
 from fastapi import UploadFile
-from ...DAL.models.models import PersonalDetails, Addresses, EmployeeIdentityDocument
+from ...DAL.models.models import CountryIdentityMapping, PersonalDetails, Addresses, EmployeeIdentityDocument
 import time
 class EmployeeUploadDAO:
     def __init__(self, db: AsyncSession):
@@ -82,12 +82,32 @@ class EmployeeUploadDAO:
 
         self.db.add(employee_identity)
         await self.db.commit()
-        await self.db.refresh(employee_identity)
-
+        # await self.db.refresh(employee_identity)
         return employee_identity
-    async def get_employee_identity_by_user_uuid_and_mapping_uuid(self, user_uuid, mapping_uuid):
-        result = await self.db.execute(select(EmployeeIdentityDocument).where(EmployeeIdentityDocument.user_uuid == user_uuid).where(EmployeeIdentityDocument.mapping_uuid == mapping_uuid))
-        return result.scalar_one_or_none()
+    
+    async def mapping_exists(self, uuid: str) -> bool:
+        start = time.perf_counter()
+
+        result = await self.db.execute(
+            select(exists().where(CountryIdentityMapping.mapping_uuid == uuid))
+        )
+
+        exists_flag = result.scalar()
+
+        print("DAO MAPPING EXISTS TIME:", time.perf_counter() - start)
+        return exists_flag
+    
+    async def identity_exists(self, user_uuid: str, mapping_uuid: str) -> bool:
+        result = await self.db.execute(
+            select(
+                exists().where(
+                    (EmployeeIdentityDocument.user_uuid == user_uuid)
+                    & (EmployeeIdentityDocument.mapping_uuid == mapping_uuid)
+                )
+            )
+        )
+        return result.scalar()
+
     
     async def get_employee_identity_by_uuid(self, identity_uuid: str):
         result = await self.db.execute(

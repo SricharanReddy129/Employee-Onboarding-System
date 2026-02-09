@@ -173,36 +173,73 @@ class EmployeeUploadService:
             raise he
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
-        
 
+    async def create_employee_identity(
+        self,
+        mapping_uuid,
+        user_uuid,
+        identity_file_number,
+        expiry_date,
+        file
+    ):
+        start_total = time.perf_counter()
 
-
-    async def create_employee_identity(self, mapping_uuid, user_uuid,identity_file_number, expiry_date, file):
         try:
-            existing = await self.identitydao.get_country_identity_mapping_by_uuid(mapping_uuid)
+            # 🔹 Mapping lookup timing
+            t1 = time.perf_counter()
+            existing = await self.dao.mapping_exists(mapping_uuid)
+            print(f"⏱ Mapping lookup: {time.perf_counter() - t1:.4f} sec")
+
             if not existing:
                 raise HTTPException(status_code=404, detail="Mapping Not Found")
 
-            # checking offer letter employee exists or not
-            existing = await self.dao.get_employee_identity_by_user_uuid_and_mapping_uuid(user_uuid, mapping_uuid)
-            if existing:
-                raise HTTPException(status_code=404, detail="Employee identity mapping Already Found")
-            
-           
+            # 🔹 Identity existence check timing
+            t2 = time.perf_counter()
+            existing = await self.dao.identity_exists(user_uuid, mapping_uuid)
+            print(f"⏱ Identity exists check: {time.perf_counter() - t2:.4f} sec")
 
-            # checking identity already exists for employee
-            
+            if existing:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Employee identity mapping already found"
+                )
+
+            # 🔹 S3 upload timing (usually biggest part)
+            t3 = time.perf_counter()
             blob_service = S3StorageService()
             folder = "identity_documents"
-            file_path = await blob_service.upload_file(file, folder, original_filename=file.filename, employee_uuid=user_uuid)
-            uuid = generate_uuid7()
-            result = await self.dao.create_employee_identity(mapping_uuid, user_uuid,identity_file_number, expiry_date, file_path, uuid)
-            return result
-        except HTTPException as he:
-            raise he
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            file_path = await blob_service.upload_file(
+                file,
+                folder,
+                original_filename=file.filename,
+                employee_uuid=user_uuid
+            )
+            print(f"⏱ S3 upload: {time.perf_counter() - t3:.4f} sec")
 
+            # 🔹 DB insert timing
+            t4 = time.perf_counter()
+            uuid = generate_uuid7()
+            result = await self.dao.create_employee_identity(
+                mapping_uuid,
+                user_uuid,
+                identity_file_number,
+                expiry_date,
+                file_path,
+                uuid
+            )
+            print(f"⏱ Insert + commit: {time.perf_counter() - t4:.4f} sec")
+
+            # 🔹 Total service time
+            print(f"🚀 TOTAL SERVICE TIME: {time.perf_counter() - start_total:.4f} sec")
+
+            return result
+
+        except HTTPException:
+            raise
+
+        except Exception as e:
+            print(f"❌ Failed after: {time.perf_counter() - start_total:.4f} sec")
+            raise HTTPException(status_code=500, detail=str(e))
     async def update_employee_identity(
         self,
         identity_uuid: str,
