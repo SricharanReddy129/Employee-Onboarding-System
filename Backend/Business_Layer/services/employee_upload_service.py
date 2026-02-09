@@ -43,7 +43,7 @@ class EmployeeUploadService:
 
             # 🔹 Nationality query timing
             t2 = time.perf_counter()
-            nationality = await self.countrydao.get_country_by_uuid(
+            nationality = await self.countrydao.country_exists(
                 request_data.nationality_country_uuid
             )
             print(f"⏱ Nationality query: {time.perf_counter() - t2:.4f} sec")
@@ -53,7 +53,7 @@ class EmployeeUploadService:
 
             # 🔹 Residence query timing
             t3 = time.perf_counter()
-            residence = await self.countrydao.get_country_by_uuid(
+            residence = await self.countrydao.country_exists(
                 request_data.residence_country_uuid
             )
             print(f"⏱ Residence query: {time.perf_counter() - t3:.4f} sec")
