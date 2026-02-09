@@ -1,17 +1,18 @@
+import asyncio
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime
+from datetime import date, datetime
 
 
-from Backend.API_Layer.interfaces.employee_experience_interfaces import  ExperienceCreateRequest, ExperienceCreateResponse
+from Backend.API_Layer.interfaces.employee_experience_interfaces import  EmploymentType, ExperienceCreateRequest, ExperienceCreateResponse, ExperienceUpdate 
 from Backend.Business_Layer.utils.experience_document_rules import EMPLOYMENT_DOCUMENT_RULES
 
 from ...DAL.dao.employee_experience_dao import EmployeeExperienceDAO
 from ...DAL.dao.offerletter_dao import OfferLetterDAO
 from ...DAL.utils.storage_utils import S3StorageService, get_storage_service
 from ..utils.uuid_generator import generate_uuid7
-
-
+import asyncio
+import time
 
 class EmployeeExperienceService:
     def __init__(self, db: AsyncSession):
@@ -23,32 +24,50 @@ class EmployeeExperienceService:
 
     # ------------------ CREATE EXPERIENCE ------------------
 
+   
+
     async def create_experience(
         self,
         request_data: ExperienceCreateRequest,
         doc_types: list[str],
         files: list[UploadFile],
     ):
-        # 1️⃣ Validate required docs
+        start_total = time.perf_counter()
+
+        # 1️⃣ Validation
         rules = EMPLOYMENT_DOCUMENT_RULES[request_data.employment_type.value]
+
         if len(doc_types) == 1 and "," in doc_types[0]:
             doc_types = [d.strip() for d in doc_types[0].split(",")]
 
-
         missing = set(rules) - set(doc_types)
         if missing:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Missing required documents: {list(missing)}",
-            )
+            raise HTTPException(400, f"Missing required documents: {list(missing)}")
 
         if len(doc_types) != len(files):
-            raise HTTPException(
-                status_code=400,
-                detail="Each document must have a matching file",
-            )
+            raise HTTPException(400, "Each document must have a matching file")
 
-        # 2️⃣ Upload files to S3 (type-based folders)
+        print("⏱ Validation:", time.perf_counter() - start_total)
+
+        # 2️⃣ Parallel S3 uploads
+        upload_start = time.perf_counter()
+
+        async def upload_one(file, doc_type):
+            folder = f"experience_documents/{doc_type}"
+            t = time.perf_counter()
+            path = await self.storage.upload_file(
+                file,
+                folder,
+                original_filename=file.filename,
+                employee_uuid=request_data.employee_uuid,
+            )
+            print(f"⏱ S3 upload ({doc_type}):", time.perf_counter() - t)
+            return doc_type, path
+
+        results = await asyncio.gather(
+            *(upload_one(f, d) for f, d in zip(files, doc_types))
+        )
+
         paths = {
             "exp_certificate_path": None,
             "payslip_path": None,
@@ -56,16 +75,17 @@ class EmployeeExperienceService:
             "contract_aggrement_path": None,
         }
 
-        for file, doc_type in zip(files, doc_types):
-            folder = f"experience_documents/{doc_type}"
-            file_path = await self.storage.upload_file(file, folder, original_filename=file.filename, employee_uuid=request_data.employee_uuid)
-            print("service", file_path)
-            paths[doc_type] = file_path
+        for doc_type, path in results:
+            paths[doc_type] = path
 
-        # 3️⃣ Create DB record
+        print("⏱ Total S3 uploads:", time.perf_counter() - upload_start)
+
+        # 3️⃣ DB insert
+        db_start = time.perf_counter()
+
         experience_uuid = generate_uuid7()
 
-        return await self.dao.create_experience(
+        result = await self.dao.create_experience(
             request_data=request_data,
             experience_uuid=experience_uuid,
             exp_certificate_path=paths["exp_certificate_path"],
@@ -74,7 +94,12 @@ class EmployeeExperienceService:
             contract_aggrement_path=paths["contract_aggrement_path"],
         )
 
-                     
+        print("⏱ Insert + commit:", time.perf_counter() - db_start)
+        print("🚀 TOTAL SERVICE TIME:", time.perf_counter() - start_total)
+
+        return result
+
+                        
 
     # ------------------ GET EXPERIENCE ------------------
     async def get_all_experience(self):
@@ -103,25 +128,72 @@ class EmployeeExperienceService:
             raise HTTPException(status_code=404, detail="No Experience Found for this Employee")
         return result
 
-    # ------------------ UPDATE EXPERIENCE ------------------
-    async def update_experience(self, experience_uuid: str, request_data):
-        existing = await self.dao.get_experience_by_uuid(experience_uuid)
-        if not existing:
-            raise HTTPException(status_code=404, detail="Experience Record Not Found")
+   # ------------------ UPDATE EXPERIENCE ------------------
+    async def update_experience_with_files(
+        self,
+        experience_uuid: str,
+        company_name: str,
+        role_title: str | None,
+        employment_type: EmploymentType,
+        start_date: date,
+        end_date: date | None,
+        is_current: int,
+        remarks: str | None,
+        doc_types: list[str],
+        files: list[UploadFile] | None,
+    ):
+        experience = await self.dao.get_experience_by_uuid(experience_uuid)
 
-        user_exists = await self.offerdao.get_offer_by_uuid(existing.employee_uuid)
-        if not user_exists:
-            raise HTTPException(status_code=404, detail="Employee Not Found")
+        if not experience:
+            raise HTTPException(status_code=404, detail="Experience not found")
 
-        start_date = request_data.start_date
-        end_date = request_data.end_date
-        if start_date and end_date and end_date < start_date:
-            raise HTTPException(
-                status_code=400,
-                detail="end_date cannot be earlier than start_date"
-            )
+        # 🔹 Validate docs based on employment type
+        rules = EMPLOYMENT_DOCUMENT_RULES[employment_type.value]
 
-        return await self.dao.update_experience(experience_uuid, request_data)
+        if doc_types and len(doc_types) == 1 and "," in doc_types[0]:
+            doc_types = [d.strip() for d in doc_types[0].split(",")]
+
+        if files and len(doc_types) != len(files):
+            raise HTTPException(400, "Each document must match a file")
+
+        # 🔹 Preserve old paths
+        paths = {
+            "exp_certificate_path": experience.exp_certificate_path,
+            "payslip_path": experience.payslip_path,
+            "internship_certificate_path": experience.internship_certificate_path,
+            "contract_aggrement_path": experience.contract_aggrement_path,
+        }
+
+        # 🔹 Upload new files if provided
+        if files and doc_types:
+            for file, doc_type in zip(files, doc_types):
+
+                if doc_type not in paths:
+                    raise HTTPException(400, f"Invalid doc type: {doc_type}")
+
+                folder = f"experience_documents/{doc_type}"
+
+                file_path = await self.storage.upload_file(
+                    file,
+                    folder,
+                    original_filename=file.filename,
+                    employee_uuid=experience.employee_uuid,
+                )
+
+                paths[doc_type] = file_path
+
+        # 🔹 Update DB fields
+        return await self.dao.update_experience_full(
+            experience,
+            company_name,
+            role_title,
+            employment_type,
+            start_date,
+            end_date,
+            is_current,
+            remarks,
+            paths,
+        )
 
     # ------------------ DELETE EXPERIENCE ------------------
     async def delete_experience(self, experience_uuid: str):

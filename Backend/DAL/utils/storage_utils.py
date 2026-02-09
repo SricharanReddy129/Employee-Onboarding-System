@@ -51,7 +51,7 @@ class S3StorageService:
         custom_filename: str = None
     ) -> str:
         try:
-            print("UPLOAD_FILE ARGS:", self, file, folder)
+           
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             unique_id = str(uuid4())[:8]
 

@@ -69,7 +69,7 @@ class EmployeeExperienceDAO:
 
         self.db.add(new_exp)
         await self.db.commit()
-        await self.db.refresh(new_exp)
+        # await self.db.refresh(new_exp)
 
         return {
             "experience_uuid": experience_uuid,
@@ -78,65 +78,44 @@ class EmployeeExperienceDAO:
 
     # ----------------------------------------------------
     # UPDATE
-    # ----------------------------------------------------
+    async def update_experience_full(
+        self,
+        experience,
+        company_name,
+        role_title,
+        employment_type,
+        start_date,
+        end_date,
+        is_current,
+        remarks,
+        paths,
+    ):
+        experience.company_name = company_name
+        experience.role_title = role_title
+        experience.employment_type = employment_type.value
+        experience.start_date = start_date
+        experience.end_date = end_date
+        experience.is_current = is_current
+        experience.remarks = remarks
 
-    async def update_experience(self, experience_uuid: str, request_data):
-        """
-        request_data = ExperienceUpdateRequest
-        Update only provided fields.
-        """
-
-        experience = await self.get_experience_by_uuid(experience_uuid)
-        if not experience:
-            return None
-
-        update_fields = {}
-
-        # Safe enum processing
-        if request_data.employment_type is not None:
-            employment_type = (
-                request_data.employment_type.value
-                if hasattr(request_data.employment_type, "value")
-                else request_data.employment_type
-            )
-
-            VALID_EMPLOYMENT_TYPES = ["Full-Time", "Part-Time", "Intern", "Contract", "Freelance"]
-            if employment_type not in VALID_EMPLOYMENT_TYPES:
-                raise ValueError(f"Invalid employment_type '{employment_type}'")
-
-            update_fields["employment_type"] = employment_type
-
-        # Normal fields
-        if request_data.company_name is not None:
-            update_fields["company_name"] = request_data.company_name
-
-        if request_data.start_date is not None:
-            update_fields["start_date"] = request_data.start_date
-
-        if request_data.end_date is not None:
-            update_fields["end_date"] = request_data.end_date
-
-        if request_data.role_title is not None:
-            update_fields["role_title"] = request_data.role_title
-
-        if request_data.is_current is not None:
-            update_fields["is_current"] = request_data.is_current
-
-        if request_data.remarks is not None:
-            update_fields["remarks"] = request_data.remarks
-
-        # Apply update
-        for field, value in update_fields.items():
-            setattr(experience, field, value)
+        # 🔹 Updated file paths
+        experience.exp_certificate_path = paths["exp_certificate_path"]
+        experience.payslip_path = paths["payslip_path"]
+        experience.internship_certificate_path = paths["internship_certificate_path"]
+        experience.contract_aggrement_path = paths["contract_aggrement_path"]
 
         experience.updated_at = datetime.utcnow()
 
         await self.db.commit()
         await self.db.refresh(experience)
 
-        return experience
+        return {
+            "experience_uuid": experience.experience_uuid,
+            "message": "Experience updated successfully",
+        }
 
-    # ----------------------------------------------------
+    
+        # ----------------------------------------------------
     # DELETE
     # ----------------------------------------------------
 

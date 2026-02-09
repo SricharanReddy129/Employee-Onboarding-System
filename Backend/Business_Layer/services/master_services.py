@@ -6,7 +6,7 @@ from ...DAL.dao.master_dao import  CountryDAO, EducationDAO, ContactDAO
 from ...DAL.dao.education_dao import EducationDocDAO
 from ..utils.validation_utils import validate_alphabets_only, validate_country, validate_phone_number, get_country_name
 from ..utils.uuid_generator import generate_uuid7
-from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest, EducLevelDetails
+from ...API_Layer.interfaces.master_interfaces import CreateContactRequest, CreateEducLevelRequest, EducLevelDetails, UpdateContactRequest
 
 
 class CountryService:
@@ -233,3 +233,23 @@ class ContactService:
             raise HTTPException(status_code=500, detail=str(e))
 
             
+    async def update_contact(
+        self,
+        contact_uuid: str,
+        request_data: UpdateContactRequest
+    ):
+        # 🔍 Check if contact exists
+        contact = await self.dao.get_contact_by_uuid(contact_uuid)
+
+        if not contact:
+            raise HTTPException(
+                status_code=404,
+                detail="Contact not found"
+            )
+        # 🔄 Call DAO update
+        updated_contact = await self.dao.update_contact(
+            contact_uuid,
+            request_data
+        )
+
+        return updated_contact

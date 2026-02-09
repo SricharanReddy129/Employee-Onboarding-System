@@ -46,7 +46,7 @@ app.add_middleware(
 )
 
 # Add Audit Middleware globally
-app.add_middleware(AuditMiddleware)
+# app.add_middleware(AuditMiddleware)
 # Add JWT middleware globally
 app.add_middleware(JWTMiddleware)
 

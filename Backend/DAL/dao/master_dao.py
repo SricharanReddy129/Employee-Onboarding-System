@@ -1,10 +1,11 @@
 # Backend/DAL/dao/master_dao.py
+
 import uuid
 from Backend.DAL.utils.database import AsyncSessionLocal
-from sqlalchemy import select
+from sqlalchemy import select , exists
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.models.models import Countries, EducationLevel, CountryEducationDocumentMapping, Contacts
-from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest, EducLevelDetails
+from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest, EducLevelDetails, UpdateContactRequest
 import time
 
 class CountryDAO:
@@ -27,12 +28,19 @@ class CountryDAO:
         await self.db.commit()
         await self.db.refresh(new_country)
         return new_country
+    async def country_exists(self, country_uuid: str) -> bool:
+        result = await self.db.execute(
+            select(exists().where(Countries.country_uuid == country_uuid))
+        )
+        return result.scalar()
+    
     async def get_country_by_uuid(self, country_uuid: str):
         result = await self.db.execute(
             select(Countries).where(Countries.country_uuid == country_uuid)
         )
-
         return result.scalar_one_or_none()
+    
+    
     async def update_country(self, country_uuid: str, is_active: bool):
         result = await self.db.execute(
             select(Countries).where(Countries.country_uuid == country_uuid)
@@ -224,4 +232,27 @@ class ContactDAO:
         await self.db.delete(contact)
         await self.db.commit()
         return contact
-        
+    async def update_contact(
+        self,
+        contact_uuid: str,
+        request_data: UpdateContactRequest
+    ):
+        result = await self.db.execute(
+            select(Contacts).where(Contacts.contact_uuid == contact_uuid)
+        )
+        contact = result.scalar_one_or_none()
+
+        if not contact:
+            return None
+
+        # 🔄 Update correct fields
+        contact.country_uuid = request_data.country_uuid
+        contact.contact_number = request_data.contact_number
+        contact.emergency_contact = request_data.emergency_contact
+        contact.is_active = request_data.is_active
+
+        await self.db.commit()
+        await self.db.refresh(contact)
+
+        return contact
+            

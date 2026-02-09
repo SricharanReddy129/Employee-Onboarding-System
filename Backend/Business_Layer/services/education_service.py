@@ -55,7 +55,7 @@ class EducationDocService:
             if request_data.document_name:
                 document_name = validate_document_name(request_data.document_name)
 
-                existing = await self.dao.get_document_by_name(document_name, uuid)
+                existing = await self.dao.get_document_by_name_and_uuid(document_name, uuid)
                 if existing:
                     raise HTTPException(
                         status_code=409,
@@ -85,32 +85,64 @@ class EducationDocService:
         
 ## Employee Education Documents ##
     async def create_employee_education_document(self, request_data, file):
+        start_total = time.perf_counter()
+
         try:
-            # checking mapping exists or not
-            print("in service method")
-            existing = await self.educationdao.get_education_country_mapping_by_uuid(request_data["mapping_uuid"])
-            print("existing", existing)
-            if not existing:
+            # 🔹 1. Mapping exists timing
+            t1 = time.perf_counter()
+            if not await self.dao.education_mapping_exists(request_data["mapping_uuid"]):
                 raise HTTPException(status_code=404, detail="Mapping Not Found")
-            
-            # checking offer letter employee exists or not
-            existing = await self.offerdao.get_offer_by_uuid(request_data["user_uuid"])
-            if not existing:
+            print("⏱ Mapping exists check:", time.perf_counter() - t1)
+
+            # 🔹 2. Employee exists timing
+            t2 = time.perf_counter()
+            if not await self.offerdao.get_offer_by_uuid(request_data["user_uuid"]):
                 raise HTTPException(status_code=404, detail="Employee Not Found")
+            print("⏱ Employee exists check:", time.perf_counter() - t2)
+
+            # 🔹 3. Validation timing
+            t3 = time.perf_counter()
             validate_alphabets_only(request_data["institution_name"])
             validate_alphabets_only(request_data["specialization"])
             validate_numeric_value(str(request_data["percentage_cgpa"]))
+            print("⏱ Validation:", time.perf_counter() - t3)
+
+            # 🔹 4. UUID generation timing
+            t4 = time.perf_counter()
             uuid = generate_uuid7()
-            blob_upload_service = S3StorageService()
-            folder = "education_documents"
-            print("User uuid", request_data["user_uuid"])
-            file_path = await blob_upload_service.upload_file(file, folder, original_filename=file.filename, employee_uuid=request_data["user_uuid"])
-            result = await self.dao.create_employee_education_document(request_data, uuid, file_path)
-            return file_path
-        except HTTPException as he:
-            raise he
+            print("⏱ UUID generation:", time.perf_counter() - t4)
+
+            # 🔹 5. S3 upload timing
+            t5 = time.perf_counter()
+            blob_service = S3StorageService()
+            file_path = await blob_service.upload_file(
+                file,
+                "education_documents",
+                original_filename=file.filename,
+                employee_uuid=request_data["user_uuid"],
+            )
+            print("⏱ S3 upload:", time.perf_counter() - t5)
+
+            # 🔹 6. DB insert timing
+            t6 = time.perf_counter()
+            await self.dao.create_employee_education_document(
+                request_data, uuid, file_path
+            )
+            print("⏱ Insert + commit:", time.perf_counter() - t6)
+
+            # 🔹 Total service time
+            print("🚀 TOTAL SERVICE TIME:", time.perf_counter() - start_total)
+
+            return file_path, uuid
+
+        except HTTPException:
+            raise
+
         except Exception as e:
+            await self.db.rollback()
+            print("❌ FAILED after:", time.perf_counter() - start_total)
             raise HTTPException(status_code=500, detail=str(e))
+
     async def update_employee_education_document(self, document_uuid, request_data, file):
         # 1️⃣ check document exists
         existing = await self.dao.get_document_by_uuid(document_uuid)
