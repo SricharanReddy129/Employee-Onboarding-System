@@ -187,7 +187,7 @@ class EmployeeUploadService:
         try:
             # 🔹 Mapping lookup timing
             t1 = time.perf_counter()
-            existing = await self.dao.mapping_exists(mapping_uuid)
+            existing = await self.dao.identity_mapping_exists(mapping_uuid)
             print(f"⏱ Mapping lookup: {time.perf_counter() - t1:.4f} sec")
 
             if not existing:

@@ -1,5 +1,5 @@
 # Backend/DAL/dao/education_dao.py
-from sqlalchemy import select
+from sqlalchemy import select, update, exists
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.models.models import EducationDocumentType, EducationLevel, EmployeeEducationDocument, CountryEducationDocumentMapping
 import time
@@ -50,6 +50,7 @@ class EducationDocDAO:
     async def get_education_document_by_uuid(self, uuid):
         result = await self.db.execute(select(EducationDocumentType).where(EducationDocumentType.document_uuid == uuid))
         return result.scalar_one_or_none()
+    
     async def update_education_document(self, uuid, request_data):
         result = await self.db.execute(
             select(EducationDocumentType).where(
@@ -81,7 +82,13 @@ class EducationDocDAO:
         return edu_doc
     
     # Employee Education Documents ##
-
+    async def education_mapping_exists(self, mapping_uuid: str) -> bool:
+        result = await self.db.execute(
+            select(exists().where(
+                CountryEducationDocumentMapping.mapping_uuid == mapping_uuid
+            ))
+        )
+        return result.scalar()
     async def create_employee_education_document(self, request_data, uuid, file_path):
         new_edu_doc = EmployeeEducationDocument(
             document_uuid = uuid,
@@ -95,7 +102,7 @@ class EducationDocDAO:
         )
         self.db.add(new_edu_doc)
         await self.db.commit()
-        await self.db.refresh(new_edu_doc)
+        # await self.db.refresh(new_edu_doc)
         return new_edu_doc
     
     async def update_employee_education_document(self, document_uuid, request_data, file_path):

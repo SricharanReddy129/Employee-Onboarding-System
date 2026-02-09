@@ -85,7 +85,7 @@ class EmployeeUploadDAO:
         # await self.db.refresh(employee_identity)
         return employee_identity
     
-    async def mapping_exists(self, uuid: str) -> bool:
+    async def identity_mapping_exists(self, uuid: str) -> bool:
         start = time.perf_counter()
 
         result = await self.db.execute(
