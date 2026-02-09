@@ -1,3 +1,4 @@
+import asyncio
 from fastapi import HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import date, datetime
@@ -10,8 +11,8 @@ from ...DAL.dao.employee_experience_dao import EmployeeExperienceDAO
 from ...DAL.dao.offerletter_dao import OfferLetterDAO
 from ...DAL.utils.storage_utils import S3StorageService, get_storage_service
 from ..utils.uuid_generator import generate_uuid7
-
-
+import asyncio
+import time
 
 class EmployeeExperienceService:
     def __init__(self, db: AsyncSession):
@@ -23,32 +24,50 @@ class EmployeeExperienceService:
 
     # ------------------ CREATE EXPERIENCE ------------------
 
+   
+
     async def create_experience(
         self,
         request_data: ExperienceCreateRequest,
         doc_types: list[str],
         files: list[UploadFile],
     ):
-        # 1️⃣ Validate required docs
+        start_total = time.perf_counter()
+
+        # 1️⃣ Validation
         rules = EMPLOYMENT_DOCUMENT_RULES[request_data.employment_type.value]
+
         if len(doc_types) == 1 and "," in doc_types[0]:
             doc_types = [d.strip() for d in doc_types[0].split(",")]
 
-
         missing = set(rules) - set(doc_types)
         if missing:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Missing required documents: {list(missing)}",
-            )
+            raise HTTPException(400, f"Missing required documents: {list(missing)}")
 
         if len(doc_types) != len(files):
-            raise HTTPException(
-                status_code=400,
-                detail="Each document must have a matching file",
-            )
+            raise HTTPException(400, "Each document must have a matching file")
 
-        # 2️⃣ Upload files to S3 (type-based folders)
+        print("⏱ Validation:", time.perf_counter() - start_total)
+
+        # 2️⃣ Parallel S3 uploads
+        upload_start = time.perf_counter()
+
+        async def upload_one(file, doc_type):
+            folder = f"experience_documents/{doc_type}"
+            t = time.perf_counter()
+            path = await self.storage.upload_file(
+                file,
+                folder,
+                original_filename=file.filename,
+                employee_uuid=request_data.employee_uuid,
+            )
+            print(f"⏱ S3 upload ({doc_type}):", time.perf_counter() - t)
+            return doc_type, path
+
+        results = await asyncio.gather(
+            *(upload_one(f, d) for f, d in zip(files, doc_types))
+        )
+
         paths = {
             "exp_certificate_path": None,
             "payslip_path": None,
@@ -56,16 +75,17 @@ class EmployeeExperienceService:
             "contract_aggrement_path": None,
         }
 
-        for file, doc_type in zip(files, doc_types):
-            folder = f"experience_documents/{doc_type}"
-            file_path = await self.storage.upload_file(file, folder, original_filename=file.filename, employee_uuid=request_data.employee_uuid)
-            print("service", file_path)
-            paths[doc_type] = file_path
+        for doc_type, path in results:
+            paths[doc_type] = path
 
-        # 3️⃣ Create DB record
+        print("⏱ Total S3 uploads:", time.perf_counter() - upload_start)
+
+        # 3️⃣ DB insert
+        db_start = time.perf_counter()
+
         experience_uuid = generate_uuid7()
 
-        return await self.dao.create_experience(
+        result = await self.dao.create_experience(
             request_data=request_data,
             experience_uuid=experience_uuid,
             exp_certificate_path=paths["exp_certificate_path"],
@@ -74,7 +94,12 @@ class EmployeeExperienceService:
             contract_aggrement_path=paths["contract_aggrement_path"],
         )
 
-                     
+        print("⏱ Insert + commit:", time.perf_counter() - db_start)
+        print("🚀 TOTAL SERVICE TIME:", time.perf_counter() - start_total)
+
+        return result
+
+                        
 
     # ------------------ GET EXPERIENCE ------------------
     async def get_all_experience(self):

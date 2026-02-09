@@ -69,7 +69,7 @@ class EmployeeExperienceDAO:
 
         self.db.add(new_exp)
         await self.db.commit()
-        await self.db.refresh(new_exp)
+        # await self.db.refresh(new_exp)
 
         return {
             "experience_uuid": experience_uuid,
