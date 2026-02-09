@@ -10,9 +10,7 @@ from ...Business_Layer.services.employee_experience_service import EmployeeExper
 from ...DAL.utils.storage_utils import get_storage_service  # If needed for presigned URL
 from ..utils.role_based import require_roles
 
-
 router = APIRouter()
-
 
 # -------------------------------------------------------
 # CREATE EXPERIENCE
