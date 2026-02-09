@@ -4,7 +4,7 @@ from typing import Optional
 from datetime import date
 from fastapi import UploadFile
 from ...DAL.models.models import PersonalDetails, Addresses, EmployeeIdentityDocument
-
+import time
 class EmployeeUploadDAO:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -25,11 +25,23 @@ class EmployeeUploadDAO:
         # await self.db.refresh(personal_details)
         return personal_details
     
-    async def get_address_by_user_uuid_and_address_type(self, user_uuid, address_type):
-        print(user_uuid, address_type)
-        result = await self.db.execute(select(Addresses).where(Addresses.user_uuid == user_uuid).where(Addresses.address_type == address_type))
+  
+
+    async def get_address_by_user_uuid_and_address_type(self, user_uuid: str, address_type: str):
+        start = time.perf_counter()
+        stmt = (
+            select(Addresses)
+            .where(
+                (Addresses.user_uuid == user_uuid) &
+                (Addresses.address_type == address_type)
+            )
+            .limit(1)
+        )
+
+        result = await self.db.execute(stmt)
+        print(f"⏱ Address query: {time.perf_counter() - start:.4f} sec")
         return result.scalar_one_or_none()
-    
+
 
     async def create_address(self, request_data, uuid):
         permanent_address = Addresses(
@@ -46,7 +58,7 @@ class EmployeeUploadDAO:
         )
         self.db.add(permanent_address)
         await self.db.commit()
-        await self.db.refresh(permanent_address)
+        # await self.db.refresh(permanent_address)
         return permanent_address
     async def create_employee_identity(
         self,

@@ -81,53 +81,77 @@ class EmployeeUploadService:
             print(f"❌ Service error: {str(e)}")
             print(f"⏱ FAILED after: {time.perf_counter() - start_total:.4f} sec")
             raise HTTPException(status_code=500, detail=str(e))
-    async def create_address(self, request_data):
-     try:
-        # check user exists
-        existing_user = await self.offerdao.get_offer_by_uuid(request_data.user_uuid)
-        if not existing_user:
-            raise HTTPException(status_code=404, detail="User Not Found")
-
-        # check country exists
-        country_existing = await self.countrydao.get_country_by_uuid(request_data.country_uuid)
-        if not country_existing:
-            raise HTTPException(status_code=404, detail="Country Not Found")
-
-        # validate postal code
-        calling_code = country_existing.calling_code
-        validate_postal_code(calling_code, request_data.postal_code)
-
-        # check if address already exists for this user + type
-        existing = await self.dao.get_address_by_user_uuid_and_address_type(
-            request_data.user_uuid,
-            request_data.address_type
-        )
-
-        # 🟢 FIRST TIME → INSERT
-        if not existing:
-            uuid = generate_uuid7()
-            return await self.dao.create_address(request_data, uuid)
-
-        # 🔵 ALREADY EXISTS → UPDATE SAME ROW
-        existing.address_line1 = request_data.address_line1
-        existing.address_line2 = request_data.address_line2
-        existing.city = request_data.city
-        existing.district_or_ward = request_data.district_or_ward
-        existing.state_or_region = request_data.state_or_region
-        existing.country_uuid = request_data.country_uuid
-        existing.postal_code = request_data.postal_code
-
-        await self.db.commit()
-        await self.db.refresh(existing)
-
-        return existing
-
-     except HTTPException as he:
-        raise he
-     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
         
+
+    async def create_address(self, request_data):
+        start_total = time.perf_counter()
+
+        try:
+            # 🔹 User check timing
+            t1 = time.perf_counter()
+            existing_user = await self.offerdao.get_offer_by_uuid(request_data.user_uuid)
+            print(f"⏱ User query: {time.perf_counter() - t1:.4f} sec")
+
+            if not existing_user:
+                raise HTTPException(status_code=404, detail="User Not Found")
+
+            # 🔹 Country exists timing
+            t2 = time.perf_counter()
+            country_exists = await self.countrydao.country_exists(request_data.country_uuid)
+            print(f"⏱ Country exists query: {time.perf_counter() - t2:.4f} sec")
+
+            if not country_exists:
+                raise HTTPException(status_code=404, detail="Country Not Found")
+
+            # 🔹 Postal validation timing
+            t3 = time.perf_counter()
+            calling_code = existing_user["country_code"]
+            validate_postal_code(calling_code, request_data.postal_code)
+            print(f"⏱ Postal validation: {time.perf_counter() - t3:.4f} sec")
+
+            # 🔹 Existing address lookup timing
+            t4 = time.perf_counter()
+            existing = await self.dao.get_address_by_user_uuid_and_address_type(
+                request_data.user_uuid,
+                request_data.address_type
+            )
+            print(f"⏱ Existing address query: {time.perf_counter() - t4:.4f} sec")
+
+            # 🟢 INSERT timing
+            if not existing:
+                uuid = generate_uuid7()
+
+                t5 = time.perf_counter()
+                result = await self.dao.create_address(request_data, uuid)
+                print(f"⏱ Insert + commit: {time.perf_counter() - t5:.4f} sec")
+
+                print(f"🚀 TOTAL SERVICE TIME: {time.perf_counter() - start_total:.4f} sec")
+                return result
+
+            # 🔵 UPDATE timing
+            t6 = time.perf_counter()
+            existing.address_line1 = request_data.address_line1
+            existing.address_line2 = request_data.address_line2
+            existing.city = request_data.city
+            existing.district_or_ward = request_data.district_or_ward
+            existing.state_or_region = request_data.state_or_region
+            existing.country_uuid = request_data.country_uuid
+            existing.postal_code = request_data.postal_code
+
+            await self.db.commit()
+            print(f"⏱ Update + commit: {time.perf_counter() - t6:.4f} sec")
+
+            print(f"🚀 TOTAL SERVICE TIME: {time.perf_counter() - start_total:.4f} sec")
+            return existing
+
+        except HTTPException:
+            raise
+
+        except Exception as e:
+            await self.db.rollback()
+            print(f"❌ Service error after: {time.perf_counter() - start_total:.4f} sec")
+            raise HTTPException(status_code=500, detail=str(e))
+            
 
     async def update_address(self, uuid, request_data):
         try:
