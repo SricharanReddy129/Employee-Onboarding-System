@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..interfaces.master_interfaces import (CreateCountryResponse, CountryDetails, CountryAllDetails,
                                             CreateEducLevelResponse, CreateEducLevelRequest, EducLevelDetails, AllEducLevelDetails,
                                             CountryEductionMapping, CountryEducationMappingDetails,
-                                            CreateContactResponse, CreateContactRequest, ContactDetails)
+                                            CreateContactResponse, CreateContactRequest, ContactDetails, UpdateContactRequest)
 from ...Business_Layer.services.master_services import CountryService, EducationService, ContactService
 from ...DAL.utils.dependencies import get_db
 from ..utils.role_based import require_roles
@@ -271,6 +271,31 @@ async def delete_contact(contact_uuid: str, db: AsyncSession = Depends(get_db)):
             contact_uuid = result.contact_uuid,
             message = "Contact Deleted Successfully"
         )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+# update contact details by uuid
+@router.put("/contacts/{contact_uuid}", response_model=CreateContactResponse)
+async def update_contact(
+    contact_uuid: str,
+    request_data: UpdateContactRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        contact_service = ContactService(db)
+
+        result = await contact_service.update_contact(
+            contact_uuid,
+            request_data
+        )
+
+        return CreateContactResponse(
+            contact_uuid=result.contact_uuid,
+            message="Contact Updated Successfully"
+        )
+
     except HTTPException:
         raise
     except Exception as e:

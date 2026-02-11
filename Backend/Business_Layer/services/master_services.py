@@ -273,3 +273,23 @@ class ContactService:
             raise HTTPException(status_code=500, detail=str(e))
 
             
+    async def update_contact(
+        self,
+        contact_uuid: str,
+        request_data: UpdateContactRequest
+    ):
+        # 🔍 Check if contact exists
+        contact = await self.dao.get_contact_by_uuid(contact_uuid)
+
+        if not contact:
+            raise HTTPException(
+                status_code=404,
+                detail="Contact not found"
+            )
+        # 🔄 Call DAO update
+        updated_contact = await self.dao.update_contact(
+            contact_uuid,
+            request_data
+        )
+
+        return updated_contact
