@@ -10,6 +10,7 @@ class OfferCreateRequest(BaseModel):
     country_code: str
     contact_number: str
     designation: str
+    employee_type: str
     package: str
     currency : str
 
@@ -39,10 +40,13 @@ class OfferLetterDetailsResponse(BaseModel):
     country_code: str
     contact_number: str
     designation: str
+    employee_type: str
     package: str
     currency : str
     created_by: int
     status : str
+
+
 
 class Config:
     from_attributes = True  # important
@@ -53,6 +57,7 @@ class OfferPendingCandidate(BaseModel):
     last_name: str
     mail: str
     designation: str
+    employee_type: str
     package: str
     currency: str
     status: str
