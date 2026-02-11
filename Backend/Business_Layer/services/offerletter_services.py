@@ -741,3 +741,48 @@ class OfferLetterService:
         except Exception as e:
             print("❗ Unexpected error in bulk DocuSign service:", str(e))
             raise HTTPException(status_code=500, detail=str(e))
+
+    async def delete_offer_letter(self, user_uuid: str) -> str:
+        """
+        Delete offer only when:
+        1. status = Rejected
+        2. status = Created AND approval action = REJECTED
+        3. status = Created AND approval not started
+
+        Block when approval exists.
+        """
+
+        try:
+            # 🔎 Fetch offer
+            offer = await self.dao.get_offer_by_uuid(user_uuid)
+            if not offer:
+                raise HTTPException(status_code=404, detail="Offer letter not found")
+
+            # 🚨 Check approval request existence
+            approval_request = await self.dao.get_approval_request_by_user_uuid(user_uuid)
+
+            if approval_request:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Approval already initiated for this offer. Delete approval request first.",
+                )
+
+            # ✅ Apply status-based delete rules
+            if offer.status not in ["Rejected", "Created"]:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Offer letter cannot be deleted due to its current status",
+                )
+
+            # 🗑 Delete offer
+            await self.dao.delete_offer_letter(user_uuid)
+
+            # 💾 Commit once in service
+            await self.db.commit()
+
+            return "Offer letter deleted successfully"
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))

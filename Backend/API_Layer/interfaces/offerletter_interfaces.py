@@ -75,3 +75,6 @@ class BulkSendOfferLettersResponse(BaseModel):
     successful: int
     failed: int
     results: List[BulkSendOfferLettersResult]
+
+class DeleteOfferResponse(BaseModel):
+    message: str
