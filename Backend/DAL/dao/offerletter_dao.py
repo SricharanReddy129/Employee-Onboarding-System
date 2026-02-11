@@ -23,6 +23,7 @@ class OfferLetterDAO:
             created_by=current_user_id,
             contact_number=request_data.contact_number,
             designation=request_data.designation,
+            employee_type=request_data.employee_type,
             package=request_data.package,
             currency=request_data.currency,
         )
@@ -44,6 +45,7 @@ class OfferLetterDAO:
             created_by=current_user_id,
             contact_number=request_data.contact_number,
             designation=request_data.designation,
+            employee_type=request_data.employee_type,
             package=request_data.package,
             currency=request_data.currency,
         )
@@ -101,6 +103,7 @@ class OfferLetterDAO:
                 OfferLetterDetails.country_code,
                 OfferLetterDetails.contact_number,
                 OfferLetterDetails.designation,
+                OfferLetterDetails.employee_type,
                 OfferLetterDetails.package,
                 OfferLetterDetails.currency,
                 OfferLetterDetails.created_by,
@@ -136,6 +139,7 @@ class OfferLetterDAO:
                 OfferLetterDetails.country_code,
                 OfferLetterDetails.contact_number,
                 OfferLetterDetails.designation,
+                OfferLetterDetails.employee_type,
                 OfferLetterDetails.package,
                 OfferLetterDetails.currency,
                 OfferLetterDetails.created_by,
@@ -199,9 +203,10 @@ class OfferLetterDAO:
             country_code=request_data.country_code,
             contact_number=request_data.contact_number,
             designation=request_data.designation,
+            employee_type=request_data.employee_type,
             package=request_data.package,
             currency=request_data.currency,
-            updated_by=current_user_id,
+            # updated_by=current_user_id,
         )
     )
 

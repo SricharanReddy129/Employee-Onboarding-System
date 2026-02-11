@@ -180,7 +180,7 @@ async def get_offer_by_uuid(
     
 
 
-@router.put("/{user_uuid}", response_model=OfferUpdateResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
+@router.put("/{user_uuid}", response_model=OfferUpdateResponse)
 
 async def update_offer_by_uuid(
     user_uuid: str,

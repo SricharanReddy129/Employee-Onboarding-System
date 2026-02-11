@@ -83,7 +83,7 @@ class OfferLetterService:
 
         required_columns = {
             'first_name', 'last_name', 'mail', 'country_code',
-            'contact_number', 'designation', 'package', 'currency'
+            'contact_number', 'designation','employee_type', 'package', 'currency'
         }
         if not required_columns.issubset(df.columns):
             missing = required_columns - set(df.columns)
@@ -131,6 +131,7 @@ class OfferLetterService:
                     country_code=country_code,
                     contact_number=contact_number,
                     designation=designation,
+                    employee_type = str(row['employee_type']).strip(),
                     package=package,
                     currency=currency
                 )
@@ -300,6 +301,7 @@ class OfferLetterService:
                 {"name": "first_name", "value": payload["first_name"]},
                 {"name": "last_name", "value": payload["last_name"]},
                 {"name": "designation", "value": payload["designation"]},
+                # {"name": "employee_type", "value": payload["employee_type"]},
                 {"name": "package", "value": payload["package"]},
                 {"name": "currency", "value": payload["currency"]},
                 {"name": "user_uuid", "value": payload["user_uuid"]},
@@ -503,6 +505,7 @@ class OfferLetterService:
                     "last_name": record.last_name,
                     "email": record.mail,
                     "designation": record.designation,
+                    # "employee_type": record.employee_type,
                     "package": record.package,
                     "currency": record.currency,
                     "user_uuid": user_uuid,
@@ -667,6 +670,7 @@ class OfferLetterService:
                                         {"tabLabel": "EE", "value": record.mail},
                                         {"tabLabel": "ET", "value": record.designation},
                                         {"tabLabel": "EP", "value": record.package},
+                                        # {"tabLabel": "EET", "value": record.employee_type},
                                         {"tabLabel": "EC", "value": record.country_code},
                                         {"tabLabel": "EN", "value": record.contact_number}
                                     ]

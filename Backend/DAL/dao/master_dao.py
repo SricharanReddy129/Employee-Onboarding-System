@@ -5,7 +5,7 @@ from Backend.DAL.utils.database import AsyncSessionLocal
 from sqlalchemy import select , exists
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.models.models import Countries, EducationLevel, CountryEducationDocumentMapping, Contacts
-from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest, EducLevelDetails
+from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest, EducLevelDetails, UpdateContactRequest
 import time
 
 class CountryDAO:
@@ -213,7 +213,7 @@ class ContactDAO:
         )
         self.db.add(new_contact)
         await self.db.commit()
-        await self.db.refresh(new_contact)
+        # await self.db.refresh(new_contact)
         return new_contact
     async def get_contact_by_user_uuid_and_country_uuid(self, user_uuid, country_uuid):
         result = await self.db.execute(select(Contacts).where(Contacts.user_uuid == user_uuid).where(Contacts.country_uuid == country_uuid))
@@ -232,4 +232,27 @@ class ContactDAO:
         await self.db.delete(contact)
         await self.db.commit()
         return contact
-        
+    async def update_contact(
+        self,
+        contact_uuid: str,
+        request_data: UpdateContactRequest
+    ):
+        result = await self.db.execute(
+            select(Contacts).where(Contacts.contact_uuid == contact_uuid)
+        )
+        contact = result.scalar_one_or_none()
+
+        if not contact:
+            return None
+
+        # 🔄 Update correct fields
+        contact.country_uuid = request_data.country_uuid
+        contact.contact_number = request_data.contact_number
+        contact.emergency_contact = request_data.emergency_contact
+        contact.is_active = request_data.is_active
+
+        await self.db.commit()
+        await self.db.refresh(contact)
+
+        return contact
+            
