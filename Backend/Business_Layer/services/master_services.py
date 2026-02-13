@@ -6,8 +6,8 @@ from ...DAL.dao.master_dao import  CountryDAO, EducationDAO, ContactDAO
 from ...DAL.dao.education_dao import EducationDocDAO
 from ..utils.validation_utils import validate_alphabets_only, validate_country, validate_phone_number, get_country_name
 from ..utils.uuid_generator import generate_uuid7
-from ...API_Layer.interfaces.master_interfaces import CreateContactRequest, CreateEducLevelRequest, EducLevelDetails, UpdateContactRequest
-
+from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest, EducLevelDetails
+import time
 
 class CountryService:
     def __init__(self, db: AsyncSession):
@@ -175,33 +175,73 @@ class ContactService:
         self.countrydao = CountryDAO(self.db)
 
     async def create_contact(self, request_data):
+        start_total = time.perf_counter()
+
         try:
+            # ================= USER CHECK =================
+            t0 = time.perf_counter()
             existing_user = await self.offerdao.get_offer_by_uuid(request_data.user_uuid)
+            print(f"[TIMING] User lookup: {time.perf_counter() - t0:.4f}s")
+
             if not existing_user:
                 raise ValueError("User Not Found")
-            existing_country = await self.countrydao.get_country_by_uuid(request_data.country_uuid)
+
+            # ================= COUNTRY CHECK =================
+            t0 = time.perf_counter()
+            existing_country = await self.countrydao.get_country_by_uuid(
+                request_data.country_uuid
+            )
+            print(f"[TIMING] Country lookup: {time.perf_counter() - t0:.4f}s")
+
             if not existing_country:
                 raise ValueError("Country Not Found")
-            if existing_country.is_active == False:
-                raise ValueError("Country is Inactive")
-            
-            calling_code = existing_country.calling_code
-            validate_phone_number(calling_code, request_data.contact_number, "contact number")
-            validate_phone_number(calling_code, request_data.emergency_contact, "emergency contact")
-            # checking already exists or not 
-            existing = await self.dao.get_contact_by_user_uuid_and_country_uuid(request_data.user_uuid, request_data.country_uuid)
-            if existing:
-                raise ValueError("Contact with this user_uuid and country_uuid already exists")
-            
 
+            if existing_country.is_active is False:
+                raise ValueError("Country is Inactive")
+
+            # ================= PHONE VALIDATION =================
+            t0 = time.perf_counter()
+            calling_code = existing_country.calling_code
+            validate_phone_number(
+                calling_code, request_data.contact_number, "contact number"
+            )
+            validate_phone_number(
+                calling_code, request_data.emergency_contact, "emergency contact"
+            )
+            print(f"[TIMING] Phone validation: {time.perf_counter() - t0:.4f}s")
+
+            # ================= DUPLICATE CHECK =================
+            t0 = time.perf_counter()
+            existing = await self.dao.get_contact_by_user_uuid_and_country_uuid(
+                request_data.user_uuid, request_data.country_uuid
+            )
+            print(f"[TIMING] Duplicate check: {time.perf_counter() - t0:.4f}s")
+
+            if existing:
+                raise ValueError(
+                    "Contact with this user_uuid and country_uuid already exists"
+                )
+
+            # ================= INSERT =================
+            t0 = time.perf_counter()
             uuid = generate_uuid7()
-            return await self.dao.create_contact(request_data, uuid)
+            result = await self.dao.create_contact(request_data, uuid)
+            print(f"[TIMING] DB Insert: {time.perf_counter() - t0:.4f}s")
+
+            return result
+
         except ValueError as ve:
             raise HTTPException(status_code=422, detail=str(ve))
+
         except HTTPException as he:
             raise he
+
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+
+        finally:
+            print(f"[TIMING] Total create_contact time: {time.perf_counter() - start_total:.4f}s")
+
         
     async def get_all_contacts(self):
         try:

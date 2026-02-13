@@ -213,7 +213,7 @@ class ContactDAO:
         )
         self.db.add(new_contact)
         await self.db.commit()
-        await self.db.refresh(new_contact)
+        # await self.db.refresh(new_contact)
         return new_contact
     async def get_contact_by_user_uuid_and_country_uuid(self, user_uuid, country_uuid):
         result = await self.db.execute(select(Contacts).where(Contacts.user_uuid == user_uuid).where(Contacts.country_uuid == country_uuid))

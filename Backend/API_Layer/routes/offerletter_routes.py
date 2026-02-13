@@ -4,6 +4,7 @@ from Backend.DAL.utils.database import get_read_db
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...API_Layer.interfaces.offerletter_interfaces import(
+    DeleteOfferResponse,
     OfferCreateRequest, 
     OfferCreateResponse, 
     BulkOfferCreateResponse,
@@ -179,7 +180,7 @@ async def get_offer_by_uuid(
     
 
 
-@router.put("/{user_uuid}", response_model=OfferUpdateResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
+@router.put("/{user_uuid}", response_model=OfferUpdateResponse)
 
 async def update_offer_by_uuid(
     user_uuid: str,
@@ -235,4 +236,27 @@ async def bulk_send_offer_letters(
     print('offer_service created in route')
     return await offer_service.send_bulk_offerletters_via_docusign(request_data, int(request.state.user.get("user_id")))
 
+## delete offer letter by user_uuid only when it satisfies the following conditions:
+# 1. The offer letter status is 'rejected'
+# 2. The offer letter status was in 'created' and approval status is 'Rejected'
+# 3. the offer letter status is in  'created'(no action taken from approver
+@router.delete("/delete/{user_uuid}", response_model=DeleteOfferResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
+async def delete_offer_letter(
+
+    user_uuid: str,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        print("Delete offer letter endpoint called")
+        offer_service = OfferLetterService(db)
+        result = await offer_service.delete_offer_letter(user_uuid)
+        if result:
+            return DeleteOfferResponse(message="Offer letter deleted successfully")
+        else:
+            raise HTTPException(status_code=400, detail="Offer letter cannot be deleted due to its current status or it does not exist")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     
+

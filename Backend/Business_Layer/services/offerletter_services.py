@@ -82,7 +82,7 @@ class OfferLetterService:
 
         required_columns = {
             'first_name', 'last_name', 'mail', 'country_code',
-            'contact_number', 'designation', 'package', 'currency'
+            'contact_number', 'designation','employee_type', 'package', 'currency'
         }
         if not required_columns.issubset(df.columns):
             missing = required_columns - set(df.columns)
@@ -130,6 +130,7 @@ class OfferLetterService:
                     country_code=country_code,
                     contact_number=contact_number,
                     designation=designation,
+                    employee_type = str(row['employee_type']).strip(),
                     package=package,
                     currency=currency
                 )
@@ -299,6 +300,7 @@ class OfferLetterService:
                 {"name": "first_name", "value": payload["first_name"]},
                 {"name": "last_name", "value": payload["last_name"]},
                 {"name": "designation", "value": payload["designation"]},
+                # {"name": "employee_type", "value": payload["employee_type"]},
                 {"name": "package", "value": payload["package"]},
                 {"name": "currency", "value": payload["currency"]},
                 {"name": "user_uuid", "value": payload["user_uuid"]},
@@ -502,6 +504,7 @@ class OfferLetterService:
                     "last_name": record.last_name,
                     "email": record.mail,
                     "designation": record.designation,
+                    # "employee_type": record.employee_type,
                     "package": record.package,
                     "currency": record.currency,
                     "user_uuid": user_uuid,
@@ -763,4 +766,49 @@ class OfferLetterService:
             return "Offer letters sent via DocuSign successfully"
         except Exception as e:
             print("❗ Unexpected error in bulk DocuSign service:", str(e))
+            raise HTTPException(status_code=500, detail=str(e))
+
+    async def delete_offer_letter(self, user_uuid: str) -> str:
+        """
+        Delete offer only when:
+        1. status = Rejected
+        2. status = Created AND approval action = REJECTED
+        3. status = Created AND approval not started
+
+        Block when approval exists.
+        """
+
+        try:
+            # 🔎 Fetch offer
+            offer = await self.dao.get_offer_by_uuid(user_uuid)
+            if not offer:
+                raise HTTPException(status_code=404, detail="Offer letter not found")
+
+            # 🚨 Check approval request existence
+            approval_request = await self.dao.get_approval_request_by_user_uuid(user_uuid)
+
+            if approval_request:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Approval already initiated for this offer. Delete approval request first.",
+                )
+
+            # ✅ Apply status-based delete rules
+            if offer.status not in ["Rejected", "Created"]:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Offer letter cannot be deleted due to its current status",
+                )
+
+            # 🗑 Delete offer
+            await self.dao.delete_offer_letter(user_uuid)
+
+            # 💾 Commit once in service
+            await self.db.commit()
+
+            return "Offer letter deleted successfully"
+
+        except HTTPException:
+            raise
+        except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))

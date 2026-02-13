@@ -10,6 +10,7 @@ class OfferCreateRequest(BaseModel):
     country_code: str
     contact_number: str
     designation: str
+    employee_type: str
     package: str
     currency : str
     cc_mails: Optional[List[EmailStr]] = None
@@ -40,10 +41,13 @@ class OfferLetterDetailsResponse(BaseModel):
     country_code: str
     contact_number: str
     designation: str
+    employee_type: str
     package: str
     currency : str
     created_by: int
     status : str
+
+
 
 class Config:
     from_attributes = True  # important
@@ -54,6 +58,7 @@ class OfferPendingCandidate(BaseModel):
     last_name: str
     mail: str
     designation: str
+    employee_type: str
     package: str
     currency: str
     status: str
@@ -76,3 +81,6 @@ class BulkSendOfferLettersResponse(BaseModel):
     successful: int
     failed: int
     results: List[BulkSendOfferLettersResult]
+
+class DeleteOfferResponse(BaseModel):
+    message: str
