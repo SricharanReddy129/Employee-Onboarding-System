@@ -700,12 +700,39 @@ class OfferLetterService:
                         "templateId": DOCUSIGN_TEMPLATE_ID,
 
                         "templateRoles": template_roles,
+                        "status": "sent"
+                    }
 
                         # "emailSubject": "Your Offer Letter from Paves Global Infotech",
                         # "emailBlurb": "Please review and sign your offer letter.",
 
-                        "status": "sent"
-                    }
+                    # payload = {
+                    #     "templateId": DOCUSIGN_TEMPLATE_ID,
+                    #     "templateRoles": [
+                    #         {
+                    #             "roleName": "Employee",
+                    #             "name": full_name,
+                    #             "email": record.mail,
+                    #             "tabs": {
+                    #                 "textTabs": [
+                    #                     {"tabLabel": "EF", "value": full_name},
+                    #                     {"tabLabel": "EE", "value": record.mail},
+                    #                     {"tabLabel": "ET", "value": record.designation},
+                    #                     {"tabLabel": "EP", "value": record.package},
+                    #                     # {"tabLabel": "EET", "value": record.employee_type},
+                    #                     {"tabLabel": "EC", "value": record.country_code},
+                    #                     {"tabLabel": "EN", "value": record.contact_number}
+                    #                 ]
+                    #             }
+                    #         },
+                    #         {
+                    #             "roleName": "Manager",
+                    #             "name": "Ajay Kumar",
+                    #             "email": "ajaykumar1438742@gmail.com"
+                    #         }
+                    #     ],
+                    #     "status": "sent"
+                    # }
 
                     print("📄 DocuSign payload prepared")
                     print(payload)

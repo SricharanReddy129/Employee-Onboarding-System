@@ -39,6 +39,8 @@ class HrBulkJoinService:
                 joining_date=payload.joining_date,
                 location=payload.location,
                 reporting_time=payload.reporting_time,
+                department=payload.department,
+                reporting_manager=payload.reporting_manager,
                 custom_message=payload.custom_message
             )
 
