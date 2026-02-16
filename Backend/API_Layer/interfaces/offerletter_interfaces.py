@@ -13,6 +13,7 @@ class OfferCreateRequest(BaseModel):
     employee_type: str
     package: str
     currency : str
+    cc_mails: Optional[List[EmailStr]] = None
 
 
 class OfferCreateResponse(BaseModel):

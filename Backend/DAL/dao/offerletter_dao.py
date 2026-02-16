@@ -26,8 +26,10 @@ class OfferLetterDAO:
             employee_type=request_data.employee_type,
             package=request_data.package,
             currency=request_data.currency,
+            cc_emails=",".join(request_data.cc_mails) if request_data.cc_mails else None,
         )
         self.db.add(new_offer)
+        await self.db.commit()
         return new_offer
 
     async def create_offer_no_commit(self, uuid: str, request_data: OfferCreateRequest, current_user_id: int) -> OfferLetterDetails:
@@ -144,6 +146,7 @@ class OfferLetterDAO:
                 OfferLetterDetails.currency,
                 OfferLetterDetails.created_by,
                 OfferLetterDetails.status,
+                OfferLetterDetails.cc_emails
             )
             .where(OfferLetterDetails.user_uuid == user_uuid)
             .limit(1)
