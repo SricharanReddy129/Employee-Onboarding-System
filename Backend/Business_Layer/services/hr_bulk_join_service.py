@@ -29,6 +29,7 @@ class HrBulkJoinService:
             payload.user_emails_list,
             payload.joining_date
         )
+        joining_date_str = payload.joining_date.strftime("%d %B %Y")
 
         # ✅ 2. SEND EMAIL FROM BACKEND 
         for user in verified_users:
@@ -36,7 +37,7 @@ class HrBulkJoinService:
                 
                 to_email=user.mail,
                 name=user.first_name,
-                joining_date=payload.joining_date,
+                joining_date_str = joining_date_str,
                 location=payload.location,
                 reporting_time=payload.reporting_time,
                 department=payload.department,
