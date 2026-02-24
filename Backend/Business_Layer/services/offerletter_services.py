@@ -1,5 +1,6 @@
 # Backend/Business_Layer/services/offerletter_service.py
 import asyncio
+from unittest import result
 from fastapi import HTTPException
 import requests
 from httpx import AsyncClient
@@ -133,6 +134,7 @@ class OfferLetterService:
                     employee_type = str(row['employee_type']).strip(),
                     package=package,
                     currency=currency
+                    
                 )
                 valid_offers.append((index, request_data))
 
@@ -213,8 +215,11 @@ class OfferLetterService:
         return await self.dao.get_all_offers()
     
     async def get_offer_by_uuid(self, user_uuid: str):
-        return await self.dao.get_offer_by_uuid(user_uuid)
-    
+        offers = await self.dao.get_offer_by_uuid(user_uuid)
+        if not offers:
+            return None
+        return offers
+   
     async def update_offer_by_uuid(self, user_uuid: str, request_data: OfferCreateRequest, current_user_id: int):
         try:
             offer = await self.dao.get_offer_by_uuid(user_uuid)

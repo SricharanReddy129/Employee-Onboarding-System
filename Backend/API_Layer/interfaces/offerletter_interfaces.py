@@ -46,6 +46,7 @@ class OfferLetterDetailsResponse(BaseModel):
     currency : str
     created_by: int
     status : str
+    cc_emails: Optional[str] = None
 
 
 

@@ -228,7 +228,7 @@ Paves Technologies
 def send_joining_email(
     to_email: str,
     name: str,
-    joining_date,
+    joining_date_str: str,
     location: str,
     reporting_time: str,
     department: str ,
@@ -255,9 +255,9 @@ def send_joining_email(
     </p>
 
     <p>
-        You are scheduled to join us on <b>{joining_date}</b> at <b>{reporting_time}</b>.
-        Your work location will be <b>{location}</b>.
-        {f'You will be reporting to <b>{reporting_manager}</b>, Manager, {department} Department.' if reporting_manager else ''}
+    You are scheduled to join us on <b>{joining_date_str}</b> at <b>{reporting_time}</b>.
+    Your work location will be <b>{location}</b>.
+    {f'You will be reporting to <b>{reporting_manager}</b>. You will be part of the <b>{department}</b> department.' if reporting_manager else ''}
     </p>
 
 
@@ -308,7 +308,7 @@ def send_joining_email(
             smtp.starttls()
             smtp.login(EMAIL_USER, EMAIL_PASSWORD)
             smtp.send_message(msg)
-        print(f"✅ Joining email sent to {to_email}")
+        print(f"Joining email sent to {to_email}")
     except Exception as e:
         print(f"❌ Failed to send joining email: {e}")
         

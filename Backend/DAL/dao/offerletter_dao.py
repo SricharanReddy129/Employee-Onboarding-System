@@ -26,7 +26,7 @@ class OfferLetterDAO:
             employee_type=request_data.employee_type,
             package=request_data.package,
             currency=request_data.currency,
-            cc_emails=",".join(request_data.cc_mails) if request_data.cc_mails else None,
+            cc_emails=",".join(request_data.cc_emails) if request_data.cc_emails else None,
         )
         self.db.add(new_offer)
         await self.db.commit()
@@ -110,6 +110,7 @@ class OfferLetterDAO:
                 OfferLetterDetails.currency,
                 OfferLetterDetails.created_by,
                 OfferLetterDetails.status,
+                OfferLetterDetails.cc_emails
             )
             .where(OfferLetterDetails.created_by == user_id)
         )
@@ -124,7 +125,7 @@ class OfferLetterDAO:
 
         print("⏱ DAO total:", time.perf_counter() - start)
 
-        return [row._mapping for row in rows]
+        return rows
 
     
 
@@ -159,7 +160,7 @@ class OfferLetterDAO:
         row = result.mappings().first()
         print("⏱ DAO total:", time.perf_counter() - start)
 
-        return row
+        return row if row else None
 
 
     
@@ -209,7 +210,7 @@ class OfferLetterDAO:
             employee_type=request_data.employee_type,
             package=request_data.package,
             currency=request_data.currency,
-            # updated_by=current_user_id,
+            cc_emails=",".join(request_data.cc_emails) if request_data.cc_emails else None,
         )
     )
 
