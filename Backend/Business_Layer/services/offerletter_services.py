@@ -134,6 +134,7 @@ class OfferLetterService:
                     employee_type = str(row['employee_type']).strip(),
                     package=package,
                     currency=currency
+                    
                 )
                 valid_offers.append((index, request_data))
 

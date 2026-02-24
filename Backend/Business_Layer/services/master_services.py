@@ -6,7 +6,7 @@ from ...DAL.dao.master_dao import  CountryDAO, EducationDAO, ContactDAO
 from ...DAL.dao.education_dao import EducationDocDAO
 from ..utils.validation_utils import validate_alphabets_only, validate_country, validate_phone_number, get_country_name
 from ..utils.uuid_generator import generate_uuid7
-from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest, EducLevelDetails
+from ...API_Layer.interfaces.master_interfaces import CreateEducLevelRequest, EducLevelDetails, UpdateContactRequest
 import time
 
 class CountryService:

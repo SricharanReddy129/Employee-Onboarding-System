@@ -45,6 +45,7 @@ class OfferLetterDetailsResponse(BaseModel):
     currency : str
     created_by: int
     status : str
+    cc_email: list[str] = []
 
 
 
