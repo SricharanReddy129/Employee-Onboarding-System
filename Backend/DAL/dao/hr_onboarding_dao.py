@@ -341,6 +341,7 @@ class HrOnboardingDAO:
             {
                 "document_uuid": d.document_uuid,
                 "identity_type": identity_map.get(d.mapping_uuid, {}).get("identity_type"),
+                "identity_file_number": d.identity_file_number,
                 "country": identity_map.get(d.mapping_uuid, {}).get("country"),
                 "file_path": d.file_path,
                 "expiry_date": d.expiry_date,
