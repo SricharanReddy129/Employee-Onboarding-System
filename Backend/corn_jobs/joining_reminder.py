@@ -50,7 +50,7 @@ async def send_joining_date_reminders():
         except Exception as e:
             print(f"❌ Email failed: {e}")
 
-
+#may be used in future if we want to run the job in the main filed
 # def run_job():
 #     loop = asyncio.get_event_loop()
 #     loop.create_task(send_joining_date_reminders())

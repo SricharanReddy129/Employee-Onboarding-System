@@ -13,6 +13,7 @@ class OfferCreateRequest(BaseModel):
     employee_type: str
     package: str
     currency : str
+    cc_mails: Optional[List[EmailStr]] = None
 
 
 class OfferCreateResponse(BaseModel):
@@ -81,3 +82,6 @@ class BulkSendOfferLettersResponse(BaseModel):
     successful: int
     failed: int
     results: List[BulkSendOfferLettersResult]
+
+class DeleteOfferResponse(BaseModel):
+    message: str

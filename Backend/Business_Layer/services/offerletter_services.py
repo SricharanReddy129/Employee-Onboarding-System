@@ -49,7 +49,6 @@ class OfferLetterService:
             designation = validate_designation(request_data.designation)
             package = validate_package(request_data.package)
             currency = validate_currency(request_data.currency)
-
             # --- DUPLICATE CHECK ---
             existing_offer = await self.dao.get_offer_by_email(mail)
             if existing_offer:
@@ -658,33 +657,83 @@ class OfferLetterService:
                     # 2️⃣ Build DocuSign payload
                     full_name = f"{record.first_name} {record.last_name}"
 
+                    # Get CC emails from DB
+                    cc_emails = []
+
+                    if record.cc_emails:
+                        cc_emails = [e.strip() for e in record.cc_emails.split(",") if e.strip()]
+
+
+                    # Build template roles
+                    template_roles = [
+
+                        # ✅ Employee (Signer)
+                        {
+                            "roleName": "Employee",
+                            "name": full_name,
+                            "email": record.mail,
+
+                            "tabs": {
+                                "textTabs": [
+                                    {"tabLabel": "EF", "value": full_name},
+                                    {"tabLabel": "EE", "value": record.mail},
+                                    {"tabLabel": "ET", "value": record.designation},
+                                    {"tabLabel": "EP", "value": record.package},
+                                    {"tabLabel": "EC", "value": record.country_code},
+                                    {"tabLabel": "EN", "value": record.contact_number}
+                                ]
+                            }
+                        }
+                    ]
+
+
+                    # ✅ Manager (CC) — First CC email
+                    if cc_emails:
+                        template_roles.append({
+                            "roleName": "Manager",   # MUST MATCH TEMPLATE
+                            "name": "Manager",
+                            "email": cc_emails[0]
+                        })
+
+
+                    # Final payload
                     payload = {
                         "templateId": DOCUSIGN_TEMPLATE_ID,
-                        "templateRoles": [
-                            {
-                                "roleName": "Employee",
-                                "name": full_name,
-                                "email": record.mail,
-                                "tabs": {
-                                    "textTabs": [
-                                        {"tabLabel": "EF", "value": full_name},
-                                        {"tabLabel": "EE", "value": record.mail},
-                                        {"tabLabel": "ET", "value": record.designation},
-                                        {"tabLabel": "EP", "value": record.package},
-                                        # {"tabLabel": "EET", "value": record.employee_type},
-                                        {"tabLabel": "EC", "value": record.country_code},
-                                        {"tabLabel": "EN", "value": record.contact_number}
-                                    ]
-                                }
-                            },
-                            {
-                                "roleName": "Manager",
-                                "name": "Ajay Kumar",
-                                "email": "ajaykumar1438742@gmail.com"
-                            }
-                        ],
+
+                        "templateRoles": template_roles,
                         "status": "sent"
                     }
+
+                        # "emailSubject": "Your Offer Letter from Paves Global Infotech",
+                        # "emailBlurb": "Please review and sign your offer letter.",
+
+                    # payload = {
+                    #     "templateId": DOCUSIGN_TEMPLATE_ID,
+                    #     "templateRoles": [
+                    #         {
+                    #             "roleName": "Employee",
+                    #             "name": full_name,
+                    #             "email": record.mail,
+                    #             "tabs": {
+                    #                 "textTabs": [
+                    #                     {"tabLabel": "EF", "value": full_name},
+                    #                     {"tabLabel": "EE", "value": record.mail},
+                    #                     {"tabLabel": "ET", "value": record.designation},
+                    #                     {"tabLabel": "EP", "value": record.package},
+                    #                     # {"tabLabel": "EET", "value": record.employee_type},
+                    #                     {"tabLabel": "EC", "value": record.country_code},
+                    #                     {"tabLabel": "EN", "value": record.contact_number}
+                    #                 ]
+                    #             }
+                    #         },
+                    #         {
+                    #             "roleName": "Manager",
+                    #             "name": "Ajay Kumar",
+                    #             "email": "ajaykumar1438742@gmail.com"
+                    #         }
+                    #     ],
+                    #     "status": "sent"
+                    # }
 
                     print("📄 DocuSign payload prepared")
                     print(payload)
@@ -745,4 +794,49 @@ class OfferLetterService:
             return "Offer letters sent via DocuSign successfully"
         except Exception as e:
             print("❗ Unexpected error in bulk DocuSign service:", str(e))
+            raise HTTPException(status_code=500, detail=str(e))
+
+    async def delete_offer_letter(self, user_uuid: str) -> str:
+        """
+        Delete offer only when:
+        1. status = Rejected
+        2. status = Created AND approval action = REJECTED
+        3. status = Created AND approval not started
+
+        Block when approval exists.
+        """
+
+        try:
+            # 🔎 Fetch offer
+            offer = await self.dao.get_offer_by_uuid(user_uuid)
+            if not offer:
+                raise HTTPException(status_code=404, detail="Offer letter not found")
+
+            # 🚨 Check approval request existence
+            approval_request = await self.dao.get_approval_request_by_user_uuid(user_uuid)
+
+            if approval_request:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Approval already initiated for this offer. Delete approval request first.",
+                )
+
+            # ✅ Apply status-based delete rules
+            if offer.status not in ["Rejected", "Created"]:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Offer letter cannot be deleted due to its current status",
+                )
+
+            # 🗑 Delete offer
+            await self.dao.delete_offer_letter(user_uuid)
+
+            # 💾 Commit once in service
+            await self.db.commit()
+
+            return "Offer letter deleted successfully"
+
+        except HTTPException:
+            raise
+        except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))

@@ -2,7 +2,7 @@
 import datetime
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...DAL.models.models import OfferLetterDetails
+from ...DAL.models.models import OfferApprovalAction, OfferApprovalRequest, OfferLetterDetails
 from ...API_Layer.interfaces.offerletter_interfaces import OfferCreateRequest
 import time
 class OfferLetterDAO:
@@ -26,8 +26,10 @@ class OfferLetterDAO:
             employee_type=request_data.employee_type,
             package=request_data.package,
             currency=request_data.currency,
+            cc_emails=",".join(request_data.cc_mails) if request_data.cc_mails else None,
         )
         self.db.add(new_offer)
+        await self.db.commit()
         return new_offer
 
     async def create_offer_no_commit(self, uuid: str, request_data: OfferCreateRequest, current_user_id: int) -> OfferLetterDetails:
@@ -144,6 +146,7 @@ class OfferLetterDAO:
                 OfferLetterDetails.currency,
                 OfferLetterDetails.created_by,
                 OfferLetterDetails.status,
+                OfferLetterDetails.cc_emails
             )
             .where(OfferLetterDetails.user_uuid == user_uuid)
             .limit(1)
@@ -311,3 +314,39 @@ class OfferLetterDAO:
         result = await self.db.execute(stmt)
 
         return result.scalars().all()
+    
+    async def get_approval_request_by_user_uuid(self, user_uuid:str):
+        stmt = (
+            select(OfferApprovalRequest)
+            .where(OfferApprovalRequest.user_uuid == user_uuid)
+            .limit(1)
+
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+    
+    async def get_latest_approval_action(self, request_id: int):
+        stmt = (
+            select(OfferApprovalAction)
+            .where(OfferApprovalAction.id == request_id)
+            .limit(1)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
+    async def delete_offer_letter(self, user_uuid: str):
+        """
+        Delete an offer letter by user UUID.
+        """
+
+        # 1. Fetch record
+        result = await self.db.execute(
+            select(OfferLetterDetails).where(OfferLetterDetails.user_uuid == user_uuid)
+        )
+        offer = result.scalar_one_or_none()
+
+        if not offer:
+            return None
+
+        # 2. Delete the record
+        await self.db.delete(offer)
+        return True

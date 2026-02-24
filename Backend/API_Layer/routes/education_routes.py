@@ -180,6 +180,8 @@ async def get_employee_education_document_by_uuid(uuid: str, db: AsyncSession = 
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+        
 # delete employee education document by uuid
 @router.delete("/employee-education-document/{uuid}", response_model=DeleteEmpEducResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def delete_employee_education_document_by_uuid(uuid: str, db: AsyncSession = Depends(get_db)):

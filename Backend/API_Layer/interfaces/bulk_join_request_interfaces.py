@@ -7,6 +7,8 @@ class BulkJoinRequest(BaseModel):
     joining_date: date
     location: str
     reporting_time: str
+    department: str
+    reporting_manager: str
     custom_message: Optional[str] = None
 
 

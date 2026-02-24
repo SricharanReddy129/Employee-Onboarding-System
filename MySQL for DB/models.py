@@ -30,6 +30,7 @@ class Countries(Base):
     __tablename__ = 'countries'
     __table_args__ = (
         Index('country_uuid', 'country_uuid', unique=True),
+        Index('idx_country_uuid', 'country_uuid')
     )
 
     country_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -82,6 +83,8 @@ class EducationLevel(Base):
     __tablename__ = 'education_level'
     __table_args__ = (
         Index('education_uuid', 'education_uuid', unique=True),
+        Index('idx_edu_uuid_exact', 'education_uuid'),
+        Index('idx_education_uuid', 'education_uuid')
     )
 
     education_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -115,6 +118,8 @@ class IdentityType(Base):
 class OfferLetterDetails(Base):
     __tablename__ = 'offer_letter_details'
     __table_args__ = (
+        Index('idx_offer_user_created', 'user_uuid', 'created_by'),
+        Index('idx_offer_user_uuid', 'user_uuid'),
         Index('mail', 'mail', unique=True),
         Index('user_uuid', 'user_uuid', unique=True)
     )
@@ -138,6 +143,7 @@ class OfferLetterDetails(Base):
     pandadoc_draft_id: Mapped[Optional[str]] = mapped_column(String(255))
     offer_response_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
     joining_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
+    cc_emails: Mapped[Optional[str]] = mapped_column(String(256))
 
     addresses: Mapped[list['Addresses']] = relationship('Addresses', back_populates='offer_letter_details', lazy="selectin")
     contacts: Mapped[list['Contacts']] = relationship('Contacts', back_populates='offer_letter_details', lazy="selectin")
@@ -184,6 +190,7 @@ class Addresses(Base):
         ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='addresses_ibfk_1'),
         Index('address_uuid', 'address_uuid', unique=True),
         Index('country_uuid', 'country_uuid'),
+        Index('idx_address_user', 'user_uuid'),
         Index('user_uuid', 'user_uuid')
     )
 
@@ -237,6 +244,7 @@ class CountryEducationDocumentMapping(Base):
         Index('country_uuid', 'country_uuid'),
         Index('education_document_uuid', 'education_document_uuid'),
         Index('education_uuid', 'education_uuid'),
+        Index('idx_edu_mapping', 'mapping_uuid'),
         Index('mapping_uuid', 'mapping_uuid', unique=True)
     )
 
@@ -262,6 +270,7 @@ class CountryIdentityMapping(Base):
         ForeignKeyConstraint(['identity_type_uuid'], ['identity_type.identity_type_uuid'], name='country_identity_mapping_ibfk_2'),
         Index('country_uuid', 'country_uuid'),
         Index('identity_type_uuid', 'identity_type_uuid'),
+        Index('idx_identity_mapping', 'mapping_uuid'),
         Index('mapping_uuid', 'mapping_uuid', unique=True)
     )
 
@@ -307,7 +316,8 @@ class EmployeeExperience(Base):
     __table_args__ = (
         ForeignKeyConstraint(['employee_uuid'], ['offer_letter_details.user_uuid'], name='employee_experience_ibfk_1'),
         Index('employee_uuid', 'employee_uuid'),
-        Index('experience_uuid', 'experience_uuid', unique=True)
+        Index('experience_uuid', 'experience_uuid', unique=True),
+        Index('idx_experience_user', 'employee_uuid')
     )
 
     experience_id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -363,6 +373,9 @@ class OfferApprovalRequest(Base):
     __tablename__ = 'offer_approval_request'
     __table_args__ = (
         ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], ondelete='CASCADE', name='fk_offer_req_user_uuid'),
+        Index('idx_approval_user', 'user_uuid'),
+        Index('idx_offer_request_user_uuid', 'user_uuid'),
+        Index('idx_offer_request_uuid', 'user_uuid'),
         Index('idx_user_uuid', 'user_uuid')
     )
 
@@ -399,6 +412,8 @@ class PersonalDetails(Base):
         ForeignKeyConstraint(['nationality_country_uuid'], ['countries.country_uuid'], name='personal_details_ibfk_2'),
         ForeignKeyConstraint(['residence_country_uuid'], ['countries.country_uuid'], name='personal_details_ibfk_3'),
         ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='personal_details_ibfk_1'),
+        Index('idx_personal_user', 'user_uuid'),
+        Index('idx_personal_user_uuid', 'user_uuid'),
         Index('nationality_country_uuid', 'nationality_country_uuid'),
         Index('personal_uuid', 'personal_uuid', unique=True),
         Index('residence_country_uuid', 'residence_country_uuid'),
@@ -428,6 +443,7 @@ class EmployeeEducationDocument(Base):
         ForeignKeyConstraint(['mapping_uuid'], ['country_education_document_mapping.mapping_uuid'], name='employee_education_document_ibfk_1'),
         ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='employee_education_document_ibfk_2'),
         Index('document_uuid', 'document_uuid', unique=True),
+        Index('idx_education_user', 'user_uuid'),
         Index('mapping_uuid', 'mapping_uuid'),
         Index('user_uuid', 'user_uuid')
     )
@@ -439,6 +455,7 @@ class EmployeeEducationDocument(Base):
     institution_name: Mapped[Optional[str]] = mapped_column(String(150))
     specialization: Mapped[Optional[str]] = mapped_column(String(150))
     year_of_passing: Mapped[Optional[Any]] = mapped_column(YEAR)
+    percentage_cgpa: Mapped[Optional[str]] = mapped_column(String(10))
     file_path: Mapped[Optional[str]] = mapped_column(String(255))
     status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'verified', 'rejected'), server_default=text("'uploaded'"))
     uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
@@ -457,6 +474,7 @@ class EmployeeIdentityDocument(Base):
         ForeignKeyConstraint(['mapping_uuid'], ['country_identity_mapping.mapping_uuid'], name='employee_identity_document_ibfk_1'),
         ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='employee_identity_document_ibfk_2'),
         Index('document_uuid', 'document_uuid', unique=True),
+        Index('idx_identity_user', 'user_uuid'),
         Index('mapping_uuid', 'mapping_uuid'),
         Index('user_uuid', 'user_uuid')
     )
@@ -535,6 +553,8 @@ class OfferApprovalAction(Base):
     __tablename__ = 'offer_approval_action'
     __table_args__ = (
         ForeignKeyConstraint(['request_id'], ['offer_approval_request.id'], ondelete='CASCADE', name='fk_offer_action_request'),
+        Index('idx_approval_action_request', 'request_id'),
+        Index('idx_offer_action_request_id', 'request_id'),
         Index('idx_request_id', 'request_id')
     )
 
