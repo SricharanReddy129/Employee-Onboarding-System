@@ -165,7 +165,7 @@ async def get_offer_by_uuid(
         offer = await offer_service.get_offer_by_uuid(user_uuid)
         if not offer:
             raise HTTPException(status_code=404, detail="Offer letter not found")
-        cc_raw = getattr(offer, "cc_emails", "")
+        cc_raw = offer.get("cc_emails", "")
         return {
             "user_uuid": offer.user_uuid,
             "first_name": offer.first_name,
