@@ -160,7 +160,7 @@ class OfferLetterDAO:
         row = result.mappings().first()
         print("⏱ DAO total:", time.perf_counter() - start)
 
-        return row
+        return dict(row) if row else None
 
 
     

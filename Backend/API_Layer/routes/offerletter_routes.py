@@ -166,10 +166,6 @@ async def get_offer_by_uuid(
         if not offer:
             raise HTTPException(status_code=404, detail="Offer letter not found")
         cc_raw = getattr(offer, "cc_emails", "")
-        if cc_raw:
-            cc_list = [e.strip() for e in cc_raw.split(",") if e.strip()]
-        else:
-            cc_list = []
         return {
             "user_uuid": offer.user_uuid,
             "first_name": offer.first_name,
@@ -183,7 +179,7 @@ async def get_offer_by_uuid(
             "currency": offer.currency,
             "created_by": offer.created_by,
             "status": offer.status,
-            "cc_emails": cc_list
+            "cc_emails": cc_raw
         }
 
     except HTTPException:
