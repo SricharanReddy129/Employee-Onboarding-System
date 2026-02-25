@@ -42,8 +42,8 @@ class OfferLetterDetailsResponse(BaseModel):
     contact_number: str
     designation: str
     employee_type: str
-    package: str
-    currency : str
+    package: Optional[str] = None
+    currency : Optional[str] = None
     created_by: int
     status : str
     cc_emails: Optional[str] = None
