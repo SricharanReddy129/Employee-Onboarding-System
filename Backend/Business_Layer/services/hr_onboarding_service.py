@@ -16,7 +16,7 @@ from Backend.Business_Layer.utils.email_utils import send_hr_onboarding_submitte
 
 class HrOnboardingService:
 
-    HR_EMAIL = "lokeswari353@gmail.com"
+    HR_EMAIL = "lokeswaribusam216@gmail.com"
     def __init__(self, db: AsyncSession):
         self.db = db
         self.dao = HrOnboardingDAO(db)
