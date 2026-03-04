@@ -412,30 +412,76 @@ class PersonalDetails(Base):
         ForeignKeyConstraint(['nationality_country_uuid'], ['countries.country_uuid'], name='personal_details_ibfk_2'),
         ForeignKeyConstraint(['residence_country_uuid'], ['countries.country_uuid'], name='personal_details_ibfk_3'),
         ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='personal_details_ibfk_1'),
+        ForeignKeyConstraint(['emergency_contact_relation_uuid'], ['relation_master.relation_uuid'], name='personal_details_ibfk_4'),
+
         Index('idx_personal_user', 'user_uuid'),
         Index('idx_personal_user_uuid', 'user_uuid'),
         Index('nationality_country_uuid', 'nationality_country_uuid'),
         Index('personal_uuid', 'personal_uuid', unique=True),
         Index('residence_country_uuid', 'residence_country_uuid'),
-        Index('user_uuid', 'user_uuid')
+        Index('user_uuid', 'user_uuid'),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     personal_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+
     date_of_birth: Mapped[Optional[datetime.date]] = mapped_column(Date)
     gender: Mapped[Optional[str]] = mapped_column(Enum('Male', 'Female', 'Other'))
     marital_status: Mapped[Optional[str]] = mapped_column(Enum('Single', 'Married', 'Divorced', 'Widowed'))
     blood_group: Mapped[Optional[str]] = mapped_column(String(5))
+
     nationality_country_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
     residence_country_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
-    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
-    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
-    countries: Mapped[Optional['Countries']] = relationship('Countries', foreign_keys=[nationality_country_uuid], back_populates='personal_details', lazy="selectin")
-    countries_: Mapped[Optional['Countries']] = relationship('Countries', foreign_keys=[residence_country_uuid], back_populates='personal_details_', lazy="selectin")
-    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='personal_details', lazy="selectin")
+    # NEW FIELDS
+    emergency_contact_name: Mapped[Optional[str]] = mapped_column(String(100))
+    emergency_contact_phone: Mapped[Optional[str]] = mapped_column(String(20))
+    emergency_contact_relation_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
 
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime, server_default=text('CURRENT_TIMESTAMP')
+    )
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')
+    )
+
+    countries: Mapped[Optional['Countries']] = relationship(
+        'Countries',
+        foreign_keys=[nationality_country_uuid],
+        back_populates='personal_details',
+        lazy="selectin"
+    )
+
+    countries_: Mapped[Optional['Countries']] = relationship(
+        'Countries',
+        foreign_keys=[residence_country_uuid],
+        back_populates='personal_details_',
+        lazy="selectin"
+    )
+
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship(
+        'OfferLetterDetails',
+        back_populates='personal_details',
+        lazy="selectin"
+    )
+
+    # NEW RELATIONSHIP
+    relation: Mapped[Optional['RelationMaster']] = relationship(
+        'RelationMaster',
+        foreign_keys=[emergency_contact_relation_uuid],
+        lazy="selectin"
+    )
+
+class RelationMaster(Base):
+    __tablename__ = "relation"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    relation_uuid: Mapped[str] = mapped_column(CHAR(36), unique=True)
+    relation_name: Mapped[str] = mapped_column(String(50))
+
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
 
 class EmployeeEducationDocument(Base):
     __tablename__ = 'employee_education_document'

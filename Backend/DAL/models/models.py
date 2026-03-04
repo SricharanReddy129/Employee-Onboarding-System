@@ -1,5 +1,6 @@
 from typing import Any, Optional
 import datetime
+from sqlalchemy import ForeignKey
 
 from sqlalchemy import BigInteger, CHAR, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, TIMESTAMP, Text, text
 from sqlalchemy.dialects.mysql import ENUM, TINYINT, YEAR
@@ -412,6 +413,8 @@ class PersonalDetails(Base):
         ForeignKeyConstraint(['nationality_country_uuid'], ['countries.country_uuid'], name='personal_details_ibfk_2'),
         ForeignKeyConstraint(['residence_country_uuid'], ['countries.country_uuid'], name='personal_details_ibfk_3'),
         ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='personal_details_ibfk_1'),
+        ForeignKeyConstraint(['emergency_contact_relation_uuid'], ['relation.relation_uuid'], name='personal_details_ibfk_4'),
+
         Index('idx_personal_user', 'user_uuid'),
         Index('idx_personal_user_uuid', 'user_uuid'),
         Index('nationality_country_uuid', 'nationality_country_uuid'),
@@ -423,19 +426,74 @@ class PersonalDetails(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     personal_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+
     date_of_birth: Mapped[Optional[datetime.date]] = mapped_column(Date)
     gender: Mapped[Optional[str]] = mapped_column(Enum('Male', 'Female', 'Other'))
     marital_status: Mapped[Optional[str]] = mapped_column(Enum('Single', 'Married', 'Divorced', 'Widowed'))
     blood_group: Mapped[Optional[str]] = mapped_column(String(5))
+
     nationality_country_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
     residence_country_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
-    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
-    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
-    countries: Mapped[Optional['Countries']] = relationship('Countries', foreign_keys=[nationality_country_uuid], back_populates='personal_details', lazy="selectin")
-    countries_: Mapped[Optional['Countries']] = relationship('Countries', foreign_keys=[residence_country_uuid], back_populates='personal_details_', lazy="selectin")
-    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='personal_details', lazy="selectin")
+    # New Emergency Contact Fields
+    emergency_contact_name: Mapped[Optional[str]] = mapped_column(String(100))
+    emergency_contact_phone: Mapped[Optional[str]] = mapped_column(String(20))
+    emergency_contact_relation_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36), ForeignKey("relation.relation_uuid")
+)
 
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime, server_default=text('CURRENT_TIMESTAMP')
+    )
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')
+    )
+
+    countries: Mapped[Optional['Countries']] = relationship(
+        'Countries',
+        foreign_keys=[nationality_country_uuid],
+        back_populates='personal_details',
+        lazy="selectin"
+    )
+
+    countries_: Mapped[Optional['Countries']] = relationship(
+        'Countries',
+        foreign_keys=[residence_country_uuid],
+        back_populates='personal_details_',
+        lazy="selectin"
+    )
+
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship(
+        'OfferLetterDetails',
+        back_populates='personal_details',
+        lazy="selectin"
+    )
+
+    # Relation Master Relationship
+    relation: Mapped[Optional['RelationMaster']] = relationship(
+        'RelationMaster',
+        foreign_keys=[emergency_contact_relation_uuid],
+        lazy="selectin"
+    )
+
+class RelationMaster(Base):
+    __tablename__ = "relation"
+    __table_args__ = (
+        Index('relation_uuid', 'relation_uuid', unique=True),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    relation_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    relation_name: Mapped[str] = mapped_column(String(50), nullable=False)
+
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime,
+        server_default=text('CURRENT_TIMESTAMP')
+    )
+
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime,
+        server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')
+    )
 
 class EmployeeEducationDocument(Base):
     __tablename__ = 'employee_education_document'

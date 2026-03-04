@@ -24,62 +24,61 @@ class EmployeeUploadService:
         self.identitydao = IdentityDAO(self.db)
         
     async def create_personal_details(self, request_data: PersonalDetailsRequest):
-        start_total = time.perf_counter()
 
         try:
-            # 🔹 Validation timing
-            t0 = time.perf_counter()
             validate_blood_group(request_data.blood_group)
             validate_date_of_birth(request_data.date_of_birth)
-            print(f"⏱ Validation: {time.perf_counter() - t0:.4f} sec")
-
-            # 🔹 Offer query timing
-            t1 = time.perf_counter()
+           
             offer = await self.offerdao.get_offer_by_uuid(request_data.user_uuid)
-            print(f"⏱ Offer query: {time.perf_counter() - t1:.4f} sec")
 
             if not offer:
                 raise HTTPException(status_code=404, detail="User Not Found")
 
-            # 🔹 Nationality query timing
-            t2 = time.perf_counter()
             nationality = await self.countrydao.country_exists(
                 request_data.nationality_country_uuid
             )
-            print(f"⏱ Nationality query: {time.perf_counter() - t2:.4f} sec")
 
             if not nationality:
                 raise HTTPException(status_code=404, detail="Nationality Country Not Found")
 
-            # 🔹 Residence query timing
-            t3 = time.perf_counter()
+           
             residence = await self.countrydao.country_exists(
                 request_data.residence_country_uuid
             )
-            print(f"⏱ Residence query: {time.perf_counter() - t3:.4f} sec")
 
             if not residence:
                 raise HTTPException(status_code=404, detail="Residence Country Not Found")
 
-            # 🔹 Insert timing
-            t4 = time.perf_counter()
+         
             result = await self.dao.create_personal_details(
                 request_data,
                 generate_uuid7()
             )
-            print(f"⏱ Insert + commit: {time.perf_counter() - t4:.4f} sec")
-
-            # 🔹 Total API time
-            print(f"🚀 TOTAL SERVICE TIME: {time.perf_counter() - start_total:.4f} sec")
-
+           
             return result
 
         except HTTPException:
             raise
 
         except Exception as e:
-            print(f"❌ Service error: {str(e)}")
-            print(f"⏱ FAILED after: {time.perf_counter() - start_total:.4f} sec")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    async def create_relation(self, request_data):
+        try:
+            result = await self.dao.create_relation(request_data, generate_uuid7())
+            return result
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    async def get_relations(self, db: AsyncSession):
+        try:
+            result = await self.dao.get_relations(db)
+            return result
+        except HTTPException:
+            raise
+        except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
         
 
