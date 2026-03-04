@@ -22,6 +22,9 @@ class PersonalDetailsRequest(BaseModel):
     blood_group: str
     nationality_country_uuid: str
     residence_country_uuid: str
+    emergency_contact_name: str
+    emergency_contact_phone: str
+    emergency_contact_relation_uuid: str
 
 class PersonalDetailsResponse(BaseModel):
     personal_uuid: str
@@ -35,7 +38,10 @@ class PersonalDetails(BaseModel):
     blood_group: str
     nationality_country_uuid: str
     residence_country_uuid: str
-    created_at: datetime     # <-- accepts datetime.datetime
+    emergency_contact_name: str
+    emergency_contact_phone: str
+    emergency_contact_relation_uuid: str
+        
 class UpdatePersonalRequest(BaseModel):
     date_of_birth: str
     gender: Gender
@@ -43,6 +49,18 @@ class UpdatePersonalRequest(BaseModel):
     blood_group: str
     nationality_country_uuid: str
     residence_country_uuid: str
+    emergency_contact_name: str
+    emergency_contact_phone: str
+    emergency_contact_relation_uuid: str
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+class CreateRelationRequest(BaseModel):
+    relation_name: str
+
+class CreateRelationResponse(BaseModel):
+    relation_uuid: str
+    message: str
 
 # Addresses Interfaces
 

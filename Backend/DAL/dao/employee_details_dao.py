@@ -27,13 +27,16 @@ class EmployeeDetailsDAO:
         personal_details.blood_group = request_data.blood_group
         personal_details.nationality_country_uuid = request_data.nationality_country_uuid
         personal_details.residence_country_uuid = request_data.residence_country_uuid
+        personal_details.emergency_contact_name = request_data.emergency_contact_name
+        personal_details.emergency_contact_phone = request_data.emergency_contact_phone
+        personal_details.emergency_contact_relation_uuid = request_data.emergency_contact_relation_uuid
         await self.db.commit()
         await self.db.refresh(personal_details)
         return personal_details
     async def delete_personal_details(self, personal_uuid):
         result = await self.db.execute(select(PersonalDetails).where(PersonalDetails.personal_uuid == personal_uuid))
         personal_details = result.scalar_one_or_none()
-        self.db.delete(personal_details)
+        await self.db.delete(personal_details)
         await self.db.commit()
         return personal_details
 

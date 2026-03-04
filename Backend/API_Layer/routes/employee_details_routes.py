@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Form, File, Uplo
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.utils.dependencies import get_db
-from ..interfaces.employee_details_interfaces import (DeleteEmployeeIdentityResponse, PersonalDetailsRequest, PersonalDetailsResponse, PersonalDetails,
+from ..interfaces.employee_details_interfaces import (PersonalDetails, DeleteEmployeeIdentityResponse, PersonalDetailsRequest, PersonalDetailsResponse, PersonalDetails,
                                                       UpdatePersonalRequest, CreateAddressRequest, CreateAddressResponse,
                                                       AddressDetails, EmployeeIdentityResponse)
 from ...Business_Layer.services.employee_details_service import EmployeeDetailsService, AddressService, EmployeeIdentityService
@@ -23,6 +23,8 @@ async def get_all_personal_details(db: AsyncSession = Depends(get_db)):
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
 @router.get("/{personal_uuid}", response_model = PersonalDetails)
 async def get_personal_details_by_user_uuid(personal_uuid: str, db: AsyncSession = Depends(get_db)):
     try:

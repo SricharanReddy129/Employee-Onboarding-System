@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Form, File, Uplo
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from ...DAL.utils.dependencies import get_db
-from ..interfaces.employee_details_interfaces import CreateAddressRequest, CreateAddressResponse, EmployeeIdentityResponse, PersonalDetailsRequest, PersonalDetailsResponse, PersonalDetails
+from ..interfaces.employee_details_interfaces import CreateAddressRequest, CreateAddressResponse, EmployeeIdentityResponse, PersonalDetailsRequest, PersonalDetailsResponse, PersonalDetails , CreateRelationRequest, CreateRelationResponse
 from ...Business_Layer.services.employee_upload_service import EmployeeUploadService
 from ..utils.role_based import require_roles
 
@@ -24,8 +24,6 @@ async def create_personal_details(
         )
 
     except Exception as e:
-        import traceback
-        traceback.print_exc()   # 👈 prints full error in terminal
         raise HTTPException(status_code=500, detail=str(e))  # 👈 show real error
  
     ## Addresses Routes ##
@@ -160,6 +158,32 @@ async def update_employee_identity(
         "identity_uuid": result.document_uuid,
         "file_path": result.file_path,
     }
+
+
+@router.post("/relations")
+async def create_relation(request_data: CreateRelationRequest, db: AsyncSession = Depends(get_db)):
+    try:
+        relation_service = EmployeeUploadService(db)
+        result = await relation_service.create_relation(request_data)
+        return CreateRelationResponse(
+            relation_uuid = result.relation_uuid,
+            message = "Relation Created Successfully"
+        )
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/relations")
+async def get_relations(db: AsyncSession = Depends(get_db)):
+    try:
+        relation_service = EmployeeUploadService(db)
+        result = await relation_service.get_relations(db)
+        return result
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
     
 

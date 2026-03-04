@@ -3,7 +3,7 @@ from sqlalchemy import select, update, exists
 from typing import Optional
 from datetime import date
 from fastapi import UploadFile
-from ...DAL.models.models import CountryIdentityMapping, PersonalDetails, Addresses, EmployeeIdentityDocument
+from ...DAL.models.models import CountryIdentityMapping, PersonalDetails, Addresses, EmployeeIdentityDocument, RelationMaster
 import time
 class EmployeeUploadDAO:
     def __init__(self, db: AsyncSession):
@@ -17,7 +17,11 @@ class EmployeeUploadDAO:
             marital_status = request_data.marital_status,
             blood_group = request_data.blood_group,
             nationality_country_uuid = request_data.nationality_country_uuid,
-            residence_country_uuid = request_data.residence_country_uuid
+            residence_country_uuid = request_data.residence_country_uuid,
+            emergency_contact_name = request_data.emergency_contact_name, 
+            emergency_contact_phone = request_data.emergency_contact_phone,
+            emergency_contact_relation_uuid = request_data.emergency_contact_relation_uuid
+
 
         )
         self.db.add(personal_details)
@@ -26,7 +30,34 @@ class EmployeeUploadDAO:
         return personal_details
     
   
+    async def create_relation(self, request_data, uuid):
+        relation = RelationMaster(
+            relation_uuid = uuid,
+            relation_name = request_data.relation_name
+        )
+        self.db.add(relation)
+        await self.db.commit()
+        # await self.db.refresh(relation)
+        return relation
 
+    async def get_relations(self, db: AsyncSession):
+        result = await db.execute(
+            select(
+                RelationMaster.relation_uuid,
+                RelationMaster.relation_name
+            )
+        )
+
+        relations = result.fetchall()
+
+        return [
+            {
+                "relation_uuid": r.relation_uuid,
+                "relation_name": r.relation_name
+            }
+            for r in relations
+        ]
+        
     async def get_address_by_user_uuid_and_address_type(self, user_uuid: str, address_type: str):
         start = time.perf_counter()
         stmt = (
