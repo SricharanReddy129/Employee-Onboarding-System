@@ -29,7 +29,7 @@ from Backend.API_Layer.routes import hr_bulk_join_router
 
 app = FastAPI(title="Employee Onboarding System API")
 
-
+app.add_middleware(JWTMiddleware)
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
@@ -50,7 +50,7 @@ app.add_middleware(
 # Add Audit Middleware globally
 # app.add_middleware(AuditMiddleware)
 # Add JWT middleware globally
-app.add_middleware(JWTMiddleware)
+
 
 # Add DB session middleware
 # app.add_middleware(DBSessionMiddleware)
