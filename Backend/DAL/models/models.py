@@ -5,6 +5,7 @@ from sqlalchemy import BigInteger, CHAR, Date, DateTime, Enum, ForeignKeyConstra
 from sqlalchemy.dialects.mysql import ENUM, TINYINT, YEAR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
+
 class Base(DeclarativeBase):
     pass
 
@@ -565,3 +566,117 @@ class OfferApprovalAction(Base):
     action_time: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
 
     request: Mapped['OfferApprovalRequest'] = relationship('OfferApprovalRequest', back_populates='offer_approval_action', lazy="selectin")
+
+class EmployeeDetails(Base):
+    __tablename__ = "employee_details"
+
+    __table_args__ = (
+
+        ForeignKeyConstraint(["department_uuid"],["departments.department_uuid"],name="fk_employee_department"
+        ),
+
+        ForeignKeyConstraint( ["designation_uuid"], ["designations.designation_uuid"], name="fk_employee_designation"
+        ),
+
+        ForeignKeyConstraint(
+            ["reporting_manager_uuid"],
+            ["employee_details.employee_uuid"],
+            name="fk_employee_manager"
+        ),
+
+        Index("idx_employee_uuid", "employee_uuid", unique=True),
+        Index("idx_employee_id", "employee_id", unique=True),
+        Index("idx_employee_department", "department_uuid"),
+        Index("idx_employee_designation", "designation_uuid"),
+        Index("idx_employee_manager", "reporting_manager_uuid"),
+        Index("idx_employee_email", "work_email", unique=True),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    employee_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    user_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
+    employee_id: Mapped[Optional[str]] = mapped_column(String(20))
+    first_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    middle_name: Mapped[Optional[str]] = mapped_column(String(50))
+    last_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    date_of_birth: Mapped[datetime.date] = mapped_column(Date)
+    work_email: Mapped[Optional[str]] = mapped_column(String(100))
+    contact_number: Mapped[Optional[str]] = mapped_column(String(15))
+    department_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    designation_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    reporting_manager_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
+    employment_type: Mapped[str] = mapped_column(
+        Enum('Full-Time','Part-Time','Intern','Contractor','Freelance'),
+        nullable=False
+    )
+    joining_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
+    location: Mapped[str] = mapped_column(String(100), nullable=False)
+    work_mode: Mapped[str] = mapped_column(
+        Enum('Office','Remote','Hybrid'),
+        nullable=False
+    )
+    employment_status: Mapped[str] = mapped_column(
+        Enum('Probation','Active','Resigned','Terminated','Absconded'),
+        nullable=False
+    )
+    blood_group: Mapped[Optional[str]] = mapped_column(String(5))
+    gender: Mapped[Optional[str]] = mapped_column(
+        Enum('Male','Female','Other')
+    )
+    marital_status: Mapped[Optional[str]] = mapped_column(
+        Enum('Single','Married','Divorced','Widowed')
+    )
+    total_experience: Mapped[Optional[float]]
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime,
+        server_default=text("CURRENT_TIMESTAMP")
+    )
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime,
+        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    )
+
+
+class Departments(Base):
+    __tablename__ = "departments"
+
+    __table_args__ = (
+        Index("idx_department_uuid", "department_uuid", unique=True),
+    )
+
+    department_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    department_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    department_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String(255))
+
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime,
+        server_default=text("CURRENT_TIMESTAMP")
+    )
+
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime,
+        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    )
+
+class Designations(Base):
+    __tablename__ = "designations"
+
+    __table_args__ = (
+        Index("idx_designation_uuid", "designation_uuid", unique=True),
+    )
+
+    designation_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    designation_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    designation_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String(255))
+
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime,
+        server_default=text("CURRENT_TIMESTAMP")
+    )
+
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime,
+        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    )
