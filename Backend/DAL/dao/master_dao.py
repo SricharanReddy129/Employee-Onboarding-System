@@ -65,7 +65,7 @@ class CountryDAO:
                 Countries.country_name,
                 Countries.is_active
             )
-            .where(Countries.is_active == True)   #  added filter
+            .where(Countries.is_active)   #  added filter
             .order_by(Countries.country_name)
         )
 

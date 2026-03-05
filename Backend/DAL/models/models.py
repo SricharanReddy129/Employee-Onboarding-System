@@ -99,6 +99,12 @@ class EducationLevel(Base):
 
     country_education_document_mapping: Mapped[list['CountryEducationDocumentMapping']] = relationship('CountryEducationDocumentMapping', back_populates='education_level', lazy="selectin")
 
+    degree_master: Mapped[list["DegreeMaster"]] = relationship(
+        "DegreeMaster",
+        back_populates="education_level",
+        lazy="selectin"
+    )
+
 
 class IdentityType(Base):
     __tablename__ = 'identity_type'
@@ -339,7 +345,6 @@ class EmployeeExperience(Base):
     uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     verified_by: Mapped[Optional[str]] = mapped_column(CHAR(36))
     verified_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
-    remarks: Mapped[Optional[str]] = mapped_column(String(255))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
@@ -501,6 +506,7 @@ class EmployeeEducationDocument(Base):
     __table_args__ = (
         ForeignKeyConstraint(['mapping_uuid'], ['country_education_document_mapping.mapping_uuid'], name='employee_education_document_ibfk_1'),
         ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='employee_education_document_ibfk_2'),
+        ForeignKeyConstraint(['degree_uuid'], ['degree_master.degree_uuid'], name='employee_education_document_ibfk_3'),
         Index('document_uuid', 'document_uuid', unique=True),
         Index('idx_education_user', 'user_uuid'),
         Index('mapping_uuid', 'mapping_uuid'),
@@ -508,25 +514,107 @@ class EmployeeEducationDocument(Base):
     )
 
     employee_education_document_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
     document_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     mapping_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+
     institution_name: Mapped[Optional[str]] = mapped_column(String(150))
+    institute_location: Mapped[Optional[str]] = mapped_column(String(150))
+
+    degree_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
+
     specialization: Mapped[Optional[str]] = mapped_column(String(150))
+
+    education_mode: Mapped[Optional[str]] = mapped_column(
+        Enum('Regular', 'Distance', 'Part Time', 'Online')
+    )
+
+    start_year: Mapped[Optional[Any]] = mapped_column(YEAR)
     year_of_passing: Mapped[Optional[Any]] = mapped_column(YEAR)
+
     percentage_cgpa: Mapped[Optional[str]] = mapped_column(String(10))
+
+    delay_reason: Mapped[Optional[str]] = mapped_column(String(255))
+
     file_path: Mapped[Optional[str]] = mapped_column(String(255))
-    status: Mapped[Optional[str]] = mapped_column(Enum('uploaded', 'verified', 'rejected'), server_default=text("'uploaded'"))
-    uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+
+    status: Mapped[Optional[str]] = mapped_column(
+        Enum('uploaded', 'verified', 'rejected'),
+        server_default=text("'uploaded'")
+    )
+
+    uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime,
+        server_default=text('CURRENT_TIMESTAMP')
+    )
+
     verified_by: Mapped[Optional[str]] = mapped_column(CHAR(36))
     verified_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
-    remarks: Mapped[Optional[str]] = mapped_column(String(255))
-    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
-
-    country_education_document_mapping: Mapped['CountryEducationDocumentMapping'] = relationship('CountryEducationDocumentMapping', back_populates='employee_education_document', lazy="selectin")
-    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_education_document', lazy="selectin")
 
 
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime,
+        server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')
+    )
+
+    country_education_document_mapping: Mapped['CountryEducationDocumentMapping'] = relationship(
+        'CountryEducationDocumentMapping',
+        back_populates='employee_education_document',
+        lazy="selectin"
+    )
+
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship(
+        'OfferLetterDetails',
+        back_populates='employee_education_document',
+        lazy="selectin"
+    )
+
+    degree_master: Mapped['DegreeMaster'] = relationship(
+        'DegreeMaster',
+        lazy="selectin"
+    )
+class DegreeMaster(Base):
+    __tablename__ = 'degree_master'
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ['education_uuid'],
+            ['education_level.education_uuid'],
+            name='degree_master_ibfk_1'
+        ),
+        Index('degree_uuid', 'degree_uuid', unique=True),
+    )
+
+    degree_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    degree_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+
+    degree_name: Mapped[str] = mapped_column(String(100), nullable=False)
+
+    education_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime,
+        server_default=text('CURRENT_TIMESTAMP')
+    )
+
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime,
+        server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')
+    )
+
+    # relationships
+    education_level: Mapped['EducationLevel'] = relationship(
+        'EducationLevel',
+        back_populates='degree_master',
+        lazy="selectin"
+    )
+
+    employee_education_document: Mapped[list['EmployeeEducationDocument']] = relationship(
+        'EmployeeEducationDocument',
+        back_populates='degree_master',
+        lazy="selectin"
+    )
 class EmployeeIdentityDocument(Base):
     __tablename__ = 'employee_identity_document'
     __table_args__ = (
@@ -575,7 +663,6 @@ class EmployeePaySlips(Base):
     uploaded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     verified_by: Mapped[Optional[str]] = mapped_column(CHAR(36))
     verified_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
-    remarks: Mapped[Optional[str]] = mapped_column(String(255))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
     offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_pay_slips', lazy="selectin")
