@@ -13,6 +13,7 @@ from Backend.API_Layer.routes import token_verification_router
 from Backend.API_Layer.routes import offer_acceptance_request_routes
 from Backend.API_Layer.routes import offer_approval_action_routes
 from Backend.corn_jobs.joining_reminder import send_joining_date_reminders
+from Backend.API_Layer.routes import permanent_employee_details_route
 
 
 # from fastapi_cache.backends.redis import RedisBackend
@@ -28,7 +29,7 @@ from Backend.API_Layer.routes import hr_bulk_join_router
 
 app = FastAPI(title="Employee Onboarding System API")
 
-
+app.add_middleware(JWTMiddleware)
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
@@ -49,7 +50,7 @@ app.add_middleware(
 # Add Audit Middleware globally
 # app.add_middleware(AuditMiddleware)
 # Add JWT middleware globally
-app.add_middleware(JWTMiddleware)
+
 
 # Add DB session middleware
 # app.add_middleware(DBSessionMiddleware)
@@ -96,6 +97,7 @@ app.include_router(hr_onboarding_routes.router, prefix="/hr", tags=["HR Onboardi
 app.include_router(docusign_token_generation_route.router, prefix="/docusign", tags=["DocuSign Token Generation"])
 app.include_router(redis_cache_routes.router, prefix="/cache", tags=["Redis Cache"])
 app.include_router(hr_bulk_join_router.router, prefix="/hr", tags=["HR Bulk Join"])
+app.include_router(permanent_employee_details_route.router, prefix="/permanent-employee", tags=["Permanent Employees"])
 
 
 

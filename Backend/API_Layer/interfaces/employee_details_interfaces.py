@@ -52,8 +52,7 @@ class UpdatePersonalRequest(BaseModel):
     emergency_contact_name: str
     emergency_contact_phone: str
     emergency_contact_relation_uuid: str
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    
 
 class CreateRelationRequest(BaseModel):
     relation_name: str
