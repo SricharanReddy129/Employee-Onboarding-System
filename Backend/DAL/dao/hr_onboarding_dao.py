@@ -23,6 +23,8 @@ from ...DAL.models.models import (
     EmployeeExperience,
     OfferApprovalRequest,
     OfferApprovalAction,
+    RelationMaster,
+    DegreeMaster,
 )
 from sqlalchemy.orm import noload
 
@@ -161,7 +163,7 @@ class HrOnboardingDAO:
         offer_row, personal_row = row
 
         # ==================================================
-        # Q1–Q4: PARALLEL FETCH (SAFE)
+        # Q1–Q4: PARALLEL FETCH
         # ==================================================
         t = time.time()
 
@@ -216,17 +218,22 @@ class HrOnboardingDAO:
         t = time.time()
         async with AsyncSessionLocal() as s:
 
-            # -------- countries --------
+            # -------- Countries --------
             country_uuids = set()
+
             if personal_row:
-                country_uuids.add(personal_row.nationality_country_uuid)
-                country_uuids.add(personal_row.residence_country_uuid)
+                if personal_row.nationality_country_uuid:
+                    country_uuids.add(personal_row.nationality_country_uuid)
+
+                if personal_row.residence_country_uuid:
+                    country_uuids.add(personal_row.residence_country_uuid)
 
             for a in address_rows:
                 if a.country_uuid:
                     country_uuids.add(a.country_uuid)
 
             countries = {}
+
             if country_uuids:
                 r = await s.execute(
                     select(Countries)
@@ -234,9 +241,37 @@ class HrOnboardingDAO:
                     .where(Countries.country_uuid.in_(country_uuids))
                 )
                 countries = {c.country_uuid: c.country_name for c in r.scalars().all()}
+            # relation mapping
+            relation_uuids = set()
+            if personal_row:
+                if personal_row.emergency_contact_relation_uuid:
+                    relation_uuids.add(personal_row.emergency_contact_relation_uuid)
+            relation = {}
+            if relation_uuids:
+                r = await s.execute(
+                    select(RelationMaster)
+                    .options(noload("*"))
+                    .where(RelationMaster.relation_uuid.in_(relation_uuids))
+                )
+                relation = {r.relation_uuid: r.relation_name for r in r.scalars().all()}
 
-            # -------- identity mapping --------
+            # degree mapping
+            degree_uuids = set()
+            for e in education_rows:
+                if e.degree_uuid:
+                    degree_uuids.add(e.degree_uuid)
+            degree = {}
+            if degree_uuids:
+                r = await s.execute(
+                    select(DegreeMaster)
+                    .options(noload("*"))
+                    .where(DegreeMaster.degree_uuid.in_(degree_uuids))
+                )
+                degree = {d.degree_uuid: d.degree_name for d in r.scalars().all()}
+
+            # -------- Identity Mapping --------
             identity_map = {}
+
             identity_ids = [i.mapping_uuid for i in identity_rows if i.mapping_uuid]
 
             if identity_ids:
@@ -253,14 +288,16 @@ class HrOnboardingDAO:
                     )
                     .where(CountryIdentityMapping.mapping_uuid.in_(identity_ids))
                 )
+
                 for m, it, c in r.all():
                     identity_map[m.mapping_uuid] = {
                         "identity_type": it.identity_type_name,
                         "country": c.country_name
                     }
 
-            # -------- education mapping --------
+            # -------- Education Mapping --------
             edu_map = {}
+
             edu_ids = [e.mapping_uuid for e in education_rows if e.mapping_uuid]
 
             if edu_ids:
@@ -282,6 +319,7 @@ class HrOnboardingDAO:
                     )
                     .where(CountryEducationDocumentMapping.mapping_uuid.in_(edu_ids))
                 )
+
                 for m, lvl, doc in r.all():
                     edu_map[m.mapping_uuid] = {
                         "education_level": lvl.education_name,
@@ -308,9 +346,11 @@ class HrOnboardingDAO:
             "updated_at": offer_row.updated_at,
         }
 
+        # -------- Personal --------
         personal = None
         if personal_row:
             personal = {
+                "user_uuid": offer_row.user_uuid,
                 "date_of_birth": personal_row.date_of_birth,
                 "gender": personal_row.gender,
                 "marital_status": personal_row.marital_status,
@@ -319,11 +359,17 @@ class HrOnboardingDAO:
                 "residence_country_uuid": personal_row.residence_country_uuid,
                 "nationality": countries.get(personal_row.nationality_country_uuid),
                 "residence": countries.get(personal_row.residence_country_uuid),
+                "emergency_contact_name": personal_row.emergency_contact_name,
+                "emergency_contact_phone": personal_row.emergency_contact_phone,
+                "emergency_contact_relation_uuid": personal_row.emergency_contact_relation_uuid,
+                "emergency_contact_relation": relation.get(personal_row.emergency_contact_relation_uuid),
             }
 
+        # -------- Addresses --------
         addresses = [
             {
                 "address_uuid": a.address_uuid,
+                "user_uuid": a.user_uuid,
                 "address_type": a.address_type,
                 "address_line1": a.address_line1,
                 "address_line2": a.address_line2,
@@ -337,60 +383,70 @@ class HrOnboardingDAO:
             for a in address_rows
         ]
 
+        # -------- Identity --------
         identity_docs = [
             {
                 "document_uuid": d.document_uuid,
+                "mapping_uuid": d.mapping_uuid,
+                "user_uuid": d.user_uuid,
                 "identity_type": identity_map.get(d.mapping_uuid, {}).get("identity_type"),
                 "identity_file_number": d.identity_file_number,
                 "country": identity_map.get(d.mapping_uuid, {}).get("country"),
-                "file_path": d.file_path,
                 "expiry_date": d.expiry_date,
+                "file_path": d.file_path,
                 "status": d.status,
-                "remarks": d.remarks,
                 "uploaded_at": d.uploaded_at,
                 "verified_at": d.verified_at,
             }
             for d in identity_rows
         ]
 
+        # -------- Education --------
         education_docs = [
             {
                 "document_uuid": d.document_uuid,
+                "mapping_uuid": d.mapping_uuid,
+                "user_uuid": d.user_uuid,
                 "education_level": edu_map.get(d.mapping_uuid, {}).get("education_level"),
                 "document_name": edu_map.get(d.mapping_uuid, {}).get("document_name"),
                 "mandatory": edu_map.get(d.mapping_uuid, {}).get("mandatory"),
+                "degree_uuid": d.degree_uuid,
+                "degree_name": degree.get(d.degree_uuid),
                 "institution_name": d.institution_name,
+                "institute_location": d.institute_location,
                 "specialization": d.specialization,
+                "education_mode": d.education_mode,
+                "start_year": d.start_year,
                 "year_of_passing": d.year_of_passing,
+                "delay_reason": d.delay_reason,
+                "percentage_cgpa": d.percentage_cgpa,
                 "file_path": d.file_path,
                 "status": d.status,
-                "remarks": d.remarks,
                 "uploaded_at": d.uploaded_at,
                 "verified_at": d.verified_at,
             }
             for d in education_rows
         ]
 
+        # -------- Experience --------
         experience = [
             {
                 "experience_uuid": e.experience_uuid,
+                "employee_uuid": e.employee_uuid,
                 "company_name": e.company_name,
                 "role_title": e.role_title,
                 "employment_type": e.employment_type,
                 "start_date": e.start_date,
                 "end_date": e.end_date,
                 "is_current": bool(e.is_current),
+                "notice_period_days": e.notice_period_days,
                 "certificate_status": e.certificate_status,
-                "remarks": e.remarks,
                 "uploaded_at": e.uploaded_at,
                 "verified_at": e.verified_at,
-
-        # ✅ ADD THIS LINE
                 "documents": HrOnboardingDAO.build_experience_documents(e),
             }
             for e in experience_rows
         ]
-
 
         print("BUILD:", round(time.time() - t, 3), "s")
         print("TOTAL DAO:", round(time.time() - TOTAL_START, 3), "s")
