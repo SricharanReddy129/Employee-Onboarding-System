@@ -25,7 +25,17 @@ async def get_all_pf_details(db: AsyncSession = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
+@router.get("/user/{user_uuid}", response_model=PfDetails)
+async def get_pf_details_by_user_uuid(user_uuid: str, db: AsyncSession = Depends(get_db)):
+    try:
+        pf_service = EmployeePfService(db)
+        result = await pf_service.get_pf_details_by_user_uuid(user_uuid)
+        return result
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+        
 @router.get("/{pf_uuid}", response_model=PfDetails)
 async def get_pf_details_by_uuid(pf_uuid: str, db: AsyncSession = Depends(get_db)):
     try:
@@ -36,7 +46,6 @@ async def get_pf_details_by_uuid(pf_uuid: str, db: AsyncSession = Depends(get_db
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.post("/", response_model=CreatePfDetailsResponse)
 async def create_pf_details(request_data: CreatePfDetailsRequest, db: AsyncSession = Depends(get_db)):

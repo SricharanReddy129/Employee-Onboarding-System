@@ -17,6 +17,11 @@ class EmployeeBankDAO:
         )
         return result.scalar_one_or_none()
 
+    async def get_bank_details_by_user_uuid(self, user_uuid: str):
+        query = select(EmployeeBankDetails).where(EmployeeBankDetails.user_uuid == user_uuid)
+        result = await self.db.execute(query)
+        return result.scalar_one_or_none()
+
 
     async def get_all_bank_details(self):
         result = await self.db.execute(select(EmployeeBankDetails))

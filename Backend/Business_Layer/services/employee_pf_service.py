@@ -47,7 +47,17 @@ class EmployeePfService:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
-
+    async def get_pf_details_by_user_uuid(self, user_uuid):
+        try:
+            result = await self.dao.get_pf_details_by_user_uuid(user_uuid)
+            if not result:
+                raise HTTPException(status_code=404, detail="PF Details Not Found")
+            return result
+        except HTTPException as he:
+            raise he
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+            
     async def create_pf_details(self, request_data):
 
         try:

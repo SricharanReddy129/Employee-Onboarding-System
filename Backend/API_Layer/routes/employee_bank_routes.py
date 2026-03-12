@@ -25,6 +25,16 @@ async def get_all_bank_details(db: AsyncSession = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/user/{user_uuid}", response_model=BankDetails)
+async def get_bank_details_by_user_uuid(user_uuid: str, db: AsyncSession = Depends(get_db)):
+    try:
+        bank_service = EmployeeBankService(db)
+        result = await bank_service.get_bank_details_by_user_uuid(user_uuid)
+        return result
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/{bank_uuid}", response_model=BankDetails)
 async def get_bank_details_by_uuid(bank_uuid: str, db: AsyncSession = Depends(get_db)):
@@ -36,7 +46,6 @@ async def get_bank_details_by_uuid(bank_uuid: str, db: AsyncSession = Depends(ge
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @router.post("/", response_model=CreateBankDetailsResponse)
 async def create_bank_details(request_data: CreateBankDetailsRequest, db: AsyncSession = Depends(get_db)):

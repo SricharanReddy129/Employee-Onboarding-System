@@ -17,6 +17,15 @@ class EmployeePfDAO:
         )
         return result.scalar_one_or_none()
 
+    async def get_pf_details_by_user_uuid(self, user_uuid: str):
+
+        result = await self.db.execute(
+            select(EmployeePfDetails).where(
+                EmployeePfDetails.user_uuid == user_uuid
+            )
+        )
+
+        return result.scalar_one_or_none()
 
     async def get_all_pf_details(self):
         result = await self.db.execute(select(EmployeePfDetails))
