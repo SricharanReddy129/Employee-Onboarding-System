@@ -14,7 +14,7 @@ from ...Business_Layer.services.employee_bank_service import EmployeeBankService
 router = APIRouter()
 
 
-@router.get("/bank", response_model=list[BankDetails])
+@router.get("/", response_model=list[BankDetails])
 async def get_all_bank_details(db: AsyncSession = Depends(get_db)):
     try:
         bank_service = EmployeeBankService(db)
@@ -26,7 +26,7 @@ async def get_all_bank_details(db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/bank/{bank_uuid}", response_model=BankDetails)
+@router.get("/{bank_uuid}", response_model=BankDetails)
 async def get_bank_details_by_uuid(bank_uuid: str, db: AsyncSession = Depends(get_db)):
     try:
         bank_service = EmployeeBankService(db)
@@ -38,7 +38,7 @@ async def get_bank_details_by_uuid(bank_uuid: str, db: AsyncSession = Depends(ge
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/bank", response_model=CreateBankDetailsResponse)
+@router.post("/", response_model=CreateBankDetailsResponse)
 async def create_bank_details(request_data: CreateBankDetailsRequest, db: AsyncSession = Depends(get_db)):
     try:
         start = perf_counter()
@@ -60,7 +60,7 @@ async def create_bank_details(request_data: CreateBankDetailsRequest, db: AsyncS
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/bank/{bank_uuid}", response_model=CreateBankDetailsResponse)
+@router.put("/{bank_uuid}", response_model=CreateBankDetailsResponse)
 async def update_bank_details(bank_uuid: str, request_data: CreateBankDetailsRequest, db: AsyncSession = Depends(get_db)):
     try:
         bank_service = EmployeeBankService(db)
@@ -77,7 +77,7 @@ async def update_bank_details(bank_uuid: str, request_data: CreateBankDetailsReq
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/bank/{bank_uuid}", response_model=CreateBankDetailsResponse)
+@router.delete("/{bank_uuid}", response_model=CreateBankDetailsResponse)
 async def delete_bank_details(bank_uuid: str, db: AsyncSession = Depends(get_db)):
     try:
         bank_service = EmployeeBankService(db)

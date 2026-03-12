@@ -14,7 +14,7 @@ from ...Business_Layer.services.employee_pf_service import EmployeePfService
 router = APIRouter()
 
 
-@router.get("/pf", response_model=list[PfDetails])
+@router.get("/", response_model=list[PfDetails])
 async def get_all_pf_details(db: AsyncSession = Depends(get_db)):
     try:
         pf_service = EmployeePfService(db)
@@ -26,7 +26,7 @@ async def get_all_pf_details(db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/pf/{pf_uuid}", response_model=PfDetails)
+@router.get("/{pf_uuid}", response_model=PfDetails)
 async def get_pf_details_by_uuid(pf_uuid: str, db: AsyncSession = Depends(get_db)):
     try:
         pf_service = EmployeePfService(db)
@@ -38,7 +38,7 @@ async def get_pf_details_by_uuid(pf_uuid: str, db: AsyncSession = Depends(get_db
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/pf", response_model=CreatePfDetailsResponse)
+@router.post("/", response_model=CreatePfDetailsResponse)
 async def create_pf_details(request_data: CreatePfDetailsRequest, db: AsyncSession = Depends(get_db)):
     try:
         start = perf_counter()
@@ -60,7 +60,7 @@ async def create_pf_details(request_data: CreatePfDetailsRequest, db: AsyncSessi
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/pf/{pf_uuid}", response_model=CreatePfDetailsResponse)
+@router.put("/{pf_uuid}", response_model=CreatePfDetailsResponse)
 async def update_pf_details(pf_uuid: str, request_data: CreatePfDetailsRequest, db: AsyncSession = Depends(get_db)):
     try:
         pf_service = EmployeePfService(db)
@@ -77,7 +77,7 @@ async def update_pf_details(pf_uuid: str, request_data: CreatePfDetailsRequest, 
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/pf/{pf_uuid}", response_model=CreatePfDetailsResponse)
+@router.delete("/{pf_uuid}", response_model=CreatePfDetailsResponse)
 async def delete_pf_details(pf_uuid: str, db: AsyncSession = Depends(get_db)):
     try:
         pf_service = EmployeePfService(db)
