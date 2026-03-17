@@ -2,6 +2,9 @@
 import asyncio
 from unittest import result
 from fastapi import HTTPException
+import base64
+import os
+from fastapi.responses import StreamingResponse
 import requests
 from httpx import AsyncClient
 import httpx
@@ -43,14 +46,14 @@ class OfferLetterService:
         try:
             # --- VALIDATION SECTION ---
             first_name = validate_name(request_data.first_name)
+            middle_name = validate_name(request_data.middle_name) if request_data.middle_name else None
             last_name = validate_name(request_data.last_name)
             mail = validate_email(request_data.mail)
             country_code = validate_country(request_data.country_code)
             contact_number = validate_phone_number(request_data.country_code, request_data.contact_number, type = 'contact_number')
             designation = validate_designation(request_data.designation)
-            package = validate_package(request_data.package)
-            currency = validate_currency(request_data.currency)
-            
+            # package = validate_package(request_data.package)
+            # currency = validate_currency(request_data.currency)
             # --- DUPLICATE CHECK ---
             existing_offer = await self.dao.get_offer_by_email(mail)
             if existing_offer:
@@ -60,12 +63,11 @@ class OfferLetterService:
             uuid = generate_uuid7()
             new_offer = await self.dao.create_offer(uuid, request_data, current_user_id)
             await self.db.commit()
-            return new_offer.user_uuid
+            # await self.create_docusign_draft(uuid)
 
-        except ValueError as ve:
-            raise HTTPException(status_code=422, detail=str(ve))
-        except HTTPException as he:
-            raise he
+            return uuid
+        
+        
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
         
@@ -632,216 +634,809 @@ class OfferLetterService:
             print('Unexpected error in send_bulk_offerletters:', str(e))
             raise HTTPException(status_code=500, detail=str(e))
         
-    async def send_bulk_offerletters_via_docusign(
+    # async def send_bulk_offerletters_via_docusign(
+    #     self,
+    #     request_data,
+    #     current_user_id: int
+    # ):
+    #     print("🚀 Bulk DocuSign offer letter service started")
+
+    #     uuids = request_data.user_uuid_list
+    #     successful = []
+    #     failed = []
+
+    #     if not uuids:
+    #         raise HTTPException(status_code=400, detail="No UUIDs provided")
+    #     try:
+    #         for user_uuid in uuids:
+    #             print(f"\n🔁 Processing user_uuid: {user_uuid}")
+
+    #             try:
+    #                 # 1️⃣ Fetch offer letter record
+    #                 record = await self.dao.get_offer_by_uuid(user_uuid)
+    #                 if not record:
+    #                     failed.append({
+    #                         "offerletter_uuid": user_uuid,
+    #                         "error": "Offer letter not found"
+    #                     })
+    #                     continue
+
+    #                 # 2️⃣ Build DocuSign payload
+    #                 full_name = f"{record.first_name} {record.last_name}"
+
+    #                 # Get CC emails from DB
+    #                 cc_emails = []
+
+    #                 if record.cc_emails:
+    #                     cc_emails = [e.strip() for e in record.cc_emails.split(",") if e.strip()]
+
+
+    #                 # Build template roles
+    #                 template_roles = [
+
+    #                     # ✅ Employee (Signer)
+    #                     {
+    #                         "roleName": "Employee",
+    #                         "name": full_name,
+    #                         "email": record.mail,
+
+    #                         "tabs": {
+    #                             "textTabs": [
+    #                                 {"tabLabel": "EF", "value": full_name},
+    #                                 {"tabLabel": "EE", "value": record.mail},
+    #                                 {"tabLabel": "ET", "value": record.designation},
+    #                                 {"tabLabel": "EP", "value": record.package},
+    #                                 {"tabLabel": "EC", "value": record.country_code},
+    #                                 {"tabLabel": "EN", "value": record.contact_number}
+    #                             ]
+    #                         }
+    #                     }
+    #                 ]
+
+
+    #                 # ✅ Manager (CC) — First CC email
+    #                 if cc_emails:
+    #                     template_roles.append({
+    #                         "roleName": "Manager",   # MUST MATCH TEMPLATE
+    #                         "name": "Manager",
+    #                         "email": cc_emails[0]
+    #                     })
+
+
+    #                 # Final payload
+    #                 payload = {
+    #                     "templateId": DOCUSIGN_TEMPLATE_ID,
+
+    #                     "templateRoles": template_roles,
+    #                     "status": "sent"
+    #                 }
+
+    #                     # "emailSubject": "Your Offer Letter from Paves Global Infotech",
+    #                     # "emailBlurb": "Please review and sign your offer letter.",
+
+    #                 # payload = {
+    #                 #     "templateId": DOCUSIGN_TEMPLATE_ID,
+    #                 #     "templateRoles": [
+    #                 #         {
+    #                 #             "roleName": "Employee",
+    #                 #             "name": full_name,
+    #                 #             "email": record.mail,
+    #                 #             "tabs": {
+    #                 #                 "textTabs": [
+    #                 #                     {"tabLabel": "EF", "value": full_name},
+    #                 #                     {"tabLabel": "EE", "value": record.mail},
+    #                 #                     {"tabLabel": "ET", "value": record.designation},
+    #                 #                     {"tabLabel": "EP", "value": record.package},
+    #                 #                     # {"tabLabel": "EET", "value": record.employee_type},
+    #                 #                     {"tabLabel": "EC", "value": record.country_code},
+    #                 #                     {"tabLabel": "EN", "value": record.contact_number}
+    #                 #                 ]
+    #                 #             }
+    #                 #         },
+    #                 #         {
+    #                 #             "roleName": "Manager",
+    #                 #             "name": "Ajay Kumar",
+    #                 #             "email": "ajaykumar1438742@gmail.com"
+    #                 #         }
+    #                 #     ],
+    #                 #     "status": "sent"
+    #                 # }
+
+    #                 print("📄 DocuSign payload prepared")
+    #                 print(payload)
+    #                 # 3️⃣ Get DocuSign access token
+    #                 token_data = generate_docusign_access_token()
+    #                 access_token = token_data["access_token"]
+    #                 print("🔑 DocuSign access token obtained")
+
+    #                 # 4️⃣ Call DocuSign Create Envelope API
+    #                 url = f"{DOCUSIGN_BASE_URL}/v2.1/accounts/{DOCUSIGN_ACCOUNT_ID}/envelopes"
+
+    #                 headers = {
+    #                     "Authorization": f"Bearer {access_token}",
+    #                     "Content-Type": "application/json"
+    #                 }
+
+    #                 response = requests.post(url, json=payload, headers=headers)
+    #                 response.raise_for_status()
+
+    #                 response_data = response.json()
+    #                 envelope_id = response_data.get("envelopeId")
+
+    #                 if not envelope_id:
+    #                     raise Exception("Envelope ID not returned by DocuSign")
+
+    #                 print(f"✅ Envelope sent successfully: {envelope_id}")
+
+    #                 # 5️⃣ Store envelopeId (replace PandaDoc ID)
+    #                 await self.dao.update_pandadoc_draft_id(
+    #                     user_uuid=user_uuid,
+    #                     draft_id=envelope_id
+    #                 )
+
+    #                 # 6️⃣ Update offer letter status
+    #                 await self.dao.update_offerletter_status(
+    #                     user_uuid=user_uuid,
+    #                     new_status="Offered",
+    #                     current_user_id=current_user_id
+    #                 )
+
+    #                 successful.append({
+    #                     "offerletter_uuid": user_uuid,
+    #                     "email": record.mail,
+    #                     "status": "success",
+    #                     "message": "Offer letter sent via DocuSign"
+    #                 })
+
+    #             except Exception as e:
+    #                 print(f"❌ Error processing {user_uuid}: {str(e)}")
+    #                 failed.append({
+    #                     "offerletter_uuid": user_uuid,
+    #                     "email": getattr(record, "mail", None),
+    #                     "error": str(e)
+    #                 })
+
+    #         print("📊 Bulk DocuSign sending completed")
+
+    #         return "Offer letters sent via DocuSign successfully"
+    #     except Exception as e:
+    #         print("❗ Unexpected error in bulk DocuSign service:", str(e))
+    #         raise HTTPException(status_code=500, detail=str(e))
+
+
+    # async def send_bulk_offerletters_via_docusign(
+    #     self,
+    #     request_data,
+    #     current_user_id: int
+    # ):
+
+    #     print("🚀 Bulk DocuSign SEND started")
+
+    #     uuids = request_data.user_uuid_list
+    #     successful = []
+    #     failed = []
+
+    #     if not uuids:
+    #         raise HTTPException(status_code=400, detail="No UUIDs provided")
+
+    #     try:
+    #         # 🔑 Generate DocuSign token once
+    #         token_data = generate_docusign_access_token()
+    #         access_token = token_data["access_token"]
+
+    #         headers = {
+    #             "Authorization": f"Bearer {access_token}",
+    #             "Content-Type": "application/json"
+    #         }
+
+    #         for user_uuid in uuids:
+    #             print(f"\n🔁 Processing user_uuid: {user_uuid}")
+
+    #             try:
+    #                 # 1️⃣ Get envelope_id from DB
+    #                 envelope_id = await self.dao.get_pandadoc_draft_id(user_uuid)
+
+    #                 if not envelope_id:
+    #                     failed.append({
+    #                         "offerletter_uuid": user_uuid,
+    #                         "error": "DocuSign envelope not created"
+    #                     })
+    #                     continue
+
+    #                 # 2️⃣ Call DocuSign update envelope status API
+    #                 url = f"{DOCUSIGN_BASE_URL}/v2.1/accounts/{DOCUSIGN_ACCOUNT_ID}/envelopes/{envelope_id}"
+
+    #                 payload = {
+    #                     "status": "sent"
+    #                 }
+
+    #                 response = requests.put(url, json=payload, headers=headers)
+    #                 response.raise_for_status()
+
+    #                 print(f"✅ Envelope sent: {envelope_id}")
+
+    #                 # 3️⃣ Update DB status
+    #                 await self.dao.update_offerletter_status(
+    #                     user_uuid=user_uuid,
+    #                     new_status="Offered",
+    #                     current_user_id=current_user_id
+    #                 )
+
+    #                 successful.append({
+    #                     "offerletter_uuid": user_uuid,
+    #                     "status": "success",
+    #                     "message": "Offer letter sent via DocuSign"
+    #                 })
+
+    #             except Exception as e:
+    #                 print(f"❌ Error sending {user_uuid}: {str(e)}")
+
+    #                 failed.append({
+    #                     "offerletter_uuid": user_uuid,
+    #                     "error": str(e)
+    #                 })
+
+    #         print("📊 Bulk send completed")
+
+    #         return {
+    #             "successful": successful,
+    #             "failed": failed
+    #         }
+
+    #     except Exception as e:
+    #         print("❗ Unexpected error in bulk send:", str(e))
+    #         raise HTTPException(status_code=500, detail=str(e))
+        
+
+    # async def send_bulk_offerletters_via_docusign_pdf(
+    #         self,
+    #         request_data,
+    #         current_user_id: int
+    #     ):
+
+    #         print("🚀 Sending generated PDF via DocuSign")
+
+    #         uuids = request_data.user_uuid_list
+    #         print("📦 UUIDs received:", uuids)
+
+
+    #         token_data = generate_docusign_access_token()
+    #         access_token = token_data["access_token"]
+
+    #         print("🔑 Token generated (first 50 chars):", access_token[:50])
+
+    #         headers = {
+    #             "Authorization": f"Bearer {access_token}",
+    #             "Content-Type": "application/json"
+    #         }
+
+
+    #         for user_uuid in uuids:
+    #             print("\n🔁 Processing UUID:", user_uuid)
+
+    #             record = await self.dao.get_offer_by_uuid(user_uuid)
+
+    #             if not record:
+    #                 print("Offer not found:", user_uuid)
+    #                 continue
+
+    #             # 1️⃣ PDF path
+    #             pdf_path = os.path.join(os.getcwd(), "generated_pdfs", f"offer_{user_uuid}.pdf")
+
+    #                     # ✅ DEBUG LOGS (PDF)
+    #             print("📂 Checking PDF path:", pdf_path)
+    #             print("📁 File exists:", os.path.exists(pdf_path))
+    #             try:
+    #                    print("📁 Available files:", os.listdir("generated_pdfs"))
+    #             except Exception as e:
+    #                     print("⚠️ Could not list directory:", str(e))
+
+    #             if not os.path.exists(pdf_path):
+    #                 raise Exception(f"PDF not found for {user_uuid}")
+
+    #             # 2️⃣ Convert PDF → base64
+    #             with open(pdf_path, "rb") as f:
+    #                 pdf_base64 = base64.b64encode(f.read()).decode()
+
+    #             print("📄 PDF converted to base64 (length):", len(pdf_base64))
+    #             # 🔥 Handle different record types
+    #             if isinstance(record, dict):
+    #                 email = record.get("mail")
+    #                 first_name = record.get("first_name")
+    #                 last_name = record.get("last_name")
+
+    #             elif hasattr(record, "__dict__"):
+    #                 email = getattr(record, "mail", None)
+    #                 first_name = getattr(record, "first_name", None)
+    #                 last_name = getattr(record, "last_name", None)
+
+    #             else:
+    #                 # tuple or Row
+    #                 print("⚠️ Record is tuple/Row, accessing by index")
+    #                 email = record[2]        # ⚠️ adjust if needed
+    #                 first_name = record[0]
+    #                 last_name = record[1]
+
+                
+
+    #             if not email:
+    #                 raise Exception("Email missing in record")
+                
+                
+    #             # 3️⃣ Document
+    #             document = {
+    #                 "documentBase64": pdf_base64,
+    #                 "name": "Offer Letter",
+    #                 "fileExtension": "pdf",
+    #                 "documentId": "1"
+    #             }
+
+    #             # 4️⃣ Signer
+    #             signer = {
+    #                 "email": email,
+    #                 "name": f"{first_name} {last_name}",
+    #                 "recipientId": "1",
+    #                 "routingOrder": "1",
+    #                 "tabs": {
+    #                     "signHereTabs": [
+    #                         {
+    #                             "documentId": "1",
+    #                             "pageNumber": "1",
+    #                             "xPosition": "450",
+    #                             "yPosition": "650"
+    #                         }
+    #                     ]
+    #                 }
+    #             }
+
+    #             envelope_definition = {
+    #                 "emailSubject": "Please sign your offer letter",
+    #                 "documents": [document],
+    #                 "recipients": {
+    #                     "signers": [signer]
+    #                 },
+    #                 "status": "sent"
+    #             }
+    #             print("🌐 DOCUSIGN_BASE_URL:", DOCUSIGN_BASE_URL)
+    #             print("🏢 DOCUSIGN_ACCOUNT_ID:", DOCUSIGN_ACCOUNT_ID)
+
+    #             url = f"{DOCUSIGN_BASE_URL}/v2.1/accounts/{DOCUSIGN_ACCOUNT_ID}/envelopes"
+    #             # ✅ DEBUG LOGS (Before API call)
+    #             print("📤 Sending request to DocuSign...")
+    #             print("👤 Email:", email)
+    #             print("🌐 URL:", url)
+
+    #             response = requests.post(
+    #                 url,
+    #                 json=envelope_definition,
+    #                 headers=headers
+    #             )
+    #             # ✅ DEBUG LOGS (After API call)
+    #             print("📥 DocuSign Status Code:", response.status_code)
+    #             print("📥 DocuSign Response:", response.text)
+
+
+             
+
+             
+
+
+    #             if response.status_code not in[200,201]:
+    #                 print("❌ DocuSign Error:", response.text)
+    #                 raise Exception(f"DocuSign failed: {response.text}")
+
+    #             envelope_id = response.json()["envelopeId"]
+
+    #             print("Envelope created:", envelope_id)
+
+    #             await self.dao.update_pandadoc_draft_id(user_uuid, envelope_id)
+
+    #             await self.dao.update_offerletter_status(
+    #                 user_uuid=user_uuid,
+    #                 new_status="Offered",
+    #                 current_user_id=current_user_id
+    #             )
+
+    #         return {"message": "Offer letters sent via DocuSign"}
+
+
+    async def send_bulk_offerletters_via_docusign_pdf(
         self,
         request_data,
         current_user_id: int
     ):
-        print("🚀 Bulk DocuSign offer letter service started")
+
+        print("🚀 Sending generated PDF via DocuSign")
 
         uuids = request_data.user_uuid_list
-        successful = []
-        failed = []
+        print("📦 UUIDs received:", uuids)
 
-        if not uuids:
-            raise HTTPException(status_code=400, detail="No UUIDs provided")
-        try:
-            for user_uuid in uuids:
-                print(f"\n🔁 Processing user_uuid: {user_uuid}")
+        # 🔑 Generate token once
+        token_data = generate_docusign_access_token()
+        access_token = token_data["access_token"]
 
-                try:
-                    # 1️⃣ Fetch offer letter record
-                    record = await self.dao.get_offer_by_uuid(user_uuid)
-                    if not record:
-                        failed.append({
-                            "offerletter_uuid": user_uuid,
-                            "error": "Offer letter not found"
-                        })
-                        continue
+        print("🔑 Token generated (first 50 chars):", access_token[:50])
 
-                    # 2️⃣ Build DocuSign payload
-                    full_name = f"{record.first_name} {record.last_name}"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
 
-                    # Get CC emails from DB
-                    cc_emails = []
+        for user_uuid in uuids:
+            print("\n🔁 Processing UUID:", user_uuid)
 
-                    if record.cc_emails:
-                        cc_emails = [e.strip() for e in record.cc_emails.split(",") if e.strip()]
+            # 1️⃣ Fetch record
+            record = await self.dao.get_offer_by_uuid(user_uuid)
+
+            if not record:
+                print("❌ Offer not found:", user_uuid)
+                continue
+
+            # 2️⃣ Extract data safely (DICT)
+            email = record.get("mail")
+            first_name = record.get("first_name")
+            last_name = record.get("last_name")
+            cc_raw = record.get("cc_emails")
+            
+
+            
 
 
-                    # Build template roles
-                    template_roles = [
+            print("👤 Employee:", email)
 
-                        # ✅ Employee (Signer)
-                        {
-                            "roleName": "Employee",
-                            "name": full_name,
-                            "email": record.mail,
+            if not email:
+                raise Exception("Email missing in record")
 
-                            "tabs": {
-                                "textTabs": [
-                                    {"tabLabel": "EF", "value": full_name},
-                                    {"tabLabel": "EE", "value": record.mail},
-                                    {"tabLabel": "ET", "value": record.designation},
-                                    {"tabLabel": "EP", "value": record.package},
-                                    {"tabLabel": "EC", "value": record.country_code},
-                                    {"tabLabel": "EN", "value": record.contact_number}
-                                ]
+            # 3️⃣ Extract managers from cc_mails
+            cc_emails = []
+            if cc_raw:
+                cc_emails = [e.strip() for e in cc_raw.split(",") if e.strip()]
+            else:
+                print("⚠️ No cc_mails found in DB")
+
+            print("👥 Managers:", cc_emails)
+
+            # 4️⃣ PDF path
+            pdf_path = os.path.join(
+                os.getcwd(),
+                "generated_pdfs",
+                f"offer_{user_uuid}.pdf"
+            )
+
+            print("📂 Checking PDF path:", pdf_path)
+            print("📁 File exists:", os.path.exists(pdf_path))
+
+            if not os.path.exists(pdf_path):
+                raise Exception(f"PDF not found for {user_uuid}")
+
+            # 5️⃣ Convert PDF → base64
+            with open(pdf_path, "rb") as f:
+                pdf_base64 = base64.b64encode(f.read()).decode()
+
+            print("📄 PDF converted to base64 (length):", len(pdf_base64))
+
+            # 6️⃣ Document
+            document = {
+                "documentBase64": pdf_base64,
+                "name": "Offer Letter",
+                "fileExtension": "pdf",
+                "documentId": "1"
+            }
+
+            # 7️⃣ Build signers dynamically
+            signers = []
+            routing_order = 1
+
+            # 🔹 Managers (FIRST)
+            for idx, manager_email in enumerate(cc_emails):
+                signers.append({
+                    "email": manager_email,
+                    "name": f"Manager {idx+1}",
+                    "recipientId": str(routing_order),
+                    "routingOrder": str(routing_order),
+                    "tabs": {
+                        "signHereTabs": [
+                            {
+                                "documentId": "1",
+                                "pageNumber": "5",
+                                "xPosition": "120",
+                                "yPosition": "300"
                             }
+                        ]
+                    }
+                })
+                routing_order += 1
+
+            # 🔹 Employee (LAST)
+            signers.append({
+                "email": email,
+                "name": f"{first_name} {last_name}",
+                "recipientId": str(routing_order),
+                "routingOrder": str(routing_order),
+                "tabs": {
+                    "signHereTabs": [
+                        {
+                            "documentId": "1",
+                            "pageNumber": "5",
+                            "xPosition": "360",
+                            "yPosition": "620"
                         }
                     ]
+                }
+            })
 
+            print("🧾 Total Signers:", len(signers))
 
-                    # ✅ Manager (CC) — First CC email
-                    if cc_emails:
-                        template_roles.append({
-                            "roleName": "Manager",   # MUST MATCH TEMPLATE
-                            "name": "Manager",
-                            "email": cc_emails[0]
-                        })
+            # 8️⃣ Envelope
+            envelope_definition = {
+                "emailSubject": "Please sign the offer letter",
+                "documents": [document],
+                "recipients": {
+                    "signers": signers
+                },
+                "status": "sent"
+            }
 
+            # 9️⃣ API call
+            url = f"{DOCUSIGN_BASE_URL}/v2.1/accounts/{DOCUSIGN_ACCOUNT_ID}/envelopes"
 
-                    # Final payload
-                    payload = {
-                        "templateId": DOCUSIGN_TEMPLATE_ID,
+            print("📤 Sending request to DocuSign...")
+            print("🌐 URL:", url)
 
-                        "templateRoles": template_roles,
-                        "status": "sent"
-                    }
+            response = requests.post(
+                url,
+                json=envelope_definition,
+                headers=headers
+            )
 
-                        # "emailSubject": "Your Offer Letter from Paves Global Infotech",
-                        # "emailBlurb": "Please review and sign your offer letter.",
+            print("📥 DocuSign Status Code:", response.status_code)
+            print("📥 DocuSign Response:", response.text)
 
-                    # payload = {
-                    #     "templateId": DOCUSIGN_TEMPLATE_ID,
-                    #     "templateRoles": [
-                    #         {
-                    #             "roleName": "Employee",
-                    #             "name": full_name,
-                    #             "email": record.mail,
-                    #             "tabs": {
-                    #                 "textTabs": [
-                    #                     {"tabLabel": "EF", "value": full_name},
-                    #                     {"tabLabel": "EE", "value": record.mail},
-                    #                     {"tabLabel": "ET", "value": record.designation},
-                    #                     {"tabLabel": "EP", "value": record.package},
-                    #                     # {"tabLabel": "EET", "value": record.employee_type},
-                    #                     {"tabLabel": "EC", "value": record.country_code},
-                    #                     {"tabLabel": "EN", "value": record.contact_number}
-                    #                 ]
-                    #             }
-                    #         },
-                    #         {
-                    #             "roleName": "Manager",
-                    #             "name": "Ajay Kumar",
-                    #             "email": "ajaykumar1438742@gmail.com"
-                    #         }
-                    #     ],
-                    #     "status": "sent"
-                    # }
+            # 🔟 Handle response
+            if response.status_code not in [200, 201]:
+                raise Exception(f"DocuSign failed: {response.text}")
 
-                    print("📄 DocuSign payload prepared")
-                    print(payload)
-                    # 3️⃣ Get DocuSign access token
-                    token_data = generate_docusign_access_token()
-                    access_token = token_data["access_token"]
-                    print("🔑 DocuSign access token obtained")
+            envelope_id = response.json()["envelopeId"]
 
-                    # 4️⃣ Call DocuSign Create Envelope API
-                    url = f"{DOCUSIGN_BASE_URL}/v2.1/accounts/{DOCUSIGN_ACCOUNT_ID}/envelopes"
+            print("✅ Envelope created:", envelope_id)
 
-                    headers = {
-                        "Authorization": f"Bearer {access_token}",
-                        "Content-Type": "application/json"
-                    }
+            # 1️⃣1️⃣ Save envelope ID
+            await self.dao.update_pandadoc_draft_id(user_uuid, envelope_id)
 
-                    response = requests.post(url, json=payload, headers=headers)
-                    response.raise_for_status()
+            # 1️⃣2️⃣ Update status
+            await self.dao.update_offerletter_status(
+                user_uuid=user_uuid,
+                new_status="Offered",
+                current_user_id=current_user_id
+            )
 
-                    response_data = response.json()
-                    envelope_id = response_data.get("envelopeId")
-
-                    if not envelope_id:
-                        raise Exception("Envelope ID not returned by DocuSign")
-
-                    print(f"✅ Envelope sent successfully: {envelope_id}")
-
-                    # 5️⃣ Store envelopeId (replace PandaDoc ID)
-                    await self.dao.update_pandadoc_draft_id(
-                        user_uuid=user_uuid,
-                        draft_id=envelope_id
-                    )
-
-                    # 6️⃣ Update offer letter status
-                    await self.dao.update_offerletter_status(
-                        user_uuid=user_uuid,
-                        new_status="Offered",
-                        current_user_id=current_user_id
-                    )
-
-                    successful.append({
-                        "offerletter_uuid": user_uuid,
-                        "email": record.mail,
-                        "status": "success",
-                        "message": "Offer letter sent via DocuSign"
-                    })
-
-                except Exception as e:
-                    print(f"❌ Error processing {user_uuid}: {str(e)}")
-                    failed.append({
-                        "offerletter_uuid": user_uuid,
-                        "email": getattr(record, "mail", None),
-                        "error": str(e)
-                    })
-
-            print("📊 Bulk DocuSign sending completed")
-
-            return "Offer letters sent via DocuSign successfully"
-        except Exception as e:
-            print("❗ Unexpected error in bulk DocuSign service:", str(e))
-            raise HTTPException(status_code=500, detail=str(e))
-
+        return {"message": "Offer letters sent via DocuSign"}
     async def delete_offer_letter(self, user_uuid: str) -> str:
-        """
-        Delete offer only when:
-        1. status = Rejected
-        2. status = Created AND approval action = REJECTED
-        3. status = Created AND approval not started
+            """
+            Delete offer only when:
+            1. status = Rejected
+            2. status = Created AND approval action = REJECTED
+            3. status = Created AND approval not started
 
-        Block when approval exists.
+            Block when approval exists.
+            """
+
+            try:
+                # 🔎 Fetch offer
+                offer = await self.dao.get_offer_by_uuid(user_uuid)
+                if not offer:
+                    raise HTTPException(status_code=404, detail="Offer letter not found")
+
+                # 🚨 Check approval request existence
+                approval_request = await self.dao.get_approval_request_by_user_uuid(user_uuid)
+
+                if approval_request:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Approval already initiated for this offer. Delete approval request first.",
+                    )
+
+                # ✅ Apply status-based delete rules
+                if offer.status not in ["Rejected", "Created"]:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Offer letter cannot be deleted due to its current status",
+                    )
+
+                # 🗑 Delete offer
+                await self.dao.delete_offer_letter(user_uuid)
+
+                # 💾 Commit once in service
+                await self.db.commit()
+
+                return "Offer letter deleted successfully"
+
+            except HTTPException:
+                raise
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=str(e))
+
+    async def create_docusign_draft(self, user_uuid: str):
+
+                record = await self.dao.get_offer_by_uuid(user_uuid)
+
+                if not record:
+                    raise HTTPException(status_code=404, detail="Offer not found")
+
+                full_name = f"{record['first_name']} {record['last_name']}"
+
+                cc_emails = []
+                if record.get("cc_emails"):
+                    
+                    cc_emails = [e.strip() for e in record["cc_emails"].split(",") if e.strip()]
+
+                template_roles = [
+                    {
+                        "roleName": "Employee",
+                        "name": full_name,
+                        "email": record["mail"],
+                        "tabs": {
+                            "textTabs": [
+                                {"tabLabel": "EF", "value": full_name},
+                                {"tabLabel": "EE", "value": record["mail"]},
+                                {"tabLabel": "ET", "value": record["designation"]},
+                                {"tabLabel": "EC", "value": record["country_code"]},
+                                {"tabLabel": "EN", "value": record["contact_number"]}
+                            ]
+                        }
+                    }
+                ]
+
+                if cc_emails:
+                    template_roles.append({
+                        "roleName": "Manager",
+                        "name": "Manager",
+                        "email": cc_emails[0]
+                    })
+
+                payload = {
+                    "templateId": DOCUSIGN_TEMPLATE_ID,
+                    "templateRoles": template_roles,
+                    "status": "created"  
+                }
+
+                token_data = generate_docusign_access_token()
+                access_token = token_data["access_token"]
+
+                url = f"{DOCUSIGN_BASE_URL}/v2.1/accounts/{DOCUSIGN_ACCOUNT_ID}/envelopes"
+
+                headers = {
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json"
+                }
+
+                response = requests.post(url, json=payload, headers=headers)
+                response.raise_for_status()
+
+                envelope_id = response.json().get("envelopeId")
+
+                if not envelope_id:
+                    raise Exception("Envelope ID not returned")
+
+                # 🔥 Store envelope id
+                await self.dao.update_pandadoc_draft_id(
+                    user_uuid=user_uuid,
+                    draft_id=envelope_id
+                )
+
+    async def get_docusign_preview(self, user_uuid: str):
+        """
+        Generate and return the DocuSign preview URL for the offer letter.
+        Steps:
+        1) Fetch envelope_id from DB using DAO
+        2) Call DocuSign API to get recipient view (preview) URL
         """
 
         try:
-            # 🔎 Fetch offer
-            offer = await self.dao.get_offer_by_uuid(user_uuid)
-            if not offer:
-                raise HTTPException(status_code=404, detail="Offer letter not found")
+            # 1️⃣ Fetch envelope_id from DB
+            envelope_id = await self.dao.get_pandadoc_draft_id(user_uuid)
 
-            # 🚨 Check approval request existence
-            approval_request = await self.dao.get_approval_request_by_user_uuid(user_uuid)
+            if not envelope_id:
+                raise HTTPException(status_code=404, detail="DocuSign envelope not found for this offer letter")
 
-            if approval_request:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Approval already initiated for this offer. Delete approval request first.",
-                )
+            print(f"[DocuSign Preview] Fetching preview for envelope_id: {envelope_id}")
 
-            # ✅ Apply status-based delete rules
-            if offer.status not in ["Rejected", "Created"]:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Offer letter cannot be deleted due to its current status",
-                )
+            # 2️⃣ Call DocuSign API to get recipient view URL
+            token_data = generate_docusign_access_token()
+            access_token = token_data["access_token"]
 
-            # 🗑 Delete offer
-            await self.dao.delete_offer_letter(user_uuid)
+            url = f"{DOCUSIGN_BASE_URL}/v2.1/accounts/{DOCUSIGN_ACCOUNT_ID}/envelopes/{envelope_id}/views/sender"
 
-            # 💾 Commit once in service
-            await self.db.commit()
+            payload = {
+                "returnUrl": "https://localhost:5173/offer-preview-return"  # Change to your actual return URL
+            }
 
-            return "Offer letter deleted successfully"
+            headers = {
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json"
+            }
+
+            response = requests.post(url, json=payload, headers=headers)
+            response.raise_for_status()
+
+            preview_url = response.json().get("url")
+
+            if not preview_url:
+                raise Exception("Preview URL not returned by DocuSign")
+
+            print(f"[DocuSign Preview] Preview URL obtained: {preview_url}")
+            return {"preview_url": preview_url}
 
         except HTTPException:
             raise
         except Exception as e:
+            print(f"[DocuSign Preview] Error obtaining preview: {str(e)}")
             raise HTTPException(status_code=500, detail=str(e))
+    async def get_final_offer_preview(self, user_uuid: str):
+
+        try:
+            envelope_id = await self.dao.get_pandadoc_draft_id(user_uuid)
+ 
+            if not envelope_id:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Envelope not found"
+                )
+
+            token_data = generate_docusign_access_token()
+            access_token = token_data["access_token"]
+
+            url = f"{DOCUSIGN_BASE_URL}/v2.1/accounts/{DOCUSIGN_ACCOUNT_ID}/envelopes/{envelope_id}/documents/1"
+
+            headers = {
+                "Authorization": f"Bearer {access_token}"
+            }
+
+            response = requests.get(url, headers=headers, stream=True)
+
+            response.raise_for_status()
+
+            return StreamingResponse(
+                response.raw,
+                media_type="application/pdf"
+            )
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+    
+
+    
+
+    # async def generate_offer_pdf_preview(self, user_uuid: str):
+
+    #   offer = await self.dao.get_offer_by_uuid(user_uuid)
+
+    # if not offer:
+    #     raise HTTPException(status_code=404, detail="Offer not found")
+
+    # buffer = BytesIO()
+
+    # pdf = canvas.Canvas(buffer)
+
+    # pdf.drawString(100, 750, f"Offer Letter")
+
+    # pdf.drawString(100, 720, f"Name: {offer['first_name']} {offer['last_name']}")
+    # pdf.drawString(100, 700, f"Email: {offer['mail']}")
+    # pdf.drawString(100, 680, f"Designation: {offer['designation']}")
+    # pdf.drawString(100, 660, f"Employee Type: {offer['employee_type']}")
+    # pdf.drawString(100, 640, f"Contact: +{offer['country_code']} {offer['contact_number']}")
+
+    # pdf.drawString(100, 610, f"Total CTC: {offer['total_ctc']}")
+
+    # pdf.showPage()
+    # pdf.save()
+
+    # buffer.seek(0)
+
+    # return StreamingResponse(
+    #     buffer,
+    #     media_type="application/pdf",
+    #     headers={
+    #         "Content-Disposition": f"inline; filename=offer_{user_uuid}.pdf"
+    #     }
+    # )

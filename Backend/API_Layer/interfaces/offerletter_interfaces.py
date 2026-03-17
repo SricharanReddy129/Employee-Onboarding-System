@@ -3,18 +3,31 @@
 from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 
+class CompensationComponent(BaseModel):
+    name: str
+    type: str
+    frequency: str
+    amount: float
+
+class CompensationComponentResponse(BaseModel):
+    name: str
+    type: str
+    frequency: str
+    amount: float
 class OfferCreateRequest(BaseModel):
     first_name: str
+    middle_name: Optional[str] = None
     last_name: str
     mail: str
     country_code: str
     contact_number: str
     designation: str
     employee_type: str
-    package: str
-    currency : str
-    cc_emails: Optional[List[EmailStr]] = None
-
+    # package: str
+    # currency : str
+    compensation_components: List[CompensationComponent]   
+    total_ctc: float                                    
+    cc_mails: Optional[List[EmailStr]] = None
 
 class OfferCreateResponse(BaseModel):
     message: str
@@ -42,11 +55,15 @@ class OfferLetterDetailsResponse(BaseModel):
     contact_number: str
     designation: str
     employee_type: str
-    package: Optional[str] = None
-    currency : Optional[str] = None
+    # package: str
+    # currency : str
+    total_ctc: float | None = None
     created_by: int
     status : str
-    cc_emails: Optional[str] = None
+
+    cc_mails: Optional[List[EmailStr]] = None
+    compensation_components: List[CompensationComponentResponse]= []
+
 
 
 

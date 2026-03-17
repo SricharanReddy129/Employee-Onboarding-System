@@ -1,8 +1,14 @@
 from typing import Any, Optional
 import datetime
+<<<<<<< Updated upstream
 from sqlalchemy import ForeignKey
 
 from sqlalchemy import BigInteger, CHAR, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, TIMESTAMP, Text, Boolean, text
+=======
+import decimal
+
+from sqlalchemy import BigInteger, CHAR, DECIMAL, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, TIMESTAMP, Text, text
+>>>>>>> Stashed changes
 from sqlalchemy.dialects.mysql import ENUM, TINYINT, YEAR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import Column, Integer, String, DateTime
@@ -46,12 +52,12 @@ class Countries(Base):
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
-    addresses: Mapped[list['Addresses']] = relationship('Addresses', back_populates='countries', lazy="selectin")
-    contacts: Mapped[list['Contacts']] = relationship('Contacts', back_populates='countries', lazy="selectin")
-    country_education_document_mapping: Mapped[list['CountryEducationDocumentMapping']] = relationship('CountryEducationDocumentMapping', back_populates='countries', lazy="selectin")
-    country_identity_mapping: Mapped[list['CountryIdentityMapping']] = relationship('CountryIdentityMapping', back_populates='countries', lazy="selectin")
-    personal_details: Mapped[list['PersonalDetails']] = relationship('PersonalDetails', foreign_keys='[PersonalDetails.nationality_country_uuid]', back_populates='countries', lazy="selectin")
-    personal_details_: Mapped[list['PersonalDetails']] = relationship('PersonalDetails', foreign_keys='[PersonalDetails.residence_country_uuid]', back_populates='countries_', lazy="selectin")
+    addresses: Mapped[list['Addresses']] = relationship('Addresses', back_populates='countries')
+    contacts: Mapped[list['Contacts']] = relationship('Contacts', back_populates='countries')
+    country_education_document_mapping: Mapped[list['CountryEducationDocumentMapping']] = relationship('CountryEducationDocumentMapping', back_populates='countries')
+    country_identity_mapping: Mapped[list['CountryIdentityMapping']] = relationship('CountryIdentityMapping', back_populates='countries')
+    personal_details: Mapped[list['PersonalDetails']] = relationship('PersonalDetails', foreign_keys='[PersonalDetails.nationality_country_uuid]', back_populates='countries')
+    personal_details_: Mapped[list['PersonalDetails']] = relationship('PersonalDetails', foreign_keys='[PersonalDetails.residence_country_uuid]', back_populates='countries_')
 
 
 class DeliverableItems(Base):
@@ -66,7 +72,39 @@ class DeliverableItems(Base):
     description: Mapped[Optional[str]] = mapped_column(String(255))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
 
-    employee_deliverables: Mapped[list['EmployeeDeliverables']] = relationship('EmployeeDeliverables', back_populates='deliverable_items', lazy="selectin")
+    employee_deliverables: Mapped[list['EmployeeDeliverables']] = relationship('EmployeeDeliverables', back_populates='deliverable_items')
+
+
+class Departments(Base):
+    __tablename__ = 'departments'
+    __table_args__ = (
+        Index('department_uuid', 'department_uuid', unique=True),
+    )
+
+    department_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    department_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    department_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String(255))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    employee_details: Mapped[list['EmployeeDetails']] = relationship('EmployeeDetails', back_populates='departments')
+
+
+class Designations(Base):
+    __tablename__ = 'designations'
+    __table_args__ = (
+        Index('designation_uuid', 'designation_uuid', unique=True),
+    )
+
+    designation_id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    designation_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    designation_name: Mapped[str] = mapped_column(String(100), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(String(255))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    employee_details: Mapped[list['EmployeeDetails']] = relationship('EmployeeDetails', back_populates='designations')
 
 
 class EducationDocumentType(Base):
@@ -81,7 +119,7 @@ class EducationDocumentType(Base):
     description: Mapped[Optional[str]] = mapped_column(String(200))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
 
-    country_education_document_mapping: Mapped[list['CountryEducationDocumentMapping']] = relationship('CountryEducationDocumentMapping', back_populates='education_document_type', lazy="selectin")
+    country_education_document_mapping: Mapped[list['CountryEducationDocumentMapping']] = relationship('CountryEducationDocumentMapping', back_populates='education_document_type')
 
 
 class EducationLevel(Base):
@@ -100,7 +138,7 @@ class EducationLevel(Base):
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
-    country_education_document_mapping: Mapped[list['CountryEducationDocumentMapping']] = relationship('CountryEducationDocumentMapping', back_populates='education_level', lazy="selectin")
+    country_education_document_mapping: Mapped[list['CountryEducationDocumentMapping']] = relationship('CountryEducationDocumentMapping', back_populates='education_level')
 
     degree_master: Mapped[list["DegreeMaster"]] = relationship(
         "DegreeMaster",
@@ -123,7 +161,7 @@ class IdentityType(Base):
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
-    country_identity_mapping: Mapped[list['CountryIdentityMapping']] = relationship('CountryIdentityMapping', back_populates='identity_type', lazy="selectin")
+    country_identity_mapping: Mapped[list['CountryIdentityMapping']] = relationship('CountryIdentityMapping', back_populates='identity_type')
 
 
 class OfferLetterDetails(Base):
@@ -131,6 +169,7 @@ class OfferLetterDetails(Base):
     __table_args__ = (
         Index('idx_offer_user_created', 'user_uuid', 'created_by'),
         Index('idx_offer_user_uuid', 'user_uuid'),
+        Index('idx_user_uuid', 'user_uuid'),
         Index('mail', 'mail', unique=True),
         Index('user_uuid', 'user_uuid', unique=True)
     )
@@ -144,9 +183,10 @@ class OfferLetterDetails(Base):
     contact_number: Mapped[str] = mapped_column(String(15), nullable=False)
     designation: Mapped[str] = mapped_column(String(50), nullable=False)
     employee_type: Mapped[str] = mapped_column(Enum('Full-Time', 'Part-Time', 'Intern', 'Contractor', 'Freelance'), nullable=False)
-    package: Mapped[str] = mapped_column(String(20), nullable=False)
-    currency: Mapped[str] = mapped_column(String(10), nullable=False)
     created_by: Mapped[int] = mapped_column(Integer, nullable=False)
+    middle_name: Mapped[Optional[str]] = mapped_column(String(100))
+    package: Mapped[Optional[str]] = mapped_column(String(255))
+    currency: Mapped[Optional[str]] = mapped_column(String(20))
     status: Mapped[Optional[str]] = mapped_column(ENUM('Created', 'Offered', 'Accepted', 'Rejected', 'Submitted', 'Verified', 'Completed'), server_default=text("'Created'"))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
@@ -155,19 +195,22 @@ class OfferLetterDetails(Base):
     offer_response_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
     joining_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
     cc_emails: Mapped[Optional[str]] = mapped_column(String(256))
+    total_ctc: Mapped[Optional[decimal.Decimal]] = mapped_column(DECIMAL(12, 2))
 
-    addresses: Mapped[list['Addresses']] = relationship('Addresses', back_populates='offer_letter_details', lazy="selectin")
-    contacts: Mapped[list['Contacts']] = relationship('Contacts', back_populates='offer_letter_details', lazy="selectin")
-    employee_deliverables: Mapped[list['EmployeeDeliverables']] = relationship('EmployeeDeliverables', back_populates='offer_letter_details', lazy="selectin")
-    employee_experience: Mapped[list['EmployeeExperience']] = relationship('EmployeeExperience', back_populates='offer_letter_details', lazy="selectin")
-    employee_receivables: Mapped[list['EmployeeReceivables']] = relationship('EmployeeReceivables', back_populates='offer_letter_details', lazy="selectin")
-    offer_approval_request: Mapped[list['OfferApprovalRequest']] = relationship('OfferApprovalRequest', back_populates='offer_letter_details', lazy="selectin")
-    onboarding_links: Mapped[list['OnboardingLinks']] = relationship('OnboardingLinks', back_populates='offer_letter_details', lazy="selectin")
-    personal_details: Mapped[list['PersonalDetails']] = relationship('PersonalDetails', back_populates='offer_letter_details', lazy="selectin")
-    employee_education_document: Mapped[list['EmployeeEducationDocument']] = relationship('EmployeeEducationDocument', back_populates='offer_letter_details', lazy="selectin")
-    employee_identity_document: Mapped[list['EmployeeIdentityDocument']] = relationship('EmployeeIdentityDocument', back_populates='offer_letter_details', lazy="selectin")
-    employee_pay_slips: Mapped[list['EmployeePaySlips']] = relationship('EmployeePaySlips', back_populates='offer_letter_details', lazy="selectin")
-    employee_relieving_letter: Mapped[list['EmployeeRelievingLetter']] = relationship('EmployeeRelievingLetter', back_populates='offer_letter_details', lazy="selectin")
+    addresses: Mapped[list['Addresses']] = relationship('Addresses', back_populates='offer_letter_details')
+    contacts: Mapped[list['Contacts']] = relationship('Contacts', back_populates='offer_letter_details')
+    employee_deliverables: Mapped[list['EmployeeDeliverables']] = relationship('EmployeeDeliverables', back_populates='offer_letter_details')
+    employee_details: Mapped[list['EmployeeDetails']] = relationship('EmployeeDetails', back_populates='offer_letter_details')
+    employee_experience: Mapped[list['EmployeeExperience']] = relationship('EmployeeExperience', back_populates='offer_letter_details')
+    employee_receivables: Mapped[list['EmployeeReceivables']] = relationship('EmployeeReceivables', back_populates='offer_letter_details')
+    offer_approval_request: Mapped[list['OfferApprovalRequest']] = relationship('OfferApprovalRequest', back_populates='offer_letter_details')
+    offer_compensation: Mapped[list['OfferCompensation']] = relationship('OfferCompensation', back_populates='offer_letter_details')
+    onboarding_links: Mapped[list['OnboardingLinks']] = relationship('OnboardingLinks', back_populates='offer_letter_details')
+    personal_details: Mapped[list['PersonalDetails']] = relationship('PersonalDetails', back_populates='offer_letter_details')
+    employee_education_document: Mapped[list['EmployeeEducationDocument']] = relationship('EmployeeEducationDocument', back_populates='offer_letter_details')
+    employee_identity_document: Mapped[list['EmployeeIdentityDocument']] = relationship('EmployeeIdentityDocument', back_populates='offer_letter_details')
+    employee_pay_slips: Mapped[list['EmployeePaySlips']] = relationship('EmployeePaySlips', back_populates='offer_letter_details')
+    employee_relieving_letter: Mapped[list['EmployeeRelievingLetter']] = relationship('EmployeeRelievingLetter', back_populates='offer_letter_details')
 
     employee_bank_details: Mapped[list["EmployeeBankDetails"]] = relationship("EmployeeBankDetails",lazy="selectin")
     employee_pf_details: Mapped[list["EmployeePfDetails"]] = relationship("EmployeePfDetails",lazy="selectin")
@@ -194,7 +237,20 @@ class ReceivableItems(Base):
     description: Mapped[Optional[str]] = mapped_column(String(255))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
 
-    employee_receivables: Mapped[list['EmployeeReceivables']] = relationship('EmployeeReceivables', back_populates='receivable_items', lazy="selectin")
+    employee_receivables: Mapped[list['EmployeeReceivables']] = relationship('EmployeeReceivables', back_populates='receivable_items')
+
+
+class Relation(Base):
+    __tablename__ = 'relation'
+    __table_args__ = (
+        Index('relation_uuid', 'relation_uuid', unique=True),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    relation_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    relation_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
 
 class Addresses(Base):
@@ -205,6 +261,7 @@ class Addresses(Base):
         Index('address_uuid', 'address_uuid', unique=True),
         Index('country_uuid', 'country_uuid'),
         Index('idx_address_user', 'user_uuid'),
+        Index('idx_addresses_user_type', 'user_uuid', 'address_type'),
         Index('user_uuid', 'user_uuid')
     )
 
@@ -222,8 +279,8 @@ class Addresses(Base):
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
-    countries: Mapped['Countries'] = relationship('Countries', back_populates='addresses', lazy="selectin")
-    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='addresses', lazy="selectin")
+    countries: Mapped['Countries'] = relationship('Countries', back_populates='addresses')
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='addresses')
 
 
 class Contacts(Base):
@@ -245,8 +302,8 @@ class Contacts(Base):
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
-    countries: Mapped['Countries'] = relationship('Countries', back_populates='contacts', lazy="selectin")
-    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='contacts', lazy="selectin")
+    countries: Mapped['Countries'] = relationship('Countries', back_populates='contacts')
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='contacts')
 
 
 class CountryEducationDocumentMapping(Base):
@@ -271,10 +328,10 @@ class CountryEducationDocumentMapping(Base):
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
-    countries: Mapped['Countries'] = relationship('Countries', back_populates='country_education_document_mapping', lazy="selectin")
-    education_document_type: Mapped['EducationDocumentType'] = relationship('EducationDocumentType', back_populates='country_education_document_mapping', lazy="selectin")
-    education_level: Mapped['EducationLevel'] = relationship('EducationLevel', back_populates='country_education_document_mapping', lazy="selectin")
-    employee_education_document: Mapped[list['EmployeeEducationDocument']] = relationship('EmployeeEducationDocument', back_populates='country_education_document_mapping', lazy="selectin")
+    countries: Mapped['Countries'] = relationship('Countries', back_populates='country_education_document_mapping')
+    education_document_type: Mapped['EducationDocumentType'] = relationship('EducationDocumentType', back_populates='country_education_document_mapping')
+    education_level: Mapped['EducationLevel'] = relationship('EducationLevel', back_populates='country_education_document_mapping')
+    employee_education_document: Mapped[list['EmployeeEducationDocument']] = relationship('EmployeeEducationDocument', back_populates='country_education_document_mapping')
 
 
 class CountryIdentityMapping(Base):
@@ -296,9 +353,9 @@ class CountryIdentityMapping(Base):
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
-    countries: Mapped['Countries'] = relationship('Countries', back_populates='country_identity_mapping', lazy="selectin")
-    identity_type: Mapped['IdentityType'] = relationship('IdentityType', back_populates='country_identity_mapping', lazy="selectin")
-    employee_identity_document: Mapped[list['EmployeeIdentityDocument']] = relationship('EmployeeIdentityDocument', back_populates='country_identity_mapping', lazy="selectin")
+    countries: Mapped['Countries'] = relationship('Countries', back_populates='country_identity_mapping')
+    identity_type: Mapped['IdentityType'] = relationship('IdentityType', back_populates='country_identity_mapping')
+    employee_identity_document: Mapped[list['EmployeeIdentityDocument']] = relationship('EmployeeIdentityDocument', back_populates='country_identity_mapping')
 
 
 class EmployeeDeliverables(Base):
@@ -321,8 +378,52 @@ class EmployeeDeliverables(Base):
     returned_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
     remarks: Mapped[Optional[str]] = mapped_column(String(255))
 
-    deliverable_items: Mapped['DeliverableItems'] = relationship('DeliverableItems', back_populates='employee_deliverables', lazy="selectin")
-    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_deliverables', lazy="selectin")
+    deliverable_items: Mapped['DeliverableItems'] = relationship('DeliverableItems', back_populates='employee_deliverables')
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_deliverables')
+
+
+class EmployeeDetails(Base):
+    __tablename__ = 'employee_details'
+    __table_args__ = (
+        ForeignKeyConstraint(['department_uuid'], ['departments.department_uuid'], name='fk_employee_department'),
+        ForeignKeyConstraint(['designation_uuid'], ['designations.designation_uuid'], name='fk_employee_designation'),
+        ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], ondelete='CASCADE', name='fk_employee_offer'),
+        Index('employee_id', 'employee_id', unique=True),
+        Index('employee_uuid', 'employee_uuid', unique=True),
+        Index('fk_employee_department', 'department_uuid'),
+        Index('fk_employee_designation', 'designation_uuid'),
+        Index('fk_employee_offer', 'user_uuid'),
+        Index('work_email', 'work_email', unique=True)
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    employee_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    user_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    first_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    last_name: Mapped[str] = mapped_column(String(50), nullable=False)
+    location: Mapped[str] = mapped_column(String(100), nullable=False)
+    work_mode: Mapped[str] = mapped_column(Enum('Office', 'Remote', 'Hybrid'), nullable=False)
+    employee_id: Mapped[Optional[str]] = mapped_column(String(20))
+    middle_name: Mapped[Optional[str]] = mapped_column(String(50))
+    date_of_birth: Mapped[Optional[datetime.date]] = mapped_column(Date)
+    work_email: Mapped[Optional[str]] = mapped_column(String(100))
+    contact_number: Mapped[Optional[str]] = mapped_column(String(15))
+    department_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
+    designation_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
+    reporting_manager_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
+    employment_type: Mapped[Optional[str]] = mapped_column(Enum('Full-Time', 'Part-Time', 'Intern', 'Contractor', 'Freelance'))
+    joining_date: Mapped[Optional[datetime.date]] = mapped_column(Date)
+    employment_status: Mapped[Optional[str]] = mapped_column(Enum('Probation', 'Active', 'Resigned', 'Terminated', 'Absconded'), server_default=text("'Probation'"))
+    blood_group: Mapped[Optional[str]] = mapped_column(String(5))
+    gender: Mapped[Optional[str]] = mapped_column(Enum('Male', 'Female', 'Other'))
+    marital_status: Mapped[Optional[str]] = mapped_column(Enum('Single', 'Married', 'Divorced', 'Widowed'))
+    total_experience: Mapped[Optional[decimal.Decimal]] = mapped_column(DECIMAL(4, 1))
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    departments: Mapped[Optional['Departments']] = relationship('Departments', back_populates='employee_details')
+    designations: Mapped[Optional['Designations']] = relationship('Designations', back_populates='employee_details')
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_details')
 
 
 class EmployeeExperience(Base):
@@ -356,9 +457,9 @@ class EmployeeExperience(Base):
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
-    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_experience', lazy="selectin")
-    employee_pay_slips: Mapped[list['EmployeePaySlips']] = relationship('EmployeePaySlips', back_populates='employee_experience', lazy="selectin")
-    employee_relieving_letter: Mapped[list['EmployeeRelievingLetter']] = relationship('EmployeeRelievingLetter', back_populates='employee_experience', lazy="selectin")
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_experience')
+    employee_pay_slips: Mapped[list['EmployeePaySlips']] = relationship('EmployeePaySlips', back_populates='employee_experience')
+    employee_relieving_letter: Mapped[list['EmployeeRelievingLetter']] = relationship('EmployeeRelievingLetter', back_populates='employee_experience')
 
 class EmployeeBankDetails(Base):
     __tablename__ = "employee_bank_details"
@@ -415,8 +516,8 @@ class EmployeeReceivables(Base):
     collected_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
     remarks: Mapped[Optional[str]] = mapped_column(String(255))
 
-    receivable_items: Mapped['ReceivableItems'] = relationship('ReceivableItems', back_populates='employee_receivables', lazy="selectin")
-    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_receivables', lazy="selectin")
+    receivable_items: Mapped['ReceivableItems'] = relationship('ReceivableItems', back_populates='employee_receivables')
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_receivables')
 
 
 class OfferApprovalRequest(Base):
@@ -435,8 +536,25 @@ class OfferApprovalRequest(Base):
     action_taker_id: Mapped[int] = mapped_column(Integer, nullable=False)
     request_time: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
 
-    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='offer_approval_request', lazy="selectin")
-    offer_approval_action: Mapped[list['OfferApprovalAction']] = relationship('OfferApprovalAction', back_populates='request', lazy="selectin")
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='offer_approval_request')
+    offer_approval_action: Mapped[list['OfferApprovalAction']] = relationship('OfferApprovalAction', back_populates='request')
+
+
+class OfferCompensation(Base):
+    __tablename__ = 'offer_compensation'
+    __table_args__ = (
+        ForeignKeyConstraint(['offer_uuid'], ['offer_letter_details.user_uuid'], ondelete='CASCADE', name='fk_offer_compensation_offer'),
+        Index('fk_offer_compensation_offer', 'offer_uuid')
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    offer_uuid: Mapped[str] = mapped_column(String(36), nullable=False)
+    name: Mapped[Optional[str]] = mapped_column(String(255))
+    type: Mapped[Optional[str]] = mapped_column(String(50))
+    frequency: Mapped[Optional[str]] = mapped_column(String(50))
+    amount: Mapped[Optional[decimal.Decimal]] = mapped_column(DECIMAL(12, 2))
+
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='offer_compensation')
 
 
 class OnboardingLinks(Base):
@@ -453,7 +571,7 @@ class OnboardingLinks(Base):
     token_hash: Mapped[str] = mapped_column(CHAR(64), nullable=False)
     expires_at: Mapped[datetime.datetime] = mapped_column(DateTime, nullable=False)
 
-    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='onboarding_links', lazy="selectin")
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='onboarding_links')
 
 
 class PersonalDetails(Base):
@@ -483,12 +601,24 @@ class PersonalDetails(Base):
 
     nationality_country_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
     residence_country_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
+<<<<<<< Updated upstream
 
     # New Emergency Contact Fields
     emergency_contact_name: Mapped[Optional[str]] = mapped_column(String(100))
     emergency_contact_phone: Mapped[Optional[str]] = mapped_column(String(20))
     emergency_contact_relation_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36), ForeignKey("relation.relation_uuid")
 )
+=======
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+    emergency_contact_name: Mapped[Optional[str]] = mapped_column(String(100))
+    emergency_contact_phone: Mapped[Optional[str]] = mapped_column(String(20))
+    emergency_contact_relation_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
+
+    countries: Mapped[Optional['Countries']] = relationship('Countries', foreign_keys=[nationality_country_uuid], back_populates='personal_details')
+    countries_: Mapped[Optional['Countries']] = relationship('Countries', foreign_keys=[residence_country_uuid], back_populates='personal_details_')
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='personal_details')
+>>>>>>> Stashed changes
 
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(
         DateTime, server_default=text('CURRENT_TIMESTAMP')
@@ -594,6 +724,14 @@ class EmployeeEducationDocument(Base):
 
     verified_by: Mapped[Optional[str]] = mapped_column(CHAR(36))
     verified_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
+<<<<<<< Updated upstream
+=======
+    remarks: Mapped[Optional[str]] = mapped_column(String(255))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
+    country_education_document_mapping: Mapped['CountryEducationDocumentMapping'] = relationship('CountryEducationDocumentMapping', back_populates='employee_education_document')
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_education_document')
+>>>>>>> Stashed changes
 
 
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(
@@ -683,8 +821,8 @@ class EmployeeIdentityDocument(Base):
     remarks: Mapped[Optional[str]] = mapped_column(String(255))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
-    country_identity_mapping: Mapped['CountryIdentityMapping'] = relationship('CountryIdentityMapping', back_populates='employee_identity_document', lazy="selectin")
-    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_identity_document', lazy="selectin")
+    country_identity_mapping: Mapped['CountryIdentityMapping'] = relationship('CountryIdentityMapping', back_populates='employee_identity_document')
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_identity_document')
 
 
 class EmployeePaySlips(Base):
@@ -708,8 +846,8 @@ class EmployeePaySlips(Base):
     verified_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
-    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_pay_slips', lazy="selectin")
-    employee_experience: Mapped['EmployeeExperience'] = relationship('EmployeeExperience', back_populates='employee_pay_slips', lazy="selectin")
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_pay_slips')
+    employee_experience: Mapped['EmployeeExperience'] = relationship('EmployeeExperience', back_populates='employee_pay_slips')
 
 
 class EmployeeRelievingLetter(Base):
@@ -734,8 +872,8 @@ class EmployeeRelievingLetter(Base):
     remarks: Mapped[Optional[str]] = mapped_column(String(255))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
-    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_relieving_letter', lazy="selectin")
-    employee_experience: Mapped['EmployeeExperience'] = relationship('EmployeeExperience', back_populates='employee_relieving_letter', lazy="selectin")
+    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_relieving_letter')
+    employee_experience: Mapped['EmployeeExperience'] = relationship('EmployeeExperience', back_populates='employee_relieving_letter')
 
 
 class OfferApprovalAction(Base):
@@ -753,6 +891,7 @@ class OfferApprovalAction(Base):
     comment: Mapped[Optional[str]] = mapped_column(Text)
     action_time: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
 
+<<<<<<< Updated upstream
     request: Mapped['OfferApprovalRequest'] = relationship('OfferApprovalRequest', back_populates='offer_approval_action', lazy="selectin")
 
 class EmployeeDetails(Base):
@@ -876,3 +1015,6 @@ class Designations(Base):
     )
 
 
+=======
+    request: Mapped['OfferApprovalRequest'] = relationship('OfferApprovalRequest', back_populates='offer_approval_action')
+>>>>>>> Stashed changes

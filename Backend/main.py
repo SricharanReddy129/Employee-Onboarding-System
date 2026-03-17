@@ -13,11 +13,31 @@ from Backend.API_Layer.routes import token_verification_router
 from Backend.API_Layer.routes import offer_acceptance_request_routes
 from Backend.API_Layer.routes import offer_approval_action_routes
 from Backend.corn_jobs.joining_reminder import send_joining_date_reminders
+<<<<<<< Updated upstream
 from Backend.API_Layer.routes import permanent_employee_details_route
 from Backend.API_Layer.routes import departments_routes
 from Backend.API_Layer.routes import designation_routes
 from Backend.API_Layer.routes import employee_pf_routes
 from Backend.API_Layer.routes import employee_bank_routes
+=======
+from jinja2 import Environment,FileSystemLoader
+from fastapi.responses import Response
+import datetime
+import os
+from weasyprint import HTML
+from dotenv import load_dotenv
+
+# ✅ Load .env from Backend folder
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+env_path = os.path.join(BASE_DIR, ".env")
+
+load_dotenv(dotenv_path=env_path)
+
+# Debug
+print("🌐 DOCUSIGN_BASE_URL:", os.getenv("DOCUSIGN_BASE_URL"))
+print("🏢 DOCUSIGN_ACCOUNT_ID:", os.getenv("DOCUSIGN_ACCOUNT_ID"))
+
+>>>>>>> Stashed changes
 
 
 
@@ -105,9 +125,14 @@ app.include_router(hr_onboarding_routes.router, prefix="/hr", tags=["HR Onboardi
 app.include_router(docusign_token_generation_route.router, prefix="/docusign", tags=["DocuSign Token Generation"])
 app.include_router(redis_cache_routes.router, prefix="/cache", tags=["Redis Cache"])
 app.include_router(hr_bulk_join_router.router, prefix="/hr", tags=["HR Bulk Join"])
+<<<<<<< Updated upstream
 app.include_router(permanent_employee_details_route.router, prefix="/permanent-employee", tags=["Permanent Employees"])
 app.include_router(departments_routes.router)
 app.include_router(designation_routes.router)
+=======
+app.include_router(offerletter_routes.router, prefix="/offerletters", tags=["Offer Letters"])
+
+>>>>>>> Stashed changes
 
 
 
@@ -133,3 +158,57 @@ app.include_router(designation_routes.router)
 # @app.on_event("shutdown")
 # async def stop_scheduler():
 #     await scheduler.shutdown()
+
+
+
+# Base directory of Backend folder
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Templates directory
+template_dir = os.path.join(BASE_DIR, "templates")
+
+# Initialize Jinja environment
+env = Environment(loader=FileSystemLoader(template_dir))
+
+
+@app.get("/generate-offer")
+def generate_offer():
+
+    # Load HTML template
+    template = env.get_template("offer_letter.html")
+
+    # Absolute path for logo
+    logo_path = os.path.join(BASE_DIR, "static", "images", "paves_logo.jpg")
+
+    # Data for template
+    data = {
+        "logo_path": logo_path,
+        "current_date": datetime.date.today(),
+        "first_name": "Ajay",
+        "last_name": "Kumar",
+        "mail": "ajay@gmail.com",
+        "country_code": "91",
+        "contact_number": "9876543210",
+        "designation": "Software Engineer",
+        "total_ctc": "12,00,000",
+        "compensation_components": [
+            {"name": "Basic Salary", "type": "Fixed", "frequency": "Monthly", "amount": "50,000"},
+            {"name": "HRA", "type": "Fixed", "frequency": "Monthly", "amount": "20,000"},
+            {"name": "Bonus", "type": "Variable", "frequency": "Yearly", "amount": "2,00,000"}
+        ]
+    }
+
+    # Render HTML with data
+    html = template.render(data)
+
+    # Convert HTML to PDF
+    pdf = HTML(string=html, base_url=BASE_DIR).write_pdf()
+
+    # Return PDF response
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": "inline; filename=offer_letter.pdf"
+        }
+    )

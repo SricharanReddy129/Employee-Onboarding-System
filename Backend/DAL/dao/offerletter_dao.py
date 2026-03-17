@@ -2,9 +2,11 @@
 import datetime
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from ...DAL.models.models import OfferApprovalAction, OfferApprovalRequest, OfferLetterDetails
+from ...DAL.models.models import OfferApprovalAction, OfferApprovalRequest, OfferCompensation, OfferLetterDetails
 from ...API_Layer.interfaces.offerletter_interfaces import OfferCreateRequest
 import time
+
+
 class OfferLetterDAO:
     def __init__(self, db: AsyncSession):
         self.db = db  # Store the session for transaction management
@@ -24,6 +26,7 @@ class OfferLetterDAO:
         new_offer = OfferLetterDetails(
             user_uuid=uuid,
             first_name=request_data.first_name,
+            middle_name=request_data.middle_name,
             last_name=request_data.last_name,
             mail=request_data.mail,
             country_code=request_data.country_code,
@@ -31,12 +34,27 @@ class OfferLetterDAO:
             contact_number=request_data.contact_number,
             designation=request_data.designation,
             employee_type=request_data.employee_type,
-            package=request_data.package,
-            currency=request_data.currency,
-            cc_emails=",".join(request_data.cc_emails) if request_data.cc_emails else None,
+            # package=request_data.package,
+            # currency=request_data.currency,
+            total_ctc=request_data.total_ctc,
+            cc_emails=",".join(request_data.cc_mails) if request_data.cc_mails else None,
         )
         self.db.add(new_offer)
-        await self.db.commit()
+
+        # ensure offer exists before children
+        await self.db.flush()
+
+        #save compensation components
+        for comp in request_data.compensation_components:
+                row = OfferCompensation(
+                    offer_uuid=uuid,
+                    name=comp.name,
+                    type=comp.type,
+                    frequency=comp.frequency,
+                    amount=comp.amount
+                )
+                self.db.add(row)
+         
         return new_offer
 
     async def create_offer_no_commit(self, uuid: str, request_data: OfferCreateRequest, current_user_id: int) -> OfferLetterDetails:
@@ -88,13 +106,7 @@ class OfferLetterDAO:
         """
         Get all offers.
         """
-        result = await self.db.execute(select(OfferLetterDetails.user_uuid,
-                                              OfferLetterDetails.first_name,
-                                              OfferLetterDetails.last_name,
-                                              OfferLetterDetails.mail,
-                                              OfferLetterDetails.country_code,
-                                              OfferLetterDetails.contact_number,
-                                              ))
+        result = await self.db.execute(select(OfferLetterDetails))
         return result.scalars().all()
 
     import time
@@ -113,8 +125,9 @@ class OfferLetterDAO:
                 OfferLetterDetails.contact_number,
                 OfferLetterDetails.designation,
                 OfferLetterDetails.employee_type,
-                OfferLetterDetails.package,
-                OfferLetterDetails.currency,
+                # OfferLetterDetails.package,
+                # OfferLetterDetails.currency,
+                OfferLetterDetails.total_ctc,
                 OfferLetterDetails.created_by,
                 OfferLetterDetails.status,
                 OfferLetterDetails.cc_emails
@@ -139,35 +152,60 @@ class OfferLetterDAO:
 
     async def get_offer_by_uuid(self, user_uuid: str):
         start = time.perf_counter()
-
+        
         stmt = (
-            select(
-                OfferLetterDetails.user_uuid,
-                OfferLetterDetails.first_name,
-                OfferLetterDetails.last_name,
-                OfferLetterDetails.mail,
-                OfferLetterDetails.country_code,
-                OfferLetterDetails.contact_number,
-                OfferLetterDetails.designation,
-                OfferLetterDetails.employee_type,
-                OfferLetterDetails.package,
-                OfferLetterDetails.currency,
-                OfferLetterDetails.created_by,
-                OfferLetterDetails.status,
-                OfferLetterDetails.cc_emails
-            )
+             select(OfferLetterDetails)
             .where(OfferLetterDetails.user_uuid == user_uuid)
             .limit(1)
         )
 
-        t1 = time.perf_counter()
         result = await self.db.execute(stmt)
-        print("⏱ DB execute:", time.perf_counter() - t1)
+        offer = result.scalar_one_or_none()
 
-        row = result.mappings().first()
+        if not offer:
+         return None
+
+            # 2️⃣ Fetch compensation rows
+        comp_stmt = (
+                select(OfferCompensation)
+                .where(OfferCompensation.offer_uuid == user_uuid)
+            )
+
+        comp_result = await self.db.execute(comp_stmt)
+        compensations = comp_result.scalars().all()
+
+        # 3️⃣ Convert compensation rows to list of dicts
+        compensation_list = [
+            {
+                "name": c.name,
+                "type": c.type,
+                "frequency": c.frequency,
+                "amount": float(c.amount)
+            }
+            for c in compensations
+        ]
+
         print("⏱ DAO total:", time.perf_counter() - start)
 
-        return row if row else None
+            # 4️⃣ Return structured response 
+        return {
+            
+        "user_uuid": offer.user_uuid,
+        "first_name": offer.first_name,
+        "last_name": offer.last_name,
+        "mail": offer.mail,
+        "country_code": offer.country_code,
+        "contact_number": offer.contact_number,
+        "designation": offer.designation,
+        "employee_type": offer.employee_type,
+        "package": offer.package,
+        "currency": offer.currency,
+        "created_by": offer.created_by,
+        "status": offer.status,
+        "cc_emails": offer.cc_emails,
+        "total_ctc": offer.total_ctc,
+        "compensation_components": compensation_list
+    }
 
 
     
