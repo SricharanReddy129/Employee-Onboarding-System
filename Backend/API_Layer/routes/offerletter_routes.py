@@ -1,5 +1,7 @@
 # Backend/API_Layer/routes/offerletter_routes.py
 
+import os
+
 from Backend.DAL.utils.database import get_read_db
 from fastapi import APIRouter, HTTPException, UploadFile, File, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +17,8 @@ from Backend.API_Layer.interfaces.offerletter_interfaces import(
     BulkSendOfferLettersResult,
 )
 from Backend.Business_Layer.services.offerletter_services import OfferLetterService
+from Backend.Business_Layer.services.document_service import DocumentService
+from fastapi.responses import FileResponse
 from Backend.DAL.utils.dependencies import get_db
 import pandas as pd
 from io import BytesIO
@@ -227,7 +231,15 @@ async def bulk_send_offer_letters(
     print("Bulk send offer letters endpoint called")
     offer_service = OfferLetterService(db)
     print('offer_service created in route')
-    return await offer_service.send_bulk_offerletters_via_docusign(request_data, int(request.state.user.get("user_id")))
+    current_user_id = int(request.state.user.get("user_id"))
+
+    result = await offer_service.send_bulk_offerletters_via_docusign_pdf(
+        request_data,
+        current_user_id
+    )
+
+    return result
+
 
 ## delete offer letter by user_uuid only when it satisfies the following conditions:
 # 1. The offer letter status is 'rejected'
@@ -251,5 +263,79 @@ async def delete_offer_letter(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{user_uuid}/docusign-preview")   
+async def get_docusign_preview(
+    user_uuid: str,
+    db: AsyncSession = Depends(get_db)
+):
+    
+    offer_service = OfferLetterService(db)
+    return await offer_service.get_docusign_preview(user_uuid)
+        
+
+@router.get("/{user_uuid}/final-preview")
+async def get_final_offer_preview(
+    user_uuid: str,
+    db: AsyncSession = Depends(get_db)
+):
+
+    offer_service = OfferLetterService(db)
+    return await offer_service.get_final_offer_preview(user_uuid)
+
+
+
+@router.get("/{user_uuid}/generate-preview")
+async def generate_offer_preview(
+    user_uuid: str,
+    db: AsyncSession = Depends(get_db)
+):
+
+    # Ensure folder exists
+    os.makedirs("generated_pdfs", exist_ok=True)
+
+    pdf_path = f"generated_pdfs/offer_{user_uuid}.pdf"
+
+    # 1️⃣ If PDF already exists → return directly
+    if os.path.exists(pdf_path):
+        return FileResponse(
+            pdf_path,
+            media_type="application/pdf",
+            filename=f"offer_{user_uuid}.pdf"
+        )
+
+    # 2️⃣ Fetch offer data
+    offer_service = OfferLetterService(db)
+    offer = await offer_service.get_offer_by_uuid(user_uuid)
+
+    if not offer:
+        raise HTTPException(status_code=404, detail="Offer not found")
+
+    # 3️⃣ Convert DB object → dictionary
+    offer_data = {
+        "user_uuid": offer["user_uuid"],
+        "first_name": offer["first_name"],
+        "last_name": offer["last_name"],
+        "mail": offer["mail"],
+        "designation": offer["designation"],
+        "employee_type": offer["employee_type"],
+        "country_code": offer["country_code"],
+        "contact_number": offer["contact_number"],
+        "total_ctc": offer.get("total_ctc"),
+        "compensation_components": offer.get("compensation_components", [])
+
+}
+        
+
     
 
+    # 4️⃣ Generate PDF
+    document_service = DocumentService()
+    pdf_path = document_service.generate_offer_pdf(offer_data)
+
+    # 5️⃣ Return generated PDF
+    return FileResponse(
+        pdf_path,
+        media_type="application/pdf",
+        filename=f"offer_{user_uuid}.pdf"
+    )
