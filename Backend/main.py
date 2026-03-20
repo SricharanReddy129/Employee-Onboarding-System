@@ -2,6 +2,8 @@
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import os
+from jinja2 import Environment, FileSystemLoader
 
 from Backend.API_Layer.routes import docusign_token_generation_route, employee_experience_routes, hr_bulk_join_router, hr_onboarding_routes, offer_approval_action_routes, otp_routes, redis_cache_routes
 from .API_Layer.routes import (master_routes, offerletter_routes, education_routes, offerresponse_routes, employee_details_routes,
@@ -13,31 +15,11 @@ from Backend.API_Layer.routes import token_verification_router
 from Backend.API_Layer.routes import offer_acceptance_request_routes
 from Backend.API_Layer.routes import offer_approval_action_routes
 from Backend.corn_jobs.joining_reminder import send_joining_date_reminders
-<<<<<<< Updated upstream
 from Backend.API_Layer.routes import permanent_employee_details_route
 from Backend.API_Layer.routes import departments_routes
 from Backend.API_Layer.routes import designation_routes
 from Backend.API_Layer.routes import employee_pf_routes
 from Backend.API_Layer.routes import employee_bank_routes
-=======
-from jinja2 import Environment,FileSystemLoader
-from fastapi.responses import Response
-import datetime
-import os
-from weasyprint import HTML
-from dotenv import load_dotenv
-
-# ✅ Load .env from Backend folder
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-env_path = os.path.join(BASE_DIR, ".env")
-
-load_dotenv(dotenv_path=env_path)
-
-# Debug
-print("🌐 DOCUSIGN_BASE_URL:", os.getenv("DOCUSIGN_BASE_URL"))
-print("🏢 DOCUSIGN_ACCOUNT_ID:", os.getenv("DOCUSIGN_ACCOUNT_ID"))
-
->>>>>>> Stashed changes
 
 
 
@@ -125,14 +107,9 @@ app.include_router(hr_onboarding_routes.router, prefix="/hr", tags=["HR Onboardi
 app.include_router(docusign_token_generation_route.router, prefix="/docusign", tags=["DocuSign Token Generation"])
 app.include_router(redis_cache_routes.router, prefix="/cache", tags=["Redis Cache"])
 app.include_router(hr_bulk_join_router.router, prefix="/hr", tags=["HR Bulk Join"])
-<<<<<<< Updated upstream
 app.include_router(permanent_employee_details_route.router, prefix="/permanent-employee", tags=["Permanent Employees"])
 app.include_router(departments_routes.router)
 app.include_router(designation_routes.router)
-=======
-app.include_router(offerletter_routes.router, prefix="/offerletters", tags=["Offer Letters"])
-
->>>>>>> Stashed changes
 
 
 

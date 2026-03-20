@@ -1,14 +1,8 @@
 from typing import Any, Optional
 import datetime
-<<<<<<< Updated upstream
-from sqlalchemy import ForeignKey
-
-from sqlalchemy import BigInteger, CHAR, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, TIMESTAMP, Text, Boolean, text
-=======
 import decimal
 
-from sqlalchemy import BigInteger, CHAR, DECIMAL, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, TIMESTAMP, Text, text
->>>>>>> Stashed changes
+from sqlalchemy import BigInteger, CHAR, DECIMAL, Date, DateTime, Enum, ForeignKeyConstraint, Index, Integer, JSON, String, TIMESTAMP, Text, text, Boolean, ForeignKey
 from sqlalchemy.dialects.mysql import ENUM, TINYINT, YEAR
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy import Column, Integer, String, DateTime
@@ -243,17 +237,18 @@ class ReceivableItems(Base):
     employee_receivables: Mapped[list['EmployeeReceivables']] = relationship('EmployeeReceivables', back_populates='receivable_items')
 
 
-class Relation(Base):
-    __tablename__ = 'relation'
-    __table_args__ = (
-        Index('relation_uuid', 'relation_uuid', unique=True),
-    )
+# class Relation(Base):
+#     __tablename__ = 'relation'
+#     __table_args__ = (
+#         Index('relation_uuid', 'relation_uuid', unique=True),
+#     )
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    relation_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
-    relation_name: Mapped[str] = mapped_column(String(50), nullable=False)
-    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
-    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+#     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+#     relation_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+#     relation_name: Mapped[str] = mapped_column(String(50), nullable=False)
+#     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
+#     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
+
 
 
 class Addresses(Base):
@@ -604,24 +599,12 @@ class PersonalDetails(Base):
 
     nationality_country_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
     residence_country_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
-<<<<<<< Updated upstream
 
     # New Emergency Contact Fields
     emergency_contact_name: Mapped[Optional[str]] = mapped_column(String(100))
     emergency_contact_phone: Mapped[Optional[str]] = mapped_column(String(20))
     emergency_contact_relation_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36), ForeignKey("relation.relation_uuid")
 )
-=======
-    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
-    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
-    emergency_contact_name: Mapped[Optional[str]] = mapped_column(String(100))
-    emergency_contact_phone: Mapped[Optional[str]] = mapped_column(String(20))
-    emergency_contact_relation_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
-
-    countries: Mapped[Optional['Countries']] = relationship('Countries', foreign_keys=[nationality_country_uuid], back_populates='personal_details')
-    countries_: Mapped[Optional['Countries']] = relationship('Countries', foreign_keys=[residence_country_uuid], back_populates='personal_details_')
-    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='personal_details')
->>>>>>> Stashed changes
 
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(
         DateTime, server_default=text('CURRENT_TIMESTAMP')
@@ -727,14 +710,6 @@ class EmployeeEducationDocument(Base):
 
     verified_by: Mapped[Optional[str]] = mapped_column(CHAR(36))
     verified_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
-<<<<<<< Updated upstream
-=======
-    remarks: Mapped[Optional[str]] = mapped_column(String(255))
-    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
-
-    country_education_document_mapping: Mapped['CountryEducationDocumentMapping'] = relationship('CountryEducationDocumentMapping', back_populates='employee_education_document')
-    offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_education_document')
->>>>>>> Stashed changes
 
 
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(
@@ -894,130 +869,4 @@ class OfferApprovalAction(Base):
     comment: Mapped[Optional[str]] = mapped_column(Text)
     action_time: Mapped[Optional[datetime.datetime]] = mapped_column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
 
-<<<<<<< Updated upstream
-    request: Mapped['OfferApprovalRequest'] = relationship('OfferApprovalRequest', back_populates='offer_approval_action', lazy="selectin")
-
-class EmployeeDetails(Base):
-    __tablename__ = "employee_details"
-
-    __table_args__ = (
-
-        ForeignKeyConstraint(["department_uuid"],["departments.department_uuid"],name="fk_employee_department"
-        ),
-
-        ForeignKeyConstraint( ["designation_uuid"], ["designations.designation_uuid"], name="fk_employee_designation"
-        ),
-
-        ForeignKeyConstraint(
-            ["reporting_manager_uuid"],
-            ["employee_details.employee_uuid"],
-            name="fk_employee_manager"
-        ),
-
-        Index("idx_employee_uuid", "employee_uuid", unique=True),
-        Index("idx_employee_id", "employee_id", unique=True),
-        Index("idx_employee_department", "department_uuid"),
-        Index("idx_employee_designation", "designation_uuid"),
-        Index("idx_employee_manager", "reporting_manager_uuid"),
-        Index("idx_employee_email", "work_email", unique=True),
-    )
-
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    employee_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
-    user_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
-    employee_id: Mapped[Optional[str]] = mapped_column(String(20))
-    first_name: Mapped[str] = mapped_column(String(50), nullable=False)
-    middle_name: Mapped[Optional[str]] = mapped_column(String(50))
-    last_name: Mapped[str] = mapped_column(String(50), nullable=False)
-    date_of_birth: Mapped[datetime.date] = mapped_column(Date)
-    work_email: Mapped[Optional[str]] = mapped_column(String(100))
-    contact_number: Mapped[Optional[str]] = mapped_column(String(15))
-    department_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
-    designation_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
-    reporting_manager_uuid: Mapped[Optional[str]] = mapped_column(CHAR(36))
-    employment_type: Mapped[str] = mapped_column(
-        Enum('Full-Time','Part-Time','Intern','Contractor','Freelance'),
-        nullable=False
-    )
-    joining_date: Mapped[datetime.date] = mapped_column(Date, nullable=False)
-    location: Mapped[str] = mapped_column(String(100), nullable=False)
-    work_mode: Mapped[str] = mapped_column(
-        Enum('Office','Remote','Hybrid'),
-        nullable=False
-    )
-    employment_status: Mapped[str] = mapped_column(
-        Enum('Probation','Active','Resigned','Terminated','Absconded'),
-        nullable=False
-    )
-    blood_group: Mapped[Optional[str]] = mapped_column(String(5))
-    gender: Mapped[Optional[str]] = mapped_column(
-        Enum('Male','Female','Other')
-    )
-    marital_status: Mapped[Optional[str]] = mapped_column(
-        Enum('Single','Married','Divorced','Widowed')
-    )
-    total_experience: Mapped[Optional[float]]
-    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(
-        DateTime,
-        server_default=text("CURRENT_TIMESTAMP")
-    )
-    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(
-        DateTime,
-        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-    )
-
-
-class Departments(Base):
-    __tablename__ = "departments"
-
-    __table_args__ = (
-        Index("idx_department_uuid", "department_uuid", unique=True),
-    )
-
-    department_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    department_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
-    department_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(String(255))
-
-    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(
-        DateTime,
-        server_default=text("CURRENT_TIMESTAMP")
-    )
-
-    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(
-        DateTime,
-        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-    )
-
-class Designations(Base):
-    __tablename__ = "designations"
-
-    __table_args__ = (
-        Index("idx_designation_uuid", "designation_uuid", unique=True),
-    )
-
-    designation_id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    designation_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
-    designation_name: Mapped[str] = mapped_column(String(100), nullable=False)
-    description: Mapped[Optional[str]] = mapped_column(String(255))
-
-    department_uuid: Mapped[str] = mapped_column(
-        CHAR(36),
-        ForeignKey("departments.department_uuid"),
-        nullable=False
-    )
-
-    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(
-        DateTime,
-        server_default=text("CURRENT_TIMESTAMP")
-    )
-
-    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(
-        DateTime,
-        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
-    )
-
-
-=======
     request: Mapped['OfferApprovalRequest'] = relationship('OfferApprovalRequest', back_populates='offer_approval_action')
->>>>>>> Stashed changes
