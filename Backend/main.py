@@ -1,7 +1,11 @@
 # from apscheduler.schedulers.background import BackgroundScheduler
-from fastapi import FastAPI
+from datetime import datetime
+
+from fastapi import FastAPI, Response
 from fastapi.openapi.utils import get_openapi
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import os
+from jinja2 import Environment, FileSystemLoader
 
 from Backend.API_Layer.routes import docusign_token_generation_route, employee_experience_routes, hr_bulk_join_router, hr_onboarding_routes, offer_approval_action_routes, otp_routes, redis_cache_routes
 from .API_Layer.routes import (master_routes, offerletter_routes, education_routes, offerresponse_routes, employee_details_routes,
@@ -133,3 +137,57 @@ app.include_router(designation_routes.router)
 # @app.on_event("shutdown")
 # async def stop_scheduler():
 #     await scheduler.shutdown()
+
+
+
+# Base directory of Backend folder
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Templates directory
+template_dir = os.path.join(BASE_DIR, "templates")
+
+# Initialize Jinja environment
+env = Environment(loader=FileSystemLoader(template_dir))
+
+
+@app.get("/generate-offer")
+def generate_offer():
+
+    # Load HTML template
+    template = env.get_template("offer_letter.html")
+
+    # Absolute path for logo
+    logo_path = os.path.join(BASE_DIR, "static", "images", "paves_logo.jpg")
+
+    # Data for template
+    data = {
+        "logo_path": logo_path,
+        "current_date": datetime.date.today(),
+        "first_name": "Ajay",
+        "last_name": "Kumar",
+        "mail": "ajay@gmail.com",
+        "country_code": "91",
+        "contact_number": "9876543210",
+        "designation": "Software Engineer",
+        "total_ctc": "12,00,000",
+        "compensation_components": [
+            {"name": "Basic Salary", "type": "Fixed", "frequency": "Monthly", "amount": "50,000"},
+            {"name": "HRA", "type": "Fixed", "frequency": "Monthly", "amount": "20,000"},
+            {"name": "Bonus", "type": "Variable", "frequency": "Yearly", "amount": "2,00,000"}
+        ]
+    }
+
+    # Render HTML with data
+    html = template.render(data)
+
+    # Convert HTML to PDF
+    pdf = HTML(string=html, base_url=BASE_DIR).write_pdf()
+
+    # Return PDF response
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": "inline; filename=offer_letter.pdf"
+        }
+    )

@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Offer Letter</title>
+    <style>
+        /* Advanced, High-Impact Futuristic/Corporate Theme */
+        :root {
+            --brand-primary: #3949ab;
+            /* Primary Blue */
+            --brand-secondary: #d81b60;
+            /* Accent Pink */
+            --bg-color: #ffffff;
+            --text-dark: #0f172a;
+            --text-gray: #475569;
+            --border-subtle: #cbd5e1;
+            --surface-color: #f8fafc;
+            --accent-gradient: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+        }
+
+        @page {
+            size: A4 portrait;
+            margin: 0;
+            /* Zero margin to allow full-bleed background designs */
+
+            @top-center {
+                content: element(header);
+            }
+
+            @bottom-center {
+                content: element(footer);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 10.5pt;
+            line-height: 1.6;
+            color: var(--text-dark);
+            -webkit-font-smoothing: antialiased;
+            background-color: var(--bg-color);
+        }
+
+        .border-bottom-left {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .border-bottom-left::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 25px; /* Vertical thickness */
+            height: 250px; /* Height of the left bar */
+            background: linear-gradient(to bottom, #d81b60, #3949ab);
+            border-top-right-radius: 20px;
+        }
+
+        .border-bottom-left::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 25px; /* Horizontal thickness */
+            width: 100%; /* Width of the bottom bar */
+            background: #3949ab;
+        }
+
+        .border-top-right {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Vertical bar on right */
+        .border-top-right::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 25px;
+            height: 250px;
+            background: linear-gradient(to bottom, #3949ab, #d81b60);
+            border-bottom-left-radius: 20px;
+        }
+
+        /* Horizontal bar on top */
+        .border-top-right::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            height: 25px;
+            width: 100%;
+            background: #3949ab;
+        }
+
+        /* Layout Container */
+        .document-container {
+            padding: 40mm 25mm 30mm 25mm;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Fixed Running Headers & Footers */
+        header {
+            position: running(header);
+            width: 100%;
+            height: 35mm;
+        }
+
+        .header-content {
+            padding: 15mm 25mm 0 25mm;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header table {
+            border-bottom: 2px solid var(--surface-color);
+            padding-bottom: 15px;
+            margin-bottom: 10px;
+        }
+
+        .logo {
+            height: 55px;
+            object-fit: contain;
+        }
+
+        .company-info {
+            text-align: right;
+            font-size: 8.5pt;
+            color: var(--text-gray);
+            line-height: 1.5;
+            border-right: 3px solid var(--brand-secondary);
+            padding-right: 15px;
+        }
+
+        .company-name {
+            font-size: 11pt;
+            font-weight: 700;
+            color: var(--brand-primary);
+            letter-spacing: 0.5px;
+        }
+
+        footer {
+            position: running(footer);
+            width: 100%;
+            height: 25mm;
+        }
+
+        .footer-content {
+            margin: 0 25mm;
+            padding-top: 5mm;
+            border-top: 2px solid var(--surface-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 8.5pt;
+            color: var(--text-gray);
+        }
+
+        .footer-badge {
+            background: var(--surface-color);
+            padding: 4px 12px;
+            border-radius: 20px;
+            color: var(--brand-primary);
+            font-weight: 600;
+        }
+
+        .page-number::after {
+            content: counter(page) " of " counter(pages);
+            font-weight: 600;
+            color: var(--brand-primary);
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 26pt;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin: 10mm 0 5mm 0;
+            letter-spacing: -0.5px;
+            line-height: 1.1;
+        }
+
+        h1 span {
+            color: var(--brand-primary);
+        }
+
+        h2 {
+            font-size: 14pt;
+            font-weight: 700;
+            color: var(--brand-primary);
+            margin: 25px 0 15px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        h2::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 18px;
+            background: var(--brand-secondary);
+            border-radius: 2px;
+            margin-right: 12px;
+        }
+
+        h3 {
+            font-size: 11.5pt;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin: 20px 0 10px 0;
+        }
+
+        p {
+            margin-bottom: 16px;
+            color: var(--text-gray);
+            text-align: justify;
+        }
+
+        .highlight-text {
+            color: var(--brand-primary);
+            font-weight: 600;
+        }
+
+        /* Candidate Details Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: var(--surface-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(14, 165, 233, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+        }
+
+        .info-item {
+            margin-bottom: 10px;
+        }
+
+        .info-label {
+            font-size: 8pt;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+            color: var(--brand-secondary);
+            margin-bottom: 2px;
+        }
+
+        .info-value {
+            font-size: 11pt;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        /* Offer Highlights Cards */
+        .cards-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 15px;
+            margin: 25px 0;
+            page-break-inside: avoid;
+        }
+
+        .value-card {
+            background: var(--surface-color);
+            border-top: 3px solid var(--brand-primary);
+            padding: 15px 20px;
+            border-radius: 0 0 8px 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s ease;
+        }
+
+        .card-label {
+            font-size: 9pt;
+            color: var(--text-gray);
+            margin-bottom: 5px;
+        }
+
+        .card-value {
+            font-size: 13pt;
+            font-weight: 800;
+            color: var(--brand-primary);
+        }
+
+        /* Advanced Data Table for CTC */
+        .ctc-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 25px 0;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border-subtle);
+        }
+
+        .ctc-table th {
+            background: var(--surface-color);
+            color: var(--brand-primary);
+            font-size: 9.5pt;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 2px solid var(--border-subtle);
+        }
+
+        .ctc-table td {
+            background: var(--bg-color);
+            padding: 14px 20px;
+            font-size: 10pt;
+            color: var(--text-gray);
+            border-bottom: 1px solid var(--surface-color);
+        }
+
+        .ctc-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .ctc-table td.amount-col,
+        .ctc-table th.amount-col {
+            text-align: right;
+        }
+
+        .ctc-table td.amount-col {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: 700;
+            color: var(--text-dark);
+            font-size: 11pt;
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            background: var(--bg-color);
+            border: 1px solid var(--brand-secondary);
+            color: var(--brand-secondary);
+            border-radius: 4px;
+            font-size: 8pt;
+            font-weight: 600;
+        }
+
+        .ctc-total-row td {
+            background: var(--brand-primary);
+            color: white;
+            font-weight: 700;
+            font-size: 12pt;
+            padding: 18px 20px;
+        }
+
+        .ctc-total-row td,
+        .ctc-total-row .amount-col {
+            color: white;
+        }
+
+        /* Signatures */
+        .signature-grid {
+            margin-top: 40px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 50px;
+            page-break-inside: avoid;
+        }
+
+        .signature-box {
+            background: var(--surface-color);
+            padding: 25px 20px 20px 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px dashed var(--border-subtle);
+            position: relative;
+        }
+
+        .sign-status {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--brand-primary);
+            color: white;
+            font-size: 7.5pt;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+/* 
+        .signature-line {
+            height: 40px;
+            border-bottom: 2px solid var(--text-dark);
+            margin-bottom: 15px;
+            width: 80%;
+            margin-left: auto;
+            margin-right: auto;
+        } */
+
+        .signatory-name {
+            font-weight: 700;
+            font-size: 11pt;
+            color: var(--brand-primary);
+        }
+
+        .signatory-title {
+            font-size: 9pt;
+            color: var(--text-gray);
+        }
+
+        /* Lists */
+        .modern-list {
+            list-style: none;
+            padding: 0;
+            margin: 15px 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-gap: 12px;
+        }
+
+        .modern-list li {
+            position: relative;
+            padding-left: 28px;
+            font-size: 9.5pt;
+            color: var(--text-gray);
+            background: var(--surface-color);
+            padding: 10px 10px 10px 35px;
+            border-radius: 6px;
+        }
+
+        .modern-list li::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 14px;
+            height: 14px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23d81b60"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>') no-repeat center center;
+            background-size: contain;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+
+        .date-badge {
+            display: inline-block;
+            background: var(--brand-primary);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 9pt;
+            font-weight: 600;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(30, 58, 138, 0.2);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Gradient L-Shape Border -->
+    <div class="border-bottom-left"></div>
+    <div class="border-top-right"></div>
+
+    <!-- Shared Header -->
+    <header>
+        <table style="width: 100%; border-collapse: collapse; padding: 15mm 25mm 0 25mm;">
+            <tr>
+                <td style="vertical-align: middle; width: 40%;">
+                    <!-- Added max-width and object-fit to ensure the logo never overflows -->
+                    <img src="{{ logo_path }}" class="logo"
+                        style="max-height: 55px; max-width: 150px; object-fit: contain;" alt="Paves Global logo">
+                </td>
+                <td style="vertical-align: middle; text-align: right; width: 60%;">
+                    <div class="company-info" style="display: inline-block; text-align: right;">
+                        <div class="company-name">Paves Global Infotech Private Limited</div>
+                        Office No.12, 8th Floor, Tower 1<br>
+                        Vasavi Sky City, Gachibowli | Hyderabad 500032
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </header>
+
+    <!-- Shared Footer -->
+    <footer>
+        <table
+            style="width: 100%; border-collapse: collapse; margin: 0 25mm; padding-top: 5mm; border-top: 1px solid var(--border-subtle); width: calc(100% - 50mm);">
+            <tr>
+                <td style="vertical-align: middle; font-size: 8.5pt; color: var(--text-gray); width: 80%;">
+                    <span class="footer-badge">CONFIDENTIAL</span>
+                    <span style="margin-left: 15px;">www.pavestechnologies.com | careers@pavestechnologies.com</span>
+                </td>
+                <td
+                    style="vertical-align: middle; text-align: right; font-size: 8.5pt; color: var(--text-gray); width: 20%;">
+                    <div class="page-number">Page </div>
+                </td>
+            </tr>
+        </table>
+    </footer>
+
+
+    <!-- ================= PAGE 1: CORE OFFER ================= -->
+    <div class="document-container">
+
+        
+      
+        <div style="margin-bottom: 35px;">
+            <p style="margin-bottom: 8px; font-weight: 600; color: var(--text-dark);">To,</p>
+            <p style="margin-bottom: 4px; font-weight: 700; font-size: 11.5pt; color: var(--brand-primary);">{{
+                first_name }} {{ last_name }}</p>
+            <p style="margin-bottom: 4px; font-size: 9.5pt; color: var(--text-gray);">Contact: +{{ country_code }} {{
+                contact_number }}</p>
+            <p style="margin-bottom: 0; font-size: 9.5pt; color: var(--text-gray);">Email: {{ mail }}</p>
+        </div>
+
+        <h1
+            style="text-align: center; font-size: 24pt; margin: 20px 0 40px 0; border-bottom: 2px solid var(--brand-primary); padding-bottom: 15px; width: fit-content; margin-left: auto; margin-right: auto;">
+            Offer of Employment
+        </h1>
+
+        <p>Dear <span class="highlight-text">{{ first_name }}</span>,</p>
+
+        <p>Following our recent evaluations and interviews, <strong>Paves Global Infotech Private Limited</strong> is
+            absolutely thrilled to offer you a position on our team. Your background, experience, and approach to
+            problem-solving stood out to us, and we are confident that you will play a key role in our company's ongoing
+            success and innovation.</p>
+
+        <h2>Role & Compensation Snapshot</h2>
+
+        <div class="cards-container">
+            <div class="value-card">
+                <div class="card-label">Official Designation</div>
+                <div class="card-value">{{ designation }}</div>
+            </div>
+            <div class="value-card">
+                <div class="card-label">Annual Cost to Company</div>
+                <div class="card-value">₹ {{ total_ctc }}</div>
+            </div>
+            <div class="value-card">
+                <div class="card-label">Employment Model</div>
+                <div class="card-value">{{ employee_type }}</div>
+            </div>
+            <div class="value-card">
+                <div class="card-label">Probation Period</div>
+                <div class="card-value">90 Days</div>
+            </div>
+        </div>
+
+        <p>A comprehensive breakdown of your compensation structure is attached in <strong>Annexure A</strong>. The
+            standard policies, procedures, and terms governing your employment are detailed in <strong>Annexure
+                B</strong>.</p>
+
+        <p>To accept this offer, please sign your name in the designated area below and return the complete document
+            prior to your anticipated date of joining. A definitive Employment Agreement will be executed on the day you
+            officially commence work.</p>
+
+        <p>We are incredibly excited about the prospect of you joining us. Welcome to the future of technology at Paves
+            Global!</p>
+
+    </div>
+
+    <!-- ================= PAGE 2: ANNEXURE A ================= -->
+    <div class="page-break"></div>
+
+    <div class="document-container">
+
+        <h2>Annexure A: Compensation Structure</h2>
+
+        <p style="margin-top: -10px; margin-bottom: 25px; font-size: 10pt;">
+            Below is the detailed itemization of your annual compensation package for the role of <strong>{{ designation
+                }}</strong>.
+        </p>
+
+        <table class="ctc-table">
+            <thead>
+                <tr>
+                    <th width="35%">Salary Component</th>
+                    <th width="20%">Type</th>
+                    <th width="20%">Frequency</th>
+                    <th width="25%" class="amount-col">Amount (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for comp in compensation_components %}
+                <tr>
+                    <td><strong>{{ comp.name }}</strong></td>
+                    <td><span class="type-badge">{{ comp.type }}</span></td>
+                    <td>{{ comp.frequency }}</td>
+                    <td class="amount-col">{{ comp.amount }}</td>
+                </tr>
+                {% endfor %}
+                <tr class="ctc-total-row">
+                    <td colspan="3" style="text-align: right; text-transform: uppercase; letter-spacing: 1px;">Gross
+                        Annual CTC</td>
+                    <td class="amount-col">₹ {{ total_ctc }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div
+            style="background: var(--surface-color); border-left: 4px solid var(--brand-secondary); padding: 15px 20px; border-radius: 0 8px 8px 0; font-size: 9pt; color: var(--text-gray);">
+            <strong style="color: var(--brand-primary);">Tax & Statutory Deductions Disclaimer:</strong><br>
+            Please note that the figures listed above constitute your gross compensation. Actual monthly net "take-home"
+            pay will be calculated after adjusting for applicable statutory deductions, including but not limited to
+            Provident Fund (PF), Professional Tax (PT), and Tax Deducted at Source (TDS) based on prevailing government
+            income tax slabs and your declared tax regime. The company reserves the right to restructure allocations as
+            mandated by changing legal compliances or corporate policies.
+        </div>
+
+    </div>
+
+    <!-- ================= PAGE 3: ANNEXURE B ================= -->
+    <div class="page-break"></div>
+
+    <div class="document-container">
+
+        <h2>Annexure B: Terms of Employment</h2>
+
+        <h3>1. Background Assessment</h3>
+        <p>This offer letter remains provisional and is granted under the assumption that all documentation,
+            credentials, and references supplied during the interview phase are entirely authentic. Paves Global
+            Infotech will conduct a thorough background verification. Any discovery of fraudulent claims or
+            misrepresentation of prior employment may lead to immediate revocation of this offer or instant termination
+            post-joining.</p>
+
+        <h3>2. Probation, Evaluation, & Confirmation</h3>
+        <p>Your employment will commence with a standard probationary period spanning <strong>90 days</strong>.
+            Throughout this timeframe, your operational performance, integration into the team, and behavioral conduct
+            will be monitored. Following successful completion of the probationary phase, your employment will be
+            formally confirmed via official written communication. Management reserves exclusive rights to increase the
+            duration of this probation if performance benchmarks are not met.</p>
+
+        <h3>3. Mobility & Deployment</h3>
+        <p>While you will initially be stationed at our corporate headquarters in Hyderabad, the company operates
+            dynamically. As such, we retain complete discretion to transfer, re-allocate, or depute your services to any
+            alternate domestic or international branch, subsidiary, partner organization, or client geographical
+            location aligned with evolving business objectives.</p>
+
+        <h3>4. Intellectual Property & Non-Disclosure</h3>
+        <p>You agree to adhere unwaveringly to our corporate confidentiality protocols. During your tenure, you will
+            encounter highly sensitive client data, internal infrastructure maps, and proprietary software. It is
+            strictly prohibited to expose internal data to third parties. Furthermore, any software code, architectural
+            design, framework, or intellectual property produced by you during your employment immediately vests with
+            and becomes the exclusive property of the company.</p>
+
+        <h3>5. Operational Hours</h3>
+        <p>We function on a standard corporate schedule. However, your role demands a commitment to deliverables. You
+            are expected to demonstrate flexibility during critical release cycles, high-priority client deliverables,
+            or global synchronization events that may demand extended or variable operational hours.</p>
+
+        <h2 style="margin-top: 40px; border-top: 1px solid var(--border-subtle); padding-top: 25px;">Mandatory
+            Onboarding Document Submission</h2>
+        <p>Kindly carry the original copies for visual verification, along with one digital/photocopy set of the
+            following documents on your date of joining:</p>
+
+        <ul class="modern-list">
+            <li>Comprehensive Updated Resume</li>
+            <li>Last 3 Months' Pay slips</li>
+            <li>Educational Certificates (10th/12th/Degree)</li>
+            <li>Last 6 Months' Bank Statement</li>
+            <li>Relieving Letter from Previous Employer</li>
+            <li>Four Passport Photographs</li>
+            <li>Permanent Account Number (PAN) Card</li>
+            <li>Passport (Front & Back Copy)</li>
+            <li>Aadhar Card (Crucial for EPF linking)</li>
+        </ul>
+
+    </div>
+
+    <!-- ================= PAGE 4: SIGNATURE ================= -->
+    <div class="page-break"></div>
+
+    <div class="document-container">
+
+        <h2 style="margin-bottom: 30px;">Signatures & Acceptance</h2>
+
+        <p>By signing below, I acknowledge that I have read, understood, and accept the offer of employment along with the compensation structure detailed in Annexure A and the terms and conditions outlined in Annexure B.</p>
+
+        <div class="signature-grid" style="margin-top: 60px;">
+            <div class="signature-box">
+                <div class="sign-status">Employer Signature</div>
+                <!-- <div class="signature-line"></div> -->
+                <!-- <div class="signatory-name">Authorized Signatory</div>
+                <div style="height: 80px;"></div>
+                <div class="signatory-title">Human Resources Division<br>Paves Global Infotech</div> -->
+                <div style="height: 80px;"></div>
+            </div>
+
+            <div class="signature-box" style="border-style: solid; border-color: var(--brand-secondary);">
+                <div class="sign-status" style="background: var(--brand-secondary);">Candidate Acceptance</div>
+                <!-- <div class="signature-line"></div> -->
+                {% if status == "accepted" %}
+                <div class="signatory-name">{{ first_name }} {{ last_name }}</div>
+                <div class="signature-title">Date:{{accepted_date}}</div>
+                {% else %}
+                
+                <div class="signatory-title">Date: _________________</div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+
+</body>
+
+</html>
