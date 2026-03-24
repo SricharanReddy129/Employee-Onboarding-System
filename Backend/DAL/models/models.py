@@ -86,18 +86,32 @@ class Departments(Base):
 
 
 class Designations(Base):
-    __tablename__ = 'designations'
+    __tablename__ = "designations"
+
     __table_args__ = (
-        Index('designation_uuid', 'designation_uuid', unique=True),
+        Index("idx_designation_uuid", "designation_uuid", unique=True),
     )
 
     designation_id: Mapped[int] = mapped_column(Integer, primary_key=True)
     designation_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
     designation_name: Mapped[str] = mapped_column(String(100), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String(255))
-    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
-    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
 
+    department_uuid: Mapped[str] = mapped_column(
+        CHAR(36),
+        ForeignKey("departments.department_uuid"),
+        nullable=False
+    )
+
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime,
+        server_default=text("CURRENT_TIMESTAMP")
+    )
+
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime,
+        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
+    )
     employee_details: Mapped[list['EmployeeDetails']] = relationship('EmployeeDetails', back_populates='designations')
 
 
