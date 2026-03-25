@@ -1,6 +1,4 @@
 # from apscheduler.schedulers.background import BackgroundScheduler
-from datetime import datetime
-
 from fastapi import FastAPI, Response
 from fastapi.openapi.utils import get_openapi
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -23,6 +21,8 @@ from Backend.API_Layer.routes import designation_routes
 from Backend.API_Layer.routes import employee_pf_routes
 from Backend.API_Layer.routes import employee_bank_routes
 from Backend.API_Layer.routes import dashboard_routes
+from datetime import date
+from weasyprint import HTML
 
 
 
@@ -168,7 +168,7 @@ def generate_offer():
     # Data for template
     data = {
         "logo_path": logo_path,
-        "current_date": datetime.date.today(),
+        "current_date": date.today(),
         "first_name": "Ajay",
         "last_name": "Kumar",
         "mail": "ajay@gmail.com",
