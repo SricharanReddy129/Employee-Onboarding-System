@@ -81,6 +81,18 @@ class AuditUtils:
                 "employee-upload/relations": {
                 "table": "relation",
                 "id_field": "relation_uuid"
+            },
+            "education/degree-master": {
+                "table": "degree_master",
+                "id_field": "degree_uuid"
+            },
+            "bank": {
+                "table": "employee_bank_details",
+                "id_field": "bank_uuid"
+            },
+            "pf": {
+                "table": "employee_pf_details",
+                "id_field": "pf_uuid"
             }
         }
 

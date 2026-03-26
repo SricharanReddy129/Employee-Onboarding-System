@@ -119,6 +119,7 @@ class OfferLetterDAO:
             select(
                 OfferLetterDetails.user_uuid,
                 OfferLetterDetails.first_name,
+                OfferLetterDetails.middle_name,   
                 OfferLetterDetails.last_name,
                 OfferLetterDetails.mail,
                 OfferLetterDetails.country_code,
@@ -192,6 +193,7 @@ class OfferLetterDAO:
             
         "user_uuid": offer.user_uuid,
         "first_name": offer.first_name,
+        "middle_name":offer.middle_name,
         "last_name": offer.last_name,
         "mail": offer.mail,
         "country_code": offer.country_code,
@@ -202,7 +204,8 @@ class OfferLetterDAO:
         "currency": offer.currency,
         "created_by": offer.created_by,
         "status": offer.status,
-        "cc_emails": offer.cc_emails,
+        
+        "cc_mails": offer.cc_emails.split(",") if offer.cc_emails else [],
         "total_ctc": offer.total_ctc,
         "compensation_components": compensation_list
     }
