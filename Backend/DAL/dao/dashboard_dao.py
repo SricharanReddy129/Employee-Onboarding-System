@@ -72,7 +72,7 @@ class DashboardDAO:
         # 5. METRICS
         # =========================
         acceptance_rate = (accepted / offered * 100) if offered else 0
-        completion_rate = (completed / verified * 100) if verified else 0
+        completion_rate = (completed / total * 100) if total else 0
         drop_off_rate = (rejected / total * 100) if total else 0
 
         # =========================
@@ -199,8 +199,9 @@ class DashboardDAO:
                 "created": created,
                 "offered": offered,
                 "accepted": accepted,
-                "verified": verified,
-                "completed": completed
+                "submitted": submitted,
+                "verified": verified
+                
             },
             "pending_actions": {
                 "pending_verification": pending_verification,

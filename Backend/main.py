@@ -48,7 +48,7 @@ app.add_middleware(
                     "http://localhost:3000",
                     "https://employeeonbordingforms.netlify.app",
                     "https://nonprovidentially-xiphisternal-junior.ngrok-free.dev",
-                    "https://api.54.206.95.128.sslip.io",
+                    "https://api.15.134.36.38.sslip.io",
                     "http://13.202.204.204"],
     
     allow_credentials=True,
