@@ -1076,7 +1076,7 @@ class OfferLetterService:
             email = record.get("mail")
             first_name = record.get("first_name")
             last_name = record.get("last_name")
-            cc_raw = record.get("cc_emails")
+            cc_raw = record.get("cc_mails")
             
 
             
@@ -1090,7 +1090,7 @@ class OfferLetterService:
             # 3️⃣ Extract managers from cc_mails
             cc_emails = []
             if cc_raw:
-                cc_emails = [e.strip() for e in cc_raw.split(",") if e.strip()]
+                cc_emails = cc_raw
             else:
                 print("⚠️ No cc_mails found in DB")
 
