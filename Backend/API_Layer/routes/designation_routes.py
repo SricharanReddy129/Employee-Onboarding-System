@@ -43,6 +43,20 @@ async def get_designations_by_department(
     return await DesignationsService.get_designations_by_department(
         db, department_uuid
     )
+@router.get("/{designation_uuid}",dependencies=[Depends(require_roles("HR", "ADMIN"))])
+async def get_designation_name(
+    designation_uuid: str,
+    db: AsyncSession = Depends(get_db)
+):
+    designation = await DesignationsService.get_designation_by_uuid(
+        db,
+        designation_uuid
+    )
+
+    return {
+        "designation_uuid": designation.designation_uuid,
+        "designation_name": designation.designation_name
+    }
 @router.put("/{designation_uuid}", response_model=DesignationResponse, dependencies=[Depends(require_roles("HR", "ADMIN"))])
 async def update_designation(designation_uuid: str, data: DesignationUpdate, db: AsyncSession = Depends(get_db)):
     designation = await DesignationsService.update_designation(

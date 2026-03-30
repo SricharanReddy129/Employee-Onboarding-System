@@ -39,15 +39,32 @@ class EducationDocService:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
         
+    # async def get_education_document_by_uuid(self, uuid):
+    #     try:
+    #         result = await self.dao.get_education_document_by_uuid(uuid)
+    #         return result
+    #     except HTTPException as he:
+    #         raise he
+    #     except Exception as e:
+    #         raise HTTPException(status_code=500, detail=str(e))
     async def get_education_document_by_uuid(self, uuid):
         try:
             result = await self.dao.get_education_document_by_uuid(uuid)
-            return result
+
+            if not result:
+                raise HTTPException(status_code=404, detail="Education document not found")
+
+            return {
+                "education_document_uuid": result.education_document_uuid,
+                "document_name": result.document_name,
+                "description": result.description
+            }
+
         except HTTPException as he:
             raise he
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
-        
+           raise HTTPException(status_code=500, detail=str(e))
+
     async def update_education_document(self, uuid, request_data):
         try:
             existing = await self.dao.get_education_document_by_uuid(uuid)
