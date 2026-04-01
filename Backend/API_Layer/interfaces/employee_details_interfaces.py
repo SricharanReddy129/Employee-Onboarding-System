@@ -38,9 +38,9 @@ class PersonalDetails(BaseModel):
     blood_group: str
     nationality_country_uuid: str
     residence_country_uuid: str
-    emergency_contact_name: str
-    emergency_contact_phone: str
-    emergency_contact_relation_uuid: str
+    emergency_contact_name: Optional[str] = None
+    emergency_contact_phone: Optional[str] = None
+    emergency_contact_relation_uuid: Optional[str] = None
         
 class UpdatePersonalRequest(BaseModel):
     date_of_birth: str

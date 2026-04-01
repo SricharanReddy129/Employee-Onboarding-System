@@ -48,19 +48,19 @@ class BulkOfferCreateResponse(BaseModel):
 
 class OfferLetterDetailsResponse(BaseModel):
     user_uuid: str
-    first_name: str
+    first_name: Optional[str] = None
     middle_name :Optional[str] = None
-    last_name: str
-    mail: str
-    country_code: str
-    contact_number: str
-    designation: str
-    employee_type: str
+    last_name: Optional[str] = None
+    mail: Optional[str] = None
+    country_code: Optional[str] = None
+    contact_number: Optional[str] = None
+    designation: Optional[str] = None
+    employee_type: Optional[str] = None
     # package: str
     # currency : str
     total_ctc: float | None = None
-    created_by: int
-    status : str
+    created_by: Optional[int] = None
+    status : Optional[str] = None
 
     cc_mails: Optional[List[EmailStr]] = None
     compensation_components: List[CompensationComponentResponse]= []

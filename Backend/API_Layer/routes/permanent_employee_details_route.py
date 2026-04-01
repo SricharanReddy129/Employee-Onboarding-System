@@ -1,10 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Backend.API_Layer.interfaces.permenent_employee_details_interfaces import CreatePermanentEmployeeRequest, CreatePermanentEmployeeResponse, UpdatePermanentEmployeeRequest
 from Backend.Business_Layer.services.permanent_employee_details_service import PermanentEmployeeDetailsService
 
 from ...DAL.utils.dependencies import get_db
+from Backend.API_Layer.utils.role_based import require_roles
+from Backend.DAL.utils.database import get_read_db
 
 router = APIRouter(
     prefix="/core-employee-details",
@@ -33,17 +35,17 @@ async def create_employee(
     
 @router.get("/{employee_uuid}")
 async def get_employee(
-            employee_uuid: str,
-            db: AsyncSession = Depends(get_db)
-            ):
-            try:
-                return await service.get_employee_by_uuid(db, employee_uuid)
+    employee_uuid: str,
+    db: AsyncSession = Depends(get_db)
+    ):
+    try:
+        return await service.get_employee_by_uuid(db, employee_uuid)
 
-            except ValueError as e:
-                raise HTTPException(
-                    status_code=404,
-                    detail=str(e)
-                )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=404,
+            detail=str(e)
+        )
 @router.get("/")
 async def get_all_employees(
     db: AsyncSession = Depends(get_db)
@@ -78,3 +80,34 @@ async def delete_employee(
             status_code=404,
             detail=str(e)
         )
+
+@router.post("/bulk-direct-upload")
+async def bulk_direct_upload(
+    file: UploadFile = File(...),
+    uploaded_by: int = 1,
+    db: AsyncSession = Depends(get_db)
+):
+    try:
+        result = await service.bulk_direct_upload(
+            db,
+            file,
+            uploaded_by
+        )
+        return result
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/bulk-template/")
+async def download_bulk_template(db: AsyncSession = Depends(get_read_db)):
+    print("entering routes")
+    try:
+        print("Downloading bulk template")
+        return await service.download_bulk_template(db)
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    

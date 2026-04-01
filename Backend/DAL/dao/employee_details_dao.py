@@ -12,13 +12,21 @@ class EmployeeDetailsDAO:
     async def get_personal_details_by_user_uuid(self, user_uuid):
         result = await self.db.execute(select(PersonalDetails).where(PersonalDetails.user_uuid == user_uuid))
         return result.scalar_one_or_none()
-    async def get_personal_details_by_uuid(self, uuid: str):
-        stmt = select(
-            exists().where(PersonalDetails.personal_uuid == uuid)
+
+    # async def get_personal_details_by_uuid(self, uuid: str):
+    #     stmt = select(
+    #         exists().where(PersonalDetails.personal_uuid == uuid)
             
+    #     )
+    #     result = await self.db.execute(stmt)
+    #     return result.scalar()
+    async def get_personal_details_by_uuid(self, uuid: str):
+        result = await self.db.execute(
+            select(PersonalDetails).where(PersonalDetails.personal_uuid == uuid)
         )
-        result = await self.db.execute(stmt)
-        return result.scalar()
+        return result.scalar_one_or_none()
+
+
     async def get_all_personal_details(self):
         result = await self.db.execute(select(PersonalDetails))
         return result.scalars().all()
@@ -121,3 +129,5 @@ class EmployeeIdentityDAO:
         await self.db.delete(employee_identity)
         await self.db.commit()
         return employee_identity
+    
+    

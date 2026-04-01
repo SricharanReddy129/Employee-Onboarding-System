@@ -228,6 +228,7 @@ async def bulk_send_offer_letters(
     request: Request,
     db: AsyncSession = Depends(get_db)
 ):
+    
     print("Bulk send offer letters endpoint called")
     offer_service = OfferLetterService(db)
     print('offer_service created in route')
