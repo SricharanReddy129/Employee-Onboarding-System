@@ -191,17 +191,12 @@ class OfferLetterDetails(Base):
     contact_number: Mapped[str] = mapped_column(String(15), nullable=False)
     designation: Mapped[str] = mapped_column(String(50), nullable=False)
     employee_type: Mapped[str] = mapped_column(Enum('Full-Time', 'Part-Time', 'Intern', 'Contractor', 'Freelance'), nullable=False)
-    package: Mapped[str] = mapped_column(String(20), nullable=False)
-    currency: Mapped[str] = mapped_column(String(10), nullable=False)
     job_id: Mapped[str] = mapped_column(String(255), nullable=False)
     created_by: Mapped[int] = mapped_column(Integer, nullable=False)
-
-    status: Mapped[Optional[str]] = mapped_column(ENUM('Created', 'Offered', 'Accepted', 'Rejected', 'Submitted', 'Verified', 'Completed','InComplete'), server_default=text("'Created'"))
-
     middle_name: Mapped[Optional[str]] = mapped_column(String(100))
     package: Mapped[Optional[str]] = mapped_column(String(255))
     currency: Mapped[Optional[str]] = mapped_column(String(20))
-    status: Mapped[Optional[str]] = mapped_column(ENUM('Created', 'Offered', 'Accepted', 'Rejected', 'Submitted', 'Verified', 'Completed'), server_default=text("'Created'"))
+    status: Mapped[Optional[str]] = mapped_column(ENUM('Created', 'Offered', 'Accepted', 'Rejected', 'Submitted', 'Verified', 'Joining','Completed'), server_default=text("'Created'"))
     created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP'))
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
     file_path: Mapped[Optional[str]] = mapped_column(String(255))

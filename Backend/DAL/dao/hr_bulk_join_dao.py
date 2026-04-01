@@ -11,7 +11,7 @@ class HrBulkJoinDAO:
     async def get_verified_users_by_emails(self, email_list):
         query = select(OfferLetterDetails).where(
             OfferLetterDetails.mail.in_(email_list),
-            OfferLetterDetails.status == "VERIFIED"
+            OfferLetterDetails.status == "Verified"
         )
         result = await self.db.execute(query)
         return result.scalars().all()
@@ -20,7 +20,7 @@ class HrBulkJoinDAO:
     async def count_verified_by_emails(self, email_list):
         query = select(OfferLetterDetails).where(
             OfferLetterDetails.mail.in_(email_list),
-            OfferLetterDetails.status == "VERIFIED"
+            OfferLetterDetails.status == "Verified"
         )
         result = await self.db.execute(query)
         return len(result.scalars().all())
@@ -31,9 +31,9 @@ class HrBulkJoinDAO:
             update(OfferLetterDetails)
             .where(
                 OfferLetterDetails.mail.in_(email_list),
-                OfferLetterDetails.status == "VERIFIED"
             )
-            .values(joining_date=joining_date)
+            .values(joining_date=joining_date,
+                    status="Joining")
         )
 
         result = await self.db.execute(stmt)
