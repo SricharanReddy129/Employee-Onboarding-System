@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Backend.DAL.models.models import EmployeeDetails
@@ -71,11 +71,211 @@ class PermanentEmployeeDetailsDAO:
         return result.scalars().all()
     
     async def delete_employee(self, db: AsyncSession, employee_uuid: str):
-
         employee = await self.get_employee_by_uuid(db, employee_uuid)
-
         if not employee:
             raise ValueError("Employee not found")
 
         await db.delete(employee)
         await db.commit()
+
+    async def insert_offer_letter(
+        self,
+        db: AsyncSession,
+        row,
+        user_uuid,
+        uploaded_by
+    ):
+
+        query = text("""
+            INSERT INTO offer_letter_details (
+                user_uuid,
+                first_name,
+                middle_name,
+                last_name,
+                mail,
+                country_code,
+                contact_number,
+                designation,
+                cc_emails,
+                employee_type,
+                joining_date,
+                hire_type,
+                status,
+                job_id,
+                total_ctc,
+                created_by,
+                created_at
+            )
+            VALUES (
+                :user_uuid,
+                :first_name,
+                :middle_name,
+                :last_name,
+                :mail,
+                :country_code,
+                :contact_number,
+                :designation,
+                :cc_emails,
+                :employee_type,
+                :joining_date,
+                'Direct',
+                'Completed',
+                :job_id,
+                :total_ctc,
+                :created_by,
+                NOW()
+            )
+        """)
+
+        values = {
+            "user_uuid": user_uuid,
+            "first_name": row.get("first_name"),
+            "middle_name": row.get("middle_name"),
+            "last_name": row.get("last_name"),
+            "mail": row.get("mail"),
+            "country_code": row.get("country_code"),
+            "contact_number": row.get("contact_number"),
+            "designation": row.get("designation"),
+            "cc_emails": row.get("cc_emails"),
+            "employee_type": row.get("employee_type"),
+            "joining_date": row.get("joining_date"),
+            "job_id": row.get("job_id"),
+            "total_ctc": row.get("total_ctc"),
+            "created_by": uploaded_by
+        }
+
+        await db.execute(query, values)
+
+
+    async def insert_employee(
+        self,
+        db: AsyncSession,
+        row,
+        user_uuid,
+        employee_uuid,
+        department_uuid,
+        designation_uuid
+    ):
+
+        query = text("""
+            INSERT INTO employee_details (
+                employee_uuid,
+                user_uuid,
+                employee_id,
+                first_name,
+                middle_name,
+                last_name,
+                date_of_birth,
+                department_uuid,
+                designation_uuid,
+                reporting_manager_uuid,
+                blood_group,
+                total_experience,
+                work_email,
+                contact_number,
+                employment_type,
+                joining_date,
+                location,
+                work_mode,
+                gender,
+                marital_status,
+                created_at
+            )
+            VALUES (
+                :employee_uuid,
+                :user_uuid,
+                :employee_id,
+                :first_name,
+                :middle_name,
+                :last_name,
+                :date_of_birth,
+                :department_uuid,
+                :designation_uuid,
+                :reporting_manager_uuid,
+                :blood_group,
+                :total_experience,
+                :work_email,
+                :contact_number,
+                :employment_type,
+                :joining_date,
+                :location,
+                :work_mode,
+                :gender,
+                :marital_status,
+                NOW()
+            )
+        """)
+
+        values = {
+            "employee_uuid": employee_uuid,
+            "user_uuid": user_uuid,
+            "employee_id": row.get("employee_id"),
+            "first_name": row.get("first_name"),
+            "middle_name": row.get("middle_name"),
+            "last_name": row.get("last_name"),
+            "date_of_birth": row.get("date_of_birth"),
+            "department_uuid": department_uuid,
+            "designation_uuid": designation_uuid,
+            "reporting_manager_uuid": row.get("reporting_manager_uuid"),
+            "blood_group": row.get("blood_group"),
+            "total_experience": row.get("total_experience"),
+            "work_email": row.get("work_email"),
+            "contact_number": row.get("contact_number"),
+            "employment_type": row.get("employee_type"),
+            "joining_date": row.get("joining_date"),
+            "location": row.get("location"),
+            "work_mode": row.get("work_mode"),
+            "gender": row.get("gender"),
+            "marital_status": row.get("marital_status")
+        }
+
+        await db.execute(query, values)
+        await db.commit()
+
+    async def get_department_uuid(self, db, department_name):
+
+        query = text("""
+            SELECT department_uuid
+            FROM departments
+            WHERE department_name = :name
+        """)
+
+        result = await db.execute(query, {"name": department_name})
+
+        return result.scalar()
+
+
+    async def get_designation_uuid(self, db, designation_name):
+
+        query = text("""
+            SELECT designation_uuid
+            FROM designations
+            WHERE designation_name = :name
+        """)
+
+        result = await db.execute(query, {"name": designation_name})
+
+        return result.scalar()
+
+    async def get_designations(self, db):
+
+        query = text("""
+            SELECT designation_uuid,
+                designation_name,
+                department_uuid
+            FROM designations
+        """)
+
+        result = await db.execute(query)
+
+        return result.fetchall()
+    async def get_departments(self, db):
+
+        query = text("""
+            SELECT department_uuid, department_name
+            FROM departments
+        """)
+
+        result = await db.execute(query)
+
+        return result.fetchall()

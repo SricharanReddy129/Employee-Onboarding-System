@@ -9,6 +9,7 @@ from ..utils.uuid_generator import generate_uuid7
 from ..utils.postal_code_validator import validate_postal_code
 from ...DAL.utils.storage_utils import S3StorageService
 import time
+
 from time import perf_counter
 class EmployeeDetailsService:
     def __init__(self, db: AsyncSession):
@@ -179,3 +180,6 @@ class EmployeeIdentityService:
             raise he
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
+    
+
+    

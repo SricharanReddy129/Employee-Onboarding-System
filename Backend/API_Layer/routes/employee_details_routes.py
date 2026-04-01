@@ -133,5 +133,5 @@ async def delete_employee_identity(document_uuid: str, db: AsyncSession = Depend
         raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
-    
+
+

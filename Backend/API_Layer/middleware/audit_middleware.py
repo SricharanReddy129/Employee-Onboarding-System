@@ -20,7 +20,7 @@ class AuditMiddleware(BaseHTTPMiddleware):
         # Endpoints that should not be audited
         self.open_endpoints = [
             "/docs", "/openapi.json",
-            "/redoc","/login", "/health", "/masters/country, /employee-details", "/employee-upload, "
+            "/redoc","/login", "/health", "/masters/country",   "/employee-details", "/employee-upload"
             
         ]
         self.entity_mappings = AuditUtils().entity_mappings
@@ -59,6 +59,8 @@ class AuditMiddleware(BaseHTTPMiddleware):
                 return await call_next(request)
         
         if path.startswith("/hr"):
+                return await call_next(request)
+        if path.startswith("/bulk-template"):
                 return await call_next(request)
         
         # Skip audit for certain methods and endpoints

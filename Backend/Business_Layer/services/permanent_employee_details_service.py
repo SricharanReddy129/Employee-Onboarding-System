@@ -1,23 +1,27 @@
 import datetime
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from Backend.Business_Layer.utils.excel_parcer import parse_excel
+from Backend.Business_Layer.utils.uuid_generator import generate_uuid7
 from Backend.API_Layer.interfaces.permenent_employee_details_interfaces import (
     CreatePermanentEmployeeRequest,
     CreatePermanentEmployeeResponse,
     UpdatePermanentEmployeeRequest
 )
-
+from io import BytesIO
+from fastapi.responses import StreamingResponse
+from openpyxl import Workbook
+from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl.workbook.defined_name import DefinedName
 from Backend.DAL.dao.permanent_employee_details_dao import PermanentEmployeeDetailsDAO
 from Backend.DAL.models.models import EmployeeDetails
+from openpyxl.utils import get_column_letter
 
 
 class PermanentEmployeeDetailsService:
 
     def __init__(self):
         self.dao = PermanentEmployeeDetailsDAO()
-
-   
 
     async def generate_employee_id(self, db: AsyncSession):
 
@@ -310,7 +314,6 @@ class PermanentEmployeeDetailsService:
         }
     
     async def delete_employee(self, db: AsyncSession, employee_uuid: str):
-
         employee = await self.dao.get_employee_by_uuid(db, employee_uuid)
 
         if not employee:
@@ -319,3 +322,185 @@ class PermanentEmployeeDetailsService:
         await self.dao.delete_employee(db, employee_uuid)
 
         return {"message": "Employee deleted successfully"}
+
+    async def bulk_direct_upload(self, db, file, uploaded_by):
+
+        data = parse_excel(file)
+
+        success_count = 0
+        failed_records = []
+
+        for index, row in enumerate(data):
+
+            try:
+                user_uuid = str(generate_uuid7())
+                employee_uuid = str(generate_uuid7())
+
+                # Get UUIDs
+                department_uuid = await self.dao.get_department_uuid(
+                    db,
+                    row.get("department")
+                )
+
+                designation_uuid = await self.dao.get_designation_uuid(
+                    db,
+                    row.get("designation")
+                )
+
+                # Insert Offer Letter
+                await self.dao.insert_offer_letter(
+                    db,
+                    row,
+                    user_uuid,
+                    uploaded_by
+                )
+
+                # Insert Employee
+                await self.dao.insert_employee(
+                    db,
+                    row,
+                    user_uuid,
+                    employee_uuid,
+                    department_uuid,
+                    designation_uuid
+                )
+
+                success_count += 1
+
+            except Exception as e:
+
+                failed_records.append({
+                    "row": index + 1,
+                    "reason": str(e)
+                })
+
+        return {
+            "message": "Bulk upload completed",
+            "success_count": success_count,
+            "failed_count": len(failed_records),
+            "failed_records": failed_records
+        }
+    async def download_bulk_template(self, db):
+
+        departments = await self.dao.get_departments(db)
+        designations = await self.dao.get_designations(db)
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Employee Upload"
+
+        headers = [
+            "first_name",
+            "middle_name",
+            "last_name",
+            "mail",
+            "country_code",
+            "contact_number",
+            "employee_type",
+            "package",
+            "currency",
+            "joining_date",
+            "cc_emails",
+            "total_ctc",
+            "job_id",
+            "employee_id",
+            "date_of_birth",
+            "work_email",
+            "department",
+            "designation",
+            "reporting_manager_uuid",
+            "employment_type",
+            "location",
+            "work_mode",
+            "employment_status",
+            "blood_group",
+            "gender",
+            "marital_status",
+            "total_experience"
+        ]
+
+        ws.append(headers)
+
+        # Master Sheet
+        master = wb.create_sheet("Master")
+        master["A1"] = "Departments"
+
+        # Fill Departments
+        for i, dept in enumerate(departments, start=2):
+            master[f"A{i}"] = dept[1]
+
+        # Group Designations
+        dept_map = {}
+
+        for des in designations:
+            dept_uuid = des[2]
+            dept_map.setdefault(dept_uuid, []).append(des[1])
+
+        col = 2
+
+        for dept in departments:
+
+            dept_name = dept[1]
+            safe_name = dept_name.replace(" ", "_")
+
+            master.cell(row=1, column=col, value=safe_name)
+
+            designations_list = dept_map.get(dept[0], [])
+
+            for i, des in enumerate(designations_list, start=2):
+                master.cell(row=i, column=col, value=des)
+
+            # Named Range
+            if designations_list:
+
+                start_row = 2
+                end_row = len(designations_list) + 1
+
+                column_letter = get_column_letter(col)
+
+                defined_name = DefinedName(
+                    safe_name,
+                    attr_text=f"Master!${column_letter}${start_row}:${column_letter}${end_row}"
+                )
+
+                wb.defined_names.add(defined_name)
+
+            col += 1
+
+        # Department Dropdown
+        dept_dropdown = DataValidation(
+            type="list",
+            formula1="=Master!$A$2:$A$100",
+            allow_blank=True
+        )
+
+        ws.add_data_validation(dept_dropdown)
+
+        # Designation Dropdown
+        des_dropdown = DataValidation(
+            type="list",
+            formula1='=INDIRECT(SUBSTITUTE($Q2," ","_"))',
+            allow_blank=True
+        )
+
+        ws.add_data_validation(des_dropdown)
+
+        # Apply dropdown for multiple rows
+        for row in range(2, 200):
+            dept_dropdown.add(f"Q{row}")
+            des_dropdown.add(f"R{row}")
+
+        # Hide Master Sheet (Optional)
+        # master.sheet_state = "hidden"
+
+        stream = BytesIO()
+        wb.save(stream)
+        stream.seek(0)
+
+        return StreamingResponse(
+            stream,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Disposition": "attachment; filename=employee_template.xlsx"
+            }
+        )

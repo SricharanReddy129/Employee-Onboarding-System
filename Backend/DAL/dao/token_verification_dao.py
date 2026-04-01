@@ -14,7 +14,6 @@ class TokenVerificationDAO:
         stmt = (
             select(OnboardingLinks)
             .where(OnboardingLinks.token_hash == token_hash)
-            .where(OnboardingLinks.expires_at > datetime.utcnow())
         )
         result = await self.db.execute(stmt)
         return result.scalar_one_or_none()

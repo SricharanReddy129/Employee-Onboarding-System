@@ -121,3 +121,5 @@ class EmployeeIdentityDAO:
         await self.db.delete(employee_identity)
         await self.db.commit()
         return employee_identity
+    
+    
