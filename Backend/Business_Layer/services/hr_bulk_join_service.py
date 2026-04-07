@@ -66,8 +66,7 @@ class HrBulkJoinService:
         # ✅ Update only required fields
         await self.dao.update_joining_date_for_user(
             payload.user_uuid,
-            payload.new_joining_date,
-            payload.reporting_time
+            payload
         )
 
         # ✅ Keep existing values from DB
@@ -86,7 +85,7 @@ class HrBulkJoinService:
         department=payload.department,
         reporting_manager=payload.reporting_manager,
 
-        custom_message=payload.joining_comments
+        custom_message=payload.comments
         )
 
         return {
