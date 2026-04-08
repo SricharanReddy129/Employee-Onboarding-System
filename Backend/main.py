@@ -119,6 +119,7 @@ app.include_router(analytics_routes.router, prefix="/api/analytics", tags=["Anal
 app.include_router(dashboard_routes.router)
 app.include_router(employee_exit_routes.router)
 app.include_router(exit_approval_routes.router)
+app.include_router(weekly_dashboard_routes.router, prefix="/weekly-dashboard", tags=["Dashboard"])
 
 
 

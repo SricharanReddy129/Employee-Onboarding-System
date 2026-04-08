@@ -39,12 +39,9 @@ class HrBulkJoinDAO:
             .where(OfferLetterDetails.mail.in_(email_list))
             .values(
                 joining_date=joining_date,
-                status="Joining",
-                reporting_time=payload.reporting_time,
-                location=payload.location,
-                department=payload.department,
                 reporting_manager=payload.reporting_manager,
-                joining_comments=getattr(payload, "joining_comments", None)
+                joining_comments=getattr(payload, "joining_comments", None),
+                status="Joining"
             )
         )
 
@@ -64,10 +61,7 @@ class HrBulkJoinDAO:
             .values(
                 joining_date=payload.new_joining_date,
                 reporting_manager=payload.reporting_manager,
-                reporting_time=payload.reporting_time,
-                location=payload.location,
-                department=payload.department,
-                joining_comments=getattr(payload, "comment", None),
+                joining_comments=payload.joining_comments,
                 status="Joining"
             )
         )

@@ -85,7 +85,7 @@ class HrBulkJoinService:
         department=payload.department,
         reporting_manager=payload.reporting_manager,
 
-        custom_message=payload.comments
+        custom_message=payload.joining_comments
         )
 
         return {
