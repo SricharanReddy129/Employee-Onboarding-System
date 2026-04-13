@@ -1756,6 +1756,9 @@ class EmployeeExit(Base):
             'HR Approved',
             'Clearance Pending',
             'FnF Pending',
+            'Settlement Approved',
+            'Paid',
+            'Documents Generated',
             'Completed',
             'Rejected'
         ),
@@ -1775,21 +1778,6 @@ class EmployeeExit(Base):
     )
 
     # relationships
-    department: Mapped[Optional["Departments"]] = relationship(
-        "Departments",
-        back_populates="employee_exit",   # auto creates reverse relation="employee_exit",   # auto creates reverse relation
-        lazy="selectin"
-    )
-    designation: Mapped[Optional["Designations"]] = relationship(
-        "Designations",
-        back_populates="employee_exit",   # auto creates reverse relation
-        lazy="selectin"
-    )
-    employee_details: Mapped["EmployeeDetails"] = relationship(
-        "EmployeeDetails",
-        back_populates="employee_exit",
-        lazy="selectin"
-    )
 
     approvals: Mapped[list['ExitApprovals']] = relationship(
         "ExitApprovals",
@@ -1872,6 +1860,7 @@ class ExitApprovals(Base):
         back_populates="approvals",
         lazy="selectin"
     )
+    
 
 # ==========================================
 
@@ -1916,6 +1905,14 @@ class ExitClearance(Base):
     )
 
     employee_exit = relationship("EmployeeExit", back_populates="clearances")
+
+    items: Mapped[list['ExitClearanceItems']] = relationship(
+        "ExitClearanceItems",
+        back_populates="exit_clearance",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+
     employee_details = relationship("EmployeeDetails", back_populates="exit_clearance")
 
 # ==========================================
@@ -2026,4 +2023,44 @@ class ExitFinalSettlement(Base):
     )
 
     employee_exit = relationship("EmployeeExit", back_populates="settlement")
-    employee_details = relationship("EmployeeDetails", back_populates="exit_final_settlement")
+
+class ExitClearanceItems(Base):
+    __tablename__ = 'exit_clearance_items'
+
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ['clearance_uuid'],
+            ['exit_clearance.clearance_uuid']
+        ),
+        Index('clearance_item_uuid', 'clearance_item_uuid', unique=True),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+
+    clearance_item_uuid: Mapped[str] = mapped_column(CHAR(36))
+
+    clearance_uuid: Mapped[str] = mapped_column(CHAR(36))
+
+    item_name: Mapped[str] = mapped_column(String(255))
+
+    status: Mapped[str] = mapped_column(
+        Enum('Pending','Completed'),
+        server_default=text("'Pending'")
+    )
+
+    remarks: Mapped[Optional[str]] = mapped_column(Text)
+
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime,
+        server_default=text('CURRENT_TIMESTAMP')
+    )
+
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(
+        DateTime,
+        server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP')
+    )
+
+    exit_clearance = relationship(
+        "ExitClearance",
+        back_populates="items"
+    )
