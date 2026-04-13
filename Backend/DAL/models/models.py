@@ -444,6 +444,7 @@ class EmployeeDetails(Base):
     exit_documents: Mapped[list['ExitDocuments']] = relationship('ExitDocuments', back_populates='employee_details')  
     exit_final_settlement: Mapped[list['ExitFinalSettlement']] = relationship('ExitFinalSettlement', back_populates='employee_details')  
     exit_interview: Mapped[list['ExitInterview']] = relationship('ExitInterview', back_populates='employee_details')  
+    employee_about: Mapped[Optional["EmployeeAbout"]] = relationship('EmployeeAbout', back_populates='employee_details', uselist=False)
   
 class EmployeeExperience(Base):
     __tablename__ = 'employee_experience'
@@ -815,6 +816,27 @@ class EmployeeSocialLink(Base):
     updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
     offer_letter_details: Mapped['OfferLetterDetails'] = relationship('OfferLetterDetails', back_populates='employee_social_links')
 
+class EmployeeAbout(Base):
+    __tablename__ = "employee_about"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["employee_uuid"],
+            ["employee_details.employee_uuid"],
+            ondelete="CASCADE",
+            onupdate="CASCADE",
+            name="fk_employee_about_employee"
+        ),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    employee_about_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    employee_uuid: Mapped[str] = mapped_column(CHAR(36), nullable=False)
+    about_me: Mapped[Optional[str]] = mapped_column(Text)
+    work_enjoyment: Mapped[Optional[str]] = mapped_column(Text)
+    interests_hobbies: Mapped[Optional[str]] = mapped_column(Text)
+    links: Mapped[Optional[list[str]]] = mapped_column(JSON)
+    created_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text("CURRENT_TIMESTAMP"))
+    updated_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime, server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"))
+    employee_details: Mapped['EmployeeDetails'] = relationship('EmployeeDetails', back_populates='employee_about')
 class EmployeePaySlips(Base):
     __tablename__ = 'employee_pay_slips'
     __table_args__ = (

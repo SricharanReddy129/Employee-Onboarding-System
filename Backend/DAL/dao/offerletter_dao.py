@@ -148,6 +148,26 @@ class OfferLetterDAO:
 
         return rows
 
+        # return [
+        #     {
+        #         "user_uuid": row.user_uuid,
+        #         "first_name": row.first_name,
+        #         "middle_name": row.middle_name,
+        #         "last_name": row.last_name,
+        #         "mail": row.mail,
+        #         "country_code": row.country_code,
+        #         "contact_number": row.contact_number,
+        #         "designation": row.designation,
+        #         "employee_type": row.employee_type,
+        #         "total_ctc": row.total_ctc,
+        #         "created_by": row.created_by,
+        #         "status": row.status,
+        #         "cc_emails": row.cc_emails.split(",") if row.cc_emails else [],
+        #         "compensation_components": [] 
+        #     }
+        #     for row in rows
+        # ]
+
     
 
 

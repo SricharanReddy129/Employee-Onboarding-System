@@ -151,3 +151,24 @@ class SocialLinkDetails(BaseModel):
     user_uuid: str
     platform_name: str
     url: str
+
+class EmployeeAboutRequest(BaseModel):
+    employee_uuid: str
+    about_me: Optional[str] = ""
+    work_enjoyment: Optional[str] = ""
+    interests_hobbies: Optional[str] = ""
+    links: list[str] = Field(default_factory=list)
+
+
+class EmployeeAboutResponse(BaseModel):
+    employee_about_uuid: str
+    message: str
+
+
+class EmployeeAboutDetails(BaseModel):
+    employee_about_uuid: str
+    employee_uuid: str
+    about_me: Optional[str] = ""
+    work_enjoyment: Optional[str] = ""
+    interests_hobbies: Optional[str] = ""
+    links: list[str] = Field(default_factory=list)
