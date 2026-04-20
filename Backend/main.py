@@ -5,7 +5,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 import os
 from jinja2 import Environment, FileSystemLoader
 
-from Backend.API_Layer.routes import docusign_token_generation_route, employee_experience_routes, hr_bulk_join_router, hr_onboarding_routes, offer_approval_action_routes, otp_routes, redis_cache_routes, weekly_dashboard_routes
+from Backend.API_Layer.routes import addtask_routes, docusign_token_generation_route, employee_experience_routes, hr_bulk_join_router, hr_onboarding_routes, offer_approval_action_routes, otp_routes, redis_cache_routes, weekly_dashboard_routes
 from .API_Layer.routes import (master_routes, offerletter_routes, education_routes, offerresponse_routes, employee_details_routes,
                                identity_routes, employee_upload_routes,analytics_routes)
 from .API_Layer.middleware.jwt_middleware import JWTMiddleware
@@ -23,6 +23,7 @@ from Backend.API_Layer.routes import employee_bank_routes
 from Backend.API_Layer.routes import dashboard_routes, employee_exit_routes, exit_approval_routes
 from datetime import date
 from weasyprint import HTML
+from Backend.API_Layer.routes import addtask_routes
 
 
 
@@ -120,7 +121,7 @@ app.include_router(dashboard_routes.router)
 app.include_router(employee_exit_routes.router)
 app.include_router(exit_approval_routes.router)
 app.include_router(weekly_dashboard_routes.router, prefix="/weekly-dashboard", tags=["Dashboard"])
-
+app.include_router(addtask_routes.router, prefix="/api")
 
 
 
