@@ -597,7 +597,7 @@ class PersonalDetails(Base):
         ForeignKeyConstraint(['nationality_country_uuid'], ['countries.country_uuid'], name='personal_details_ibfk_2'),
         ForeignKeyConstraint(['residence_country_uuid'], ['countries.country_uuid'], name='personal_details_ibfk_3'),
         ForeignKeyConstraint(['user_uuid'], ['offer_letter_details.user_uuid'], name='personal_details_ibfk_1'),
-        ForeignKeyConstraint(['emergency_contact_relation_uuid'], ['relation.relation_uuid'], name='personal_details_ibfk_4'),
+        ForeignKeyConstraint(['emergency_contact_relation_uuid'], ['relation_master.relation_uuid'], name='personal_details_ibfk_4'),
 
         Index('idx_personal_user', 'user_uuid'),
         Index('idx_personal_user_uuid', 'user_uuid'),
@@ -651,7 +651,7 @@ class PersonalDetails(Base):
     )
 
 class RelationMaster(Base):
-    __tablename__ = "relation"
+    __tablename__ = "relation_master"
     __table_args__ = (
         Index('relation_uuid', 'relation_uuid', unique=True),
     )
