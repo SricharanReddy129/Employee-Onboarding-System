@@ -139,7 +139,7 @@ async def get_all_offers(
 
 import time
 
-@router.get("/user_id/details", response_model=list[OfferLetterDetailsResponse], dependencies=[Depends(require_roles("HR", "ADMIN"))])
+@router.get("/user_id/details", response_model=list[OfferLetterDetailsResponse], dependencies=[Depends(require_roles("HR", "ADMIN","MANAGER"))])
 
 async def get_offer_by_user_id(
     request: Request,
