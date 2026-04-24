@@ -13,14 +13,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from .API_Layer.middleware.audit_middleware import AuditMiddleware
 from Backend.API_Layer.routes import token_verification_router
 from Backend.API_Layer.routes import offer_acceptance_request_routes
-from Backend.API_Layer.routes import offer_approval_action_routes
+# from Backend.API_Layer.routes import offer_approval_action_routes
 from Backend.corn_jobs.joining_reminder import send_joining_date_reminders
 from Backend.API_Layer.routes import permanent_employee_details_route
 from Backend.API_Layer.routes import departments_routes
 from Backend.API_Layer.routes import designation_routes
 from Backend.API_Layer.routes import employee_pf_routes
 from Backend.API_Layer.routes import employee_bank_routes
-from Backend.API_Layer.routes import dashboard_routes, employee_exit_routes, exit_approval_routes, exit_clearance_items_routes, exit_clearance_routes
+from Backend.API_Layer.routes import dashboard_routes, employee_exit_routes, exit_approval_routes, exit_clearance_items_routes, exit_clearance_routes, exit_interview_routes
 from datetime import date
 from weasyprint import HTML
 from Backend.API_Layer.routes import addtask_routes
@@ -34,7 +34,7 @@ from Backend.API_Layer.routes import exit_documents_routes
 # import redis.asyncio as redis
 
 
-from Backend.API_Layer.routes import hr_bulk_join_router
+# from Backend.API_Layer.routes import hr_bulk_join_router
 
 # import redis.asyncio as redis
 
@@ -121,6 +121,7 @@ app.include_router(designation_routes.router)
 app.include_router(analytics_routes.router, prefix="/api/analytics", tags=["Analytics"])
 app.include_router(dashboard_routes.router)
 app.include_router(employee_exit_routes.router)
+app.include_router(exit_interview_routes.router)
 app.include_router(exit_approval_routes.router)
 app.include_router(weekly_dashboard_routes.router, prefix="/weekly-dashboard", tags=["Dashboard"])
 app.include_router(addtask_routes.router, prefix="/api")
