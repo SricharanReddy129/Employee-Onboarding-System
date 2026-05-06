@@ -847,7 +847,7 @@ class OfferLetterService:
             email = record.get("mail")
             first_name = record.get("first_name")
             last_name = record.get("last_name")
-            cc_raw = record.get("cc_mails")
+            cc_raw = record.get("cc_emails")
             
 
             
@@ -1176,7 +1176,7 @@ class OfferLetterService:
 
             employee_email = record["mail"].strip()
             employee_name = f"{record['first_name']} {record['last_name']}"
-            cc_raw = record.get("cc_mails")
+            cc_raw = record.get("cc_emails")
             if isinstance(cc_raw, str):
                 manager_emails = [manager_email.strip() for manager_email in cc_raw.split(",") if manager_email.strip()]
             elif cc_raw:
