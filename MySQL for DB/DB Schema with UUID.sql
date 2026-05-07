@@ -18,7 +18,8 @@ CREATE TABLE offer_letter_details (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     file_path VARCHAR(255),
     pandadoc_draft_id VARCHAR(255),
-    offer_response_at DATETIME
+    offer_response_at DATETIME,
+    cc_emails VARCHAR(256)
 );
 
 -- =========================================================

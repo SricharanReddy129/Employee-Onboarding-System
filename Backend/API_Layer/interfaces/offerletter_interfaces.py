@@ -1,6 +1,6 @@
 # Backend/api/interfaces/offerletter_interfaces.py
 
-from pydantic import BaseModel, EmailStr
+from pydantic import AliasChoices, BaseModel, ConfigDict, EmailStr, Field, field_validator
 from typing import List, Optional
 
 class CompensationComponent(BaseModel):
@@ -15,6 +15,8 @@ class CompensationComponentResponse(BaseModel):
     frequency: str
     amount: float
 class OfferCreateRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
     first_name: str
     middle_name: Optional[str] = None
     last_name: str
@@ -27,7 +29,19 @@ class OfferCreateRequest(BaseModel):
     # currency : str
     compensation_components: List[CompensationComponent]   
     total_ctc: float                                    
-    cc_emails: Optional[List[EmailStr]] = None
+    cc_emails: Optional[List[EmailStr]] = Field(
+        default=None,
+        validation_alias=AliasChoices("cc_emails", "cc_email", "ccEmails", "ccEmail"),
+    )
+
+    @field_validator("cc_emails", mode="before")
+    @classmethod
+    def normalize_cc_emails(cls, value):
+        if value in (None, ""):
+            return None
+        if isinstance(value, str):
+            return [email.strip() for email in value.split(",") if email.strip()]
+        return value
 
 class OfferCreateResponse(BaseModel):
     message: str
@@ -47,6 +61,8 @@ class BulkOfferCreateResponse(BaseModel):
     skipped_rows: int
 
 class OfferLetterDetailsResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     user_uuid: str
     first_name: Optional[str] = None
     middle_name :Optional[str] = None
@@ -63,13 +79,16 @@ class OfferLetterDetailsResponse(BaseModel):
     status : Optional[str] = None
 
     cc_emails: Optional[List[EmailStr]] = None
-    compensation_components: List[CompensationComponentResponse]= []
+    compensation_components: List[CompensationComponentResponse] = Field(default_factory=list)
 
-
-
-
-class Config:
-    from_attributes = True  
+    @field_validator("cc_emails", mode="before")
+    @classmethod
+    def normalize_cc_emails(cls, value):
+        if value in (None, ""):
+            return []
+        if isinstance(value, str):
+            return [email.strip() for email in value.split(",") if email.strip()]
+        return value
 
 class OfferPendingCandidate(BaseModel):
     user_uuid: str
