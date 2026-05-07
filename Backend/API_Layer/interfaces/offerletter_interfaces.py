@@ -23,9 +23,8 @@ class OfferCreateRequest(BaseModel):
     contact_number: str
     designation: str
     employee_type: str
-    # package: str
-    # currency : str
-    compensation_components: List[CompensationComponent]   
+    currency: str
+    compensation_components: List[CompensationComponent]
     total_ctc: float                                    
     cc_emails: Optional[List[EmailStr]] = None
 
@@ -56,8 +55,7 @@ class OfferLetterDetailsResponse(BaseModel):
     contact_number: Optional[str] = None
     designation: Optional[str] = None
     employee_type: Optional[str] = None
-    # package: str
-    # currency : str
+    currency: Optional[str] = None
     total_ctc: float | None = None
     created_by: Optional[int] = None
     status : Optional[str] = None

@@ -48,8 +48,7 @@ class OfferLetterDAO:
             contact_number=request_data.contact_number,
             designation=request_data.designation,
             employee_type=request_data.employee_type,
-            # package=request_data.package,
-            # currency=request_data.currency,
+            currency=request_data.currency,
             total_ctc=request_data.total_ctc,
             cc_emails=",".join(request_data.cc_emails) if request_data.cc_emails else None,
         )
@@ -138,8 +137,7 @@ class OfferLetterDAO:
                 OfferLetterDetails.contact_number,
                 OfferLetterDetails.designation,
                 OfferLetterDetails.employee_type,
-                # OfferLetterDetails.package,
-                # OfferLetterDetails.currency,
+                OfferLetterDetails.currency,
                 OfferLetterDetails.total_ctc,
                 OfferLetterDetails.created_by,
                 OfferLetterDetails.status,
@@ -224,8 +222,7 @@ class OfferLetterDAO:
 
         print("⏱ DAO total:", time.perf_counter() - start)
 
-        # 4️⃣ Return structured response 
-        return {
+        result_data = {
                 
             "user_uuid": offer.user_uuid,
             "first_name": offer.first_name,
@@ -245,6 +242,8 @@ class OfferLetterDAO:
             "total_ctc": offer.total_ctc,
             "compensation_components": compensation_list
         }
+        print("DEBUG: DAO returning offer data:", result_data)
+        return result_data
 
     async def update_offer_by_uuid(
     self,
@@ -265,6 +264,7 @@ class OfferLetterDAO:
                 contact_number=request_data.contact_number,
                 designation=request_data.designation,
                 employee_type=request_data.employee_type,
+                currency=request_data.currency,
                 total_ctc=request_data.total_ctc, # Matching your latest POST logic
                 cc_emails=",".join(request_data.cc_emails) if request_data.cc_emails else None,
                 
