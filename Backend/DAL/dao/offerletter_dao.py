@@ -13,6 +13,22 @@ class OfferLetterDAO:
     def __init__(self, db: AsyncSession):
         self.db = db  # Store the session for transaction management
 
+    @staticmethod
+    def _cc_emails_to_db(cc_emails) -> str | None:
+        if not cc_emails:
+            return None
+        if isinstance(cc_emails, str):
+            emails = cc_emails.split(",")
+        else:
+            emails = cc_emails
+
+        cleaned_emails = [
+            str(email).strip()
+            for email in emails
+            if email and str(email).strip()
+        ]
+        return ",".join(cleaned_emails) if cleaned_emails else None
+
     async def get_offer_by_user_uuid(self, user_uuid: str):
         result = await self.db.execute(
             select(OfferLetterDetails).where(
@@ -51,7 +67,7 @@ class OfferLetterDAO:
             # package=request_data.package,
             # currency=request_data.currency,
             total_ctc=request_data.total_ctc,
-            cc_emails=",".join(request_data.cc_emails) if request_data.cc_emails else None,
+            cc_emails=self._cc_emails_to_db(request_data.cc_emails),
         )
         self.db.add(new_offer)
 
@@ -89,7 +105,7 @@ class OfferLetterDAO:
             employee_type=request_data.employee_type,
             package=request_data.package,
             currency=request_data.currency,
-            cc_emails=",".join(request_data.cc_emails) if request_data.cc_emails else None,
+            cc_emails=self._cc_emails_to_db(request_data.cc_emails),
         )
         self.db.add(new_offer)
         # Don't commit - let the caller handle it
@@ -266,7 +282,7 @@ class OfferLetterDAO:
                 designation=request_data.designation,
                 employee_type=request_data.employee_type,
                 total_ctc=request_data.total_ctc, # Matching your latest POST logic
-                cc_emails=",".join(request_data.cc_emails) if request_data.cc_emails else None,
+                cc_emails=self._cc_emails_to_db(request_data.cc_emails),
                 
             )
         )
