@@ -1,3 +1,4 @@
+from Backend.API_Layer.interfaces import exit_final_settlement_interface
 from datetime import date
 
 from fastapi import HTTPException
@@ -188,18 +189,14 @@ class HrBulkJoinService:
         }
     
 
-    # ✅ Get employees under reporting manager
-    async def get_employees_under_manager(
-        self,
-        user_uuid: str
-    ):
-        # Step 1 — Find manager
-        manager = await self.dao.get_user_by_uuid(user_uuid)
+    async def get_employees_under_manager(self, employee_id: str):
+        # Step 1: Find the internal UUID of the employee ID provided
+        manager_id = await self.dao.get_manager_id_by_id(employee_id)
 
-        if not manager:
+        if not manager_id:
             raise HTTPException(
-                status_code=404,
-                detail="Manager not found"
+                status_code=404, 
+                detail=f"No employee found with ID: {employee_id}"
             )
 
         # Step 2 — Manager full name
@@ -218,12 +215,12 @@ class HrBulkJoinService:
             manager_employee.employee_id
         )
 
-        # Step 4 — Response
+        # Step 3: Format the response
         return [
             {
-                "user_uuid": offer.user_uuid,
-                "name": f"{offer.first_name} {offer.last_name}".strip(),
-                "employee_id": employee.employee_id
+                "employee_id": emp.employee_id,
+                "user_uuid": emp.user_uuid,
+                "name": f"{emp.first_name} {emp.last_name}".strip()
             }
             for offer, employee in employees
         ]
