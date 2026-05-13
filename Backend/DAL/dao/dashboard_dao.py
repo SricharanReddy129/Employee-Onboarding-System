@@ -1,5 +1,5 @@
-from sqlalchemy import select, func, case
-from datetime import datetime, timedelta
+from sqlalchemy import select, func, case, and_, or_, tuple_
+from datetime import date, datetime, timedelta
 
 from Backend.DAL.models.models import (
     OfferLetterDetails,
@@ -219,4 +219,98 @@ class DashboardDAO:
                 "pending_7_days": aging7
             },
             "recent_activity": recent_activity
+        }
+
+    async def get_celebrations(self, start_date: date, end_date: date):
+        active_statuses = ("Probation", "Active", "On-Notice")
+
+        birthdays_result = await self.db.execute(
+            select(EmployeeDetails)
+            .where(
+                EmployeeDetails.date_of_birth.is_not(None),
+                EmployeeDetails.employment_status.in_(active_statuses),
+                self._date_month_day_filter(
+                    EmployeeDetails.date_of_birth,
+                    start_date,
+                    end_date
+                )
+            )
+            .order_by(
+                func.month(EmployeeDetails.date_of_birth),
+                func.day(EmployeeDetails.date_of_birth),
+                EmployeeDetails.first_name
+            )
+        )
+
+        anniversaries_result = await self.db.execute(
+            select(EmployeeDetails)
+            .where(
+                EmployeeDetails.joining_date.is_not(None),
+                EmployeeDetails.employment_status.in_(active_statuses),
+                EmployeeDetails.joining_date < start_date,
+                self._date_month_day_filter(
+                    EmployeeDetails.joining_date,
+                    start_date,
+                    end_date
+                )
+            )
+            .order_by(
+                func.month(EmployeeDetails.joining_date),
+                func.day(EmployeeDetails.joining_date),
+                EmployeeDetails.first_name
+            )
+        )
+
+        new_joinees_result = await self.db.execute(
+            select(EmployeeDetails)
+            .where(
+                EmployeeDetails.joining_date.is_not(None),
+                EmployeeDetails.employment_status.in_(active_statuses),
+                EmployeeDetails.joining_date.between(start_date, end_date)
+            )
+            .order_by(EmployeeDetails.joining_date, EmployeeDetails.first_name)
+        )
+
+        return {
+            "birthdays": [
+                self._format_celebration_item(employee, employee.date_of_birth)
+                for employee in birthdays_result.scalars().all()
+            ],
+            "workAnniversaries": [
+                self._format_celebration_item(employee, employee.joining_date)
+                for employee in anniversaries_result.scalars().all()
+            ],
+            "newJoinees": [
+                self._format_celebration_item(employee, employee.joining_date)
+                for employee in new_joinees_result.scalars().all()
+            ]
+        }
+
+    def _date_month_day_filter(self, column, start_date: date, end_date: date):
+        start_month_day = (start_date.month, start_date.day)
+        end_month_day = (end_date.month, end_date.day)
+        column_month_day = tuple_(func.month(column), func.day(column))
+
+        if start_month_day <= end_month_day:
+            return and_(
+                column_month_day >= start_month_day,
+                column_month_day <= end_month_day
+            )
+
+        return or_(
+            column_month_day >= start_month_day,
+            column_month_day <= end_month_day
+        )
+
+    def _format_celebration_item(self, employee, event_date):
+        return {
+            "name": " ".join(
+                part for part in [
+                    employee.first_name,
+                    employee.middle_name,
+                    employee.last_name
+                ]
+                if part
+            ),
+            "date": event_date.strftime("%d/%m/%y")
         }
