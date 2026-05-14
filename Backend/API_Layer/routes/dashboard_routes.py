@@ -41,8 +41,9 @@ async def get_dashboard_summary(
 async def get_dashboard_celebrations(
     db: AsyncSession = Depends(get_db)
 ):
-    start_date = date.today()
-    end_date = start_date + timedelta(days=14)
+    today = date.today()
+    start_date = today - timedelta(days=15)
+    end_date = today + timedelta(days=14)
 
     dao = DashboardDAO(db)
     service = DashboardService(dao)
