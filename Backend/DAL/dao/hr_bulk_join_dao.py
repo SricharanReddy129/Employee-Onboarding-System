@@ -71,12 +71,20 @@ class HrBulkJoinDAO:
         await self.db.commit()
         return result.rowcount
 
+<<<<<<< Updated upstream
     async def get_user_by_uuid(self, user_uuid: str):
         query = select(OfferLetterDetails).where(
             OfferLetterDetails.user_uuid == user_uuid
+=======
+    # ✅ Get user by UUID
+    async def get_user_by_reporting_manager_id(self, employee_id: str):
+        query = select(EmployeeDetails).where(
+            EmployeeDetails.reporting_manager_uuid == employee_id
+>>>>>>> Stashed changes
         )
         result = await self.db.execute(query)
-        return result.scalar_one_or_none()
+        print(result.scalars().all())
+        return result.scalars().all()
 
     async def get_employee_by_manager_value(self, reporting_manager: str):
         if reporting_manager is None:
